@@ -56,8 +56,3 @@ module fp32_invsqrt (
         end
     end
 endmodule
-
-// Placeholder for invsqrt LUT
-module invsqrt_lut_32b (input [7:0] addr, output [25:0] data);
-    assign data = 26'h1000000; // Simplified placeholder
-endmodule

@@ -82,10 +82,3 @@ module fp16_invsqrt (
     end
 
 endmodule
-
-// Placeholder for invsqrt LUT
-module invsqrt_lut_16b (input [4:0] addr, output [12:0] data);
-    // This LUT would contain pre-calculated values for 1/sqrt(M)
-    // where M depends on both mantissa and if exponent was odd/even
-    assign data = 13'h1000; // Simplified placeholder
-endmodule

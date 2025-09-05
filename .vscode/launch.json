@@ -1,0 +1,46 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "generate_lut.py help",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "rtl/verilog/generate_lut.py",
+            "args": [
+                "--help"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "generate_lut.py fp16 recip",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "rtl/verilog/generate_lut.py",
+            "args": [
+                "--type", "recip",
+                "--precision", "fp16",
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "generate_lut.py ALL",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "rtl/verilog/generate_lut.py",
+            "args": [
+                "all",
+            ],
+            "console": "integratedTerminal"
+        },
+    ]
+}
