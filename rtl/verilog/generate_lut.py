@@ -45,6 +45,8 @@ GENERATED_MODULE_WARNING = textwrap.dedent("""\
 //======================================================================
 """)
 
+PATH_PREFIX = 'rtl/verilog' # TODO: (now) Handle it better (relative path to the script? to caller dir?)
+
 def generate_invsqrt_lut(precision: str) -> Tuple[str, str, str]:
     """Generates the Verilog RTL for an inverse square root LUT."""
 
@@ -225,13 +227,13 @@ def run_generation(func_type: str, precision: str, splice: bool, output_file: st
         # Construct the target filename based on type and precision
         base_filename = f"{precision}_{func_type}.v"
 
-        # Assumes the script is run from rtl/verilog/
-        target_filepath = os.path.join(precision, base_filename)
+        # Assumes the script is run from hdl/verilog/
+        target_filepath = os.path.join(PATH_PREFIX, precision, base_filename)
 
         splice_module_into_file(target_filepath, module_name, verilog_code)
     else:
         # Determine output directory based on precision
-        output_dir = precision
+        output_dir = os.path.join(PATH_PREFIX, precision)
         os.makedirs(output_dir, exist_ok=True)
 
         # Use user-specified filename or the default
