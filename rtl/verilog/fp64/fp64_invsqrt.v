@@ -55,7 +55,3 @@ module fp64_invsqrt (
         end
     end
 endmodule
-
-module invsqrt_lut_64b (input [9:0] addr, output [54:0] data);
-    assign data = 55'h10000000000000; // Placeholder
-endmodule

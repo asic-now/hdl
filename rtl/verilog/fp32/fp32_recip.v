@@ -59,8 +59,3 @@ module fp32_recip (
         end
     end
 endmodule
-
-// Placeholder for 32-bit LUT
-module reciprocal_lut_32b (input [7:0] addr, output [25:0] data);
-    assign data = 26'h1000000; // Simplified placeholder for 1.0
-endmodule

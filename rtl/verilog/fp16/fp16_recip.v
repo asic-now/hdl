@@ -87,28 +87,3 @@ module fp16_recip (
     end
 
 endmodule
-
-// Lookup table module
-module reciprocal_lut_16b (
-    input [3:0] addr,
-    output [12:0] data // 1.12 format
-);
-    // Values are pre-calculated for 1/(1.addr)
-    // e.g., for addr=0000 (1.0), result is 1.0 -> 13'h1000
-    // for addr=1111 (1.9375), result is 0.516... -> 13'h0842
-    assign data = (addr == 4'h0) ? 13'h1000 :
-                  (addr == 4'h1) ? 13'h0F0F :
-                  (addr == 4'h2) ? 13'h0E38 :
-                  (addr == 4'h3) ? 13'h0D79 :
-                  (addr == 4'h4) ? 13'h0CCB :
-                  (addr == 4'h5) ? 13'h0C2C :
-                  (addr == 4'h6) ? 13'h0BA2 :
-                  (addr == 4'h7) ? 13'h0B21 :
-                  (addr == 4'h8) ? 13'h0AA9 :
-                  (addr == 4'h9) ? 13'h0A3B :
-                  (addr == 4'hA) ? 13'h09D3 :
-                  (addr == 4'hB) ? 13'h0972 :
-                  (addr == 4'hC) ? 13'h091A :
-                  (addr == 4'hD) ? 13'h08C7 :
-                  (addr == 4'hE) ? 13'h087A : 13'h0831;
-endmodule
