@@ -26,6 +26,11 @@ module fp64_to_fp32 (
     // Max normal: 127 (biased 254)
     // Min normal: -126 (biased 1)
 
+    reg signed [11:0] true_exp;
+    reg [7:0] exp32;
+    reg [22:0] mant32;
+    reg [52:0] full_mant64;
+    integer shift_amount;
     always @(*) begin
         if (is_nan64) begin
             fp32_out = {sign, 8'hFF, {1'b1, mant64[51:29]}}; // Propagate quiet NaN
@@ -34,21 +39,20 @@ module fp64_to_fp32 (
         end else if (is_zero64) begin
             fp32_out = {sign, 31'b0};
         end else begin
-            reg signed [11:0] true_exp = exp64 - 1023;
+            true_exp = exp64 - 1023;
             
             if (true_exp > 127) begin // Overflow
                 fp32_out = {sign, 8'hFF, 23'b0}; // Infinity
             end else if (true_exp < -149) begin // Underflow to zero
                 fp32_out = {sign, 31'b0};
             end else if (true_exp < -126) begin // Underflow to denormalized
-                reg [22:0] mant32;
-                reg [52:0] full_mant64 = {1'b1, mant64};
-                integer shift_amount = -126 - true_exp;
+                full_mant64 = {1'b1, mant64};
+                shift_amount = -126 - true_exp;
                 mant32 = (full_mant64 >> shift_amount) >> 29;
                 fp32_out = {sign, 8'b0, mant32};
             end else begin // Normal conversion
-                reg [7:0] exp32 = true_exp + 127;
-                reg [22:0] mant32 = mant64[51:29];
+                exp32 = true_exp + 127;
+                mant32 = mant64[51:29];
                 fp32_out = {sign, exp32, mant32};
             end
         end

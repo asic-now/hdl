@@ -12,13 +12,17 @@ module int64_to_fp64 (
     output reg [63:0] fp_out
 );
 
+    integer msb_pos;
+    reg [10:0] out_exp;
+    reg [51:0] out_mant;
+    reg [63:0] shifted_mant;
+    reg sign;
+    reg [63:0] abs_val;
     always @(*) begin
         if (int_in == 64'd0) begin
             fp_out = 64'd0;
         end else begin
             // Get sign and absolute value
-            reg sign;
-            reg [63:0] abs_val;
             if (int_in[63]) begin
                 sign = 1'b1;
                 abs_val = -int_in;
@@ -28,7 +32,6 @@ module int64_to_fp64 (
             end
 
             // Priority encode to find MSB
-            integer msb_pos;
             msb_pos = 0;
             for (integer i = 62; i >= 0; i = i - 1) begin
                 if (abs_val[i]) begin
@@ -37,9 +40,6 @@ module int64_to_fp64 (
             end
 
             // Calculate exponent and mantissa
-            reg [10:0] out_exp;
-            reg [51:0] out_mant;
-            reg [63:0] shifted_mant;
 
             out_exp = msb_pos + 1023;
             

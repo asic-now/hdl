@@ -22,6 +22,10 @@ module fp16_to_fp32 (
     wire is_zero16 = (exp16 == 0) && (mant16 == 0);
     wire is_denorm16 = (exp16 == 0) && (mant16 != 0);
 
+    integer shift_amount;
+    wire [9:0] temp_mant = mant16;
+    reg [7:0] exp32;
+    reg [22:0] mant32;
     always @(*) begin
         if (is_nan16) begin
             // Propagate NaN, making it a quiet NaN in 32-bit format
@@ -32,8 +36,6 @@ module fp16_to_fp32 (
             fp32_out = {sign, 31'b0};
         end else if (is_denorm16) begin
             // Normalize the denormalized 16-bit number
-            integer shift_amount;
-            reg [9:0] temp_mant = mant16;
             
             // Find leading '1' to determine shift
             shift_amount = 0;
@@ -41,13 +43,13 @@ module fp16_to_fp32 (
                 if(temp_mant[i]) shift_amount = 9 - i;
             end
             
-            reg [7:0] exp32 = 127 - 15 - shift_amount;
-            reg [22:0] mant32 = (temp_mant << (shift_amount + 1))[9:0] << 13;
+            exp32 = 127 - 15 - shift_amount;
+            mant32 = (temp_mant << (shift_amount + 1))[9:0] << 13;
             fp32_out = {sign, exp32, mant32};
         end else begin
             // Normal conversion
-            reg [7:0] exp32 = exp16 - 15 + 127;
-            reg [22:0] mant32 = {mant16, 13'b0}; // Pad mantissa with zeros
+            exp32 = exp16 - 15 + 127;
+            mant32 = {mant16, 13'b0}; // Pad mantissa with zeros
             fp32_out = {sign, exp32, mant32};
         end
     end

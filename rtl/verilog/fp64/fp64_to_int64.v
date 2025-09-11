@@ -27,6 +27,9 @@ module fp64_to_int64 (
     localparam INT64_MAX = 64'h7FFFFFFFFFFFFFFF;
     localparam INT64_MIN = 64'h8000000000000000;
 
+    reg  signed [11:0] true_exp;
+    reg  [52:0] full_mant;
+    reg  [115:0] shifted_val; // 53 mant bits + 63 max shift
     always @(*) begin
         if (is_nan) begin
             int_out = 64'd0; // Return 0 for NaN
@@ -36,9 +39,8 @@ module fp64_to_int64 (
             int_out = 64'd0;
         end else begin
             // Normal conversion
-            reg signed [11:0] true_exp = exp - 1023;
-            reg [52:0] full_mant = {1'b1, mant}; // Add implicit 1
-            reg [115:0] shifted_val; // 53 mant bits + 63 max shift
+            true_exp = exp - 1023;
+            full_mant = {1'b1, mant}; // Add implicit 1
 
             if (true_exp < 0) begin // Value is < 1.0
                 int_out = 64'd0;

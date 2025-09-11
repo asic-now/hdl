@@ -26,6 +26,11 @@ module fp32_to_fp16 (
     // Max normal: 15 (biased 30)
     // Min normal: -14 (biased 1)
     
+    integer shift_amount;
+    reg signed [ 8:0] true_exp;
+    reg        [23:0] full_mant32;
+    reg        [ 4:0] exp16;
+    reg        [ 9:0] mant16;
     always @(*) begin
         if (is_nan32) begin
             fp16_out = {sign, 5'h1F, {1'b1, mant32[22:13]}}; // Propagate quiet NaN
@@ -34,21 +39,20 @@ module fp32_to_fp16 (
         end else if (is_zero32) begin
             fp16_out = {sign, 15'b0};
         end else begin
-            reg signed [8:0] true_exp = exp32 - 127;
+            true_exp = exp32 - 127;
             
             if (true_exp > 15) begin // Overflow
                 fp16_out = {sign, 5'h1F, 10'b0}; // Infinity
             end else if (true_exp < -24) begin // Underflow to zero
                 fp16_out = {sign, 15'b0};
             end else if (true_exp < -14) begin // Underflow to denormalized
-                reg [9:0] mant16;
-                reg [23:0] full_mant32 = {1'b1, mant32};
-                integer shift_amount = -14 - true_exp;
+                full_mant32 = {1'b1, mant32};
+                shift_amount = -14 - true_exp;
                 mant16 = (full_mant32 >> shift_amount) >> 13;
                 fp16_out = {sign, 5'b0, mant16};
             end else begin // Normal conversion
-                reg [4:0] exp16 = true_exp + 15;
-                reg [9:0] mant16 = mant32[22:13];
+                exp16 = true_exp + 15;
+                mant16 = mant32[22:13];
                 fp16_out = {sign, exp16, mant16};
             end
         end

@@ -27,6 +27,9 @@ module fp32_to_int32 (
     localparam INT32_MAX = 32'h7FFFFFFF;
     localparam INT32_MIN = 32'h80000000;
 
+    reg  signed [8:0] true_exp;
+    reg  [23:0] full_mant;
+    reg  [54:0] shifted_val; // 24 mant bits + 31 max shift
     always @(*) begin
         if (is_nan) begin
             int_out = 32'h00000000; // Return 0 for NaN
@@ -36,9 +39,8 @@ module fp32_to_int32 (
             int_out = 32'h00000000;
         end else begin
             // Normal conversion
-            reg signed [8:0] true_exp = exp - 127;
-            reg [23:0] full_mant = {1'b1, mant}; // Add implicit 1
-            reg [54:0] shifted_val; // 24 mant bits + 31 max shift
+            true_exp = exp - 127;
+            full_mant = {1'b1, mant}; // Add implicit 1
 
             if (true_exp < 0) begin // Value is < 1.0
                 int_out = 32'h00000000;
