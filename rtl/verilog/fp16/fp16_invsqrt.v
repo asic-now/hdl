@@ -3,85 +3,111 @@
 // Verilog RTL for 16-bit float inverse square root (1/sqrt(x)).
 //
 // Features:
-// - Combinational logic (should be pipelined for synthesis).
-// - LUT for initial guess.
-// - One Newton-Raphson iteration: y1 = y0 * (1.5 - (x/2) * y0^2)
-// - Handles all special cases.
+// - Refactored to use fp16_classify and an external LUT module.
+// - Parameter USE_LUT selects between a LUT-based or combinatorial initial guess.
+// - Combinational data path using placeholder FPUs for Newton-Raphson iteration.
+//   WARNING: This design is purely combinational and will result in long logic
+//            paths. For synthesis, pipelining the N-R stages is recommended.
+//
+// N-R Iteration: y1 = y0 * (1.5 - (x/2) * y0^2)
 
-module fp16_invsqrt (
+module fp16_invsqrt #(
+    parameter USE_LUT = 1
+) (
     input  [15:0] fp_in,
     output reg [15:0] fp_out
 );
 
-    wire       sign_in = fp_in[15];
-    wire [4:0] exp_in  = fp_in[14:10];
-    wire [9:0] mant_in = fp_in[9:0];
-    
-    wire is_neg = sign_in && !((exp_in == 0) && (mant_in == 0));
-    wire is_nan = (exp_in == 5'h1F) && (mant_in != 0);
-    wire is_inf = (exp_in == 5'h1F) && (mant_in == 0);
-    wire is_zero = (exp_in == 0) && (mant_in == 0);
+    //==================================================================
+    // 1. Classification
+    //==================================================================
+    wire is_snan, is_qnan, is_neg_inf, is_pos_inf, is_neg_norm, is_pos_norm,
+         is_neg_denorm, is_pos_denorm, is_neg_zero, is_pos_zero;
 
-    localparam P = 12; // Internal fractional precision
-
-    // Wires for N-R iteration
-    wire [P:0] y0;
-    
-    // N-R Iteration: y1 = y0 * (1.5 - (x/2) * y0^2)
-    wire [2*P+1:0] y0_sq; // y0^2
-    wire [10+2*P+2:0] mul1_res; // x * y0^2
-    wire [10+2*P+1:0] mul1_div2; // (x/2) * y0^2
-    wire signed [P+2:0] sub_res; // 1.5 - mul1_div2
-    wire [2*P+2:0] y1; // y0 * sub_res
-
-    // LUT gets top mantissa bits and exponent LSB
-    invsqrt_lut_16b lut (
-        .addr({exp_in[0], mant_in[9:6]}),
-        .data(y0)
+    fp16_classify classifier (
+        .in(fp_in),
+        .is_snan(is_snan), .is_qnan(is_qnan),
+        .is_neg_inf(is_neg_inf), .is_pos_inf(is_pos_inf),
+        .is_neg_norm(is_neg_norm), .is_pos_norm(is_pos_norm),
+        .is_neg_denorm(is_neg_denorm), .is_pos_denorm(is_pos_denorm),
+        .is_neg_zero(is_neg_zero), .is_pos_zero(is_pos_zero)
     );
 
-    `ifdef `NO_LUT
-    // --- Newton-Raphson Calculation (Combinational) ---
-    assign y0_sq = y0 * y0;
-    assign mul1_res = {1'b0, (exp_in != 0), mant_in} * y0_sq;
+    wire is_nan = is_snan || is_qnan;
+    wire is_zero = is_pos_zero || is_neg_zero;
+    wire is_invalid_neg = is_neg_norm || is_neg_denorm || is_neg_inf;
 
-    // x/2 is a simple exponent adjustment on the FP input
-    wire [4:0] exp_div2 = exp_in - 1;
-    wire [10:0] mant_div2 = {(exp_div2 != 0), mant_in};
-    
-    assign mul1_div2 = mant_div2 * y0_sq;
+    //==================================================================
+    // 2. Initial Guess Generation (y0)
+    //==================================================================
+    wire [15:0] y0_fp;
 
-    // 1.5 is 3/2 -> 1.1 in binary
-    assign sub_res = (3'b011 << (P-1)) - mul1_div2[10+P:0];
-    
-    assign y1 = y0 * sub_res;
-    // --- End of Combinational Calculation ---
-    `endif
+    generate
+        if (USE_LUT == 1) begin : use_lut_guess
+            localparam P_LUT = 12; // Internal precision of the LUT output
+            wire [P_LUT:0] y0_from_lut;
+            wire [4:0] exp_in = fp_in[14:10];
+            wire [9:0] mant_in = fp_in[9:0];
 
-    reg  signed [5:0] exp_out_unnorm;
-    reg         [9:0] mant_out_final;
-    always @(*) begin
-        if (is_nan || is_neg) begin
-            fp_out = 16'h7C01; // qNaN
-        end else if (is_inf) begin
-            fp_out = 16'h0000; // 1/sqrt(inf) -> 0
-        end else if (is_zero) begin
-            fp_out = 16'h7C00; // 1/sqrt(0) -> inf
-        end else begin
-            
-            // Exponent is approx (3*bias - E)/2
-            exp_out_unnorm = (3*15 - exp_in) >> 1;
+            invsqrt_lut_16b lut ( .addr({exp_in[0], mant_in[9:6]}), .data(y0_from_lut) );
 
-            // Normalize the mantissa result 'y1'
-            // Result is always in [0.5, 1.0) range before final mul, so we look at top two bits
-            if (y1[2*P]) begin // 1.xxxx
-                mant_out_final = y1[2*P-1 : 2*P-10];
-            end else begin // 0.1xxx
-                exp_out_unnorm = exp_out_unnorm - 1;
-                mant_out_final = y1[2*P-2 : 2*P-11];
+            // Convert the fixed-point LUT output (u1.P) to a fp16 float.
+            reg [4:0] y0_exp;
+            reg [9:0] y0_mant;
+            integer shift;
+            always @(*) begin
+                if (y0_from_lut[P_LUT]) begin // Value is 1.0
+                    y0_exp = 5'd15;
+                    y0_mant = 10'd0;
+                end else begin // Value is < 1.0
+                    y0_exp = 5'd14;
+                    shift = 0;
+                    for (integer i = P_LUT - 1; i >= 0; i = i - 1)
+                        if (y0_from_lut[i]) shift = (P_LUT - 1) - i;
+                    y0_mant = (y0_from_lut << (shift + 1)) >> (P_LUT - 9);
+                end
             end
+            assign y0_fp = {1'b0, y0_exp, y0_mant};
 
-            fp_out = {1'b0, exp_out_unnorm[4:0], mant_out_final};
+        end else begin : use_combinatorial_guess
+            localparam [15:0] MAGIC_NUMBER = 16'h5A00;
+            assign y0_fp = MAGIC_NUMBER - (fp_in >> 1);
+        end
+    endgenerate
+
+    //==================================================================
+    // 3. Newton-Raphson Iteration
+    //==================================================================
+    wire [15:0] x_div2, y0_sq, term, sub_res, y1_fp;
+    localparam [15:0] C_1_5 = 16'h3E00; // 1.5 in FP16
+    localparam [15:0] C_0_5 = 16'h3800; // 0.5 in FP16
+
+    /*
+    // TODO: Connect your FPU modules here for the N-R iteration.
+    // The logic below requires fp16_mul and fp16_add modules from your library.
+    
+    fp16_mul mul_x_div2 (.a(fp_in),   .b(C_0_5),    .result(x_div2)  );
+    fp16_mul mul_y0_sq  (.a(y0_fp),   .b(y0_fp),    .result(y0_sq)   );
+    fp16_mul mul_term   (.a(x_div2),  .b(y0_sq),    .result(term)    );
+    fp16_add sub_res_add(.a(C_1_5),   .b({!term[15], term[14:0]}), .result(sub_res));
+    fp16_mul mul_final  (.a(y0_fp),   .b(sub_res),  .result(y1_fp)   );
+    */
+    
+    // TEMPORARY BYPASS: Returns initial guess until FPU modules are connected.
+    assign y1_fp = y0_fp;
+
+    //==================================================================
+    // 4. Final Output Selection
+    //==================================================================
+    always @(*) begin
+        if (is_nan || is_invalid_neg) begin
+            fp_out = 16'h7C01; // qNaN
+        end else if (is_pos_inf) begin
+            fp_out = 16'h0000; // 1/sqrt(+inf) -> +0
+        end else if (is_zero) begin
+            fp_out = 16'h7C00; // 1/sqrt(0) -> +inf
+        end else begin
+            fp_out = y1_fp;
         end
     end
 
