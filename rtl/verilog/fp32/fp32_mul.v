@@ -28,12 +28,12 @@ module fp32_mul (
     //----------------------------------------------------------------
 
     // Unpack inputs a and b
-    wire sign_a = a[31];
-    wire [7:0] exp_a = a[30:23];
+    wire        sign_a = a[31];
+    wire [ 7:0] exp_a  = a[30:23];
     wire [22:0] mant_a = a[22:0];
 
-    wire sign_b = b[31];
-    wire [7:0] exp_b = b[30:23];
+    wire        sign_b = b[31];
+    wire [ 7:0] exp_b  = b[30:23];
     wire [22:0] mant_b = b[22:0];
 
     // Detect special values
@@ -49,21 +49,22 @@ module fp32_mul (
     wire [23:0] full_mant_a = {(exp_a != 0), mant_a};
     wire [23:0] full_mant_b = {(exp_b != 0), mant_b};
 
+    // Handle denormalized inputs where the effective exponent is 1, not 0.
+    wire [8:0] effective_exp_a = (exp_a == 0) ? 9'd1 : {1'b0, exp_a};
+    wire [8:0] effective_exp_b = (exp_b == 0) ? 9'd1 : {1'b0, exp_b};
+
     // Stage 1 pipeline registers
-    reg signed [8:0] s1_exp_sum;
-    reg              s1_sign;
-    reg [23:0]       s1_mant_a;
-    reg [23:0]       s1_mant_b;
-    reg              s1_special_case;
-    reg [31:0]       s1_special_result;
+    reg signed [ 8:0] s1_exp_sum;
+    reg               s1_sign;
+    reg        [23:0] s1_mant_a;
+    reg        [23:0] s1_mant_b;
+    reg               s1_special_case;
+    reg        [31:0] s1_special_result;
 
     always @(*) begin
         // Combinational logic for Stage 1
         
         // Exponent calculation: new_exp = exp_a + exp_b - bias (127)
-        // Handle denormalized inputs where the effective exponent is 1, not 0.
-        wire [8:0] effective_exp_a = (exp_a == 0) ? 9'd1 : {1'b0, exp_a};
-        wire [8:0] effective_exp_b = (exp_b == 0) ? 9'd1 : {1'b0, exp_b};
         
         s1_exp_sum = effective_exp_a + effective_exp_b - 127;
         s1_sign = sign_a ^ sign_b;
@@ -83,7 +84,7 @@ module fp32_mul (
         end else if (is_inf_a || is_inf_b) begin
             s1_special_case = 1'b1;
             s1_special_result = {s1_sign, 8'hFF, 23'b0}; // Inf * anything = Inf
-        end else if (is_zero_a || is_zero_b) {
+        end else if (is_zero_a || is_zero_b) begin
             s1_special_case = 1'b1;
             s1_special_result = {s1_sign, 31'b0}; // Zero * anything = Zero
         end
@@ -92,11 +93,11 @@ module fp32_mul (
     //----------------------------------------------------------------
     // Stage 2: Mantissa Multiplication
     //----------------------------------------------------------------
-    reg signed [8:0] s2_exp;
-    reg              s2_sign;
-    reg [47:0]       s2_mant_product;
-    reg              s2_special_case;
-    reg [31:0]       s2_special_result;
+    reg signed [ 8:0] s2_exp;
+    reg               s2_sign;
+    reg        [47:0] s2_mant_product;
+    reg               s2_special_case;
+    reg        [31:0] s2_special_result;
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -119,6 +120,10 @@ module fp32_mul (
     //----------------------------------------------------------------
     reg [31:0] result_reg;
 
+    reg signed [ 8:0] final_exp;
+    reg        [47:0] norm_mant;
+    reg        [22:0] out_mant;
+    reg        [ 7:0] out_exp;
     always @(posedge clk) begin
         if (!rst_n) begin
             result_reg <= 32'b0;
@@ -127,8 +132,6 @@ module fp32_mul (
                 result_reg <= s2_special_result;
             end else begin
                 // Normalize the result from the multiplier
-                reg signed [8:0] final_exp;
-                reg [47:0]       norm_mant;
 
                 // The product of two 24-bit mantissas (1.f * 1.f) is 48 bits.
                 // The result is either 01.f... (bit 46 is 1) or 1x.f... (bit 47 is 1).
@@ -143,8 +146,6 @@ module fp32_mul (
                 end
 
                 // Pack the final result
-                reg [22:0] out_mant;
-                reg [7:0] out_exp;
                 
                 // Truncate mantissa to 23 bits. The implicit bit is at index 46 of norm_mant.
                 out_mant = norm_mant[45:23];

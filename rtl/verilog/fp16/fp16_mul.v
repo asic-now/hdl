@@ -28,12 +28,12 @@ module fp16_mul (
     //----------------------------------------------------------------
 
     // Unpack inputs a and b
-    wire sign_a = a[15];
-    wire [4:0] exp_a = a[14:10];
+    wire       sign_a = a[15];
+    wire [4:0] exp_a  = a[14:10];
     wire [9:0] mant_a = a[9:0];
 
-    wire sign_b = b[15];
-    wire [4:0] exp_b = b[14:10];
+    wire       sign_b = b[15];
+    wire [4:0] exp_b  = b[14:10];
     wire [9:0] mant_b = b[9:0];
 
     // Detect special values
@@ -49,6 +49,7 @@ module fp16_mul (
     wire [10:0] full_mant_a = {(exp_a != 0), mant_a};
     wire [10:0] full_mant_b = {(exp_b != 0), mant_b};
 
+    // Handle denormalized inputs where the effective exponent is 1, not 0.
     wire [5:0] effective_exp_a = (exp_a == 0) ? 1 : exp_a;
     wire [5:0] effective_exp_b = (exp_b == 0) ? 1 : exp_b;
 
@@ -94,11 +95,11 @@ module fp16_mul (
     //----------------------------------------------------------------
     // Stage 2: Mantissa Multiplication
     //----------------------------------------------------------------
-    reg signed [5:0] s2_exp;
-    reg              s2_sign;
-    reg [21:0]       s2_mant_product;
-    reg              s2_special_case;
-    reg [15:0]       s2_special_result;
+    reg signed [ 5:0] s2_exp;
+    reg               s2_sign;
+    reg        [21:0] s2_mant_product;
+    reg               s2_special_case;
+    reg        [15:0] s2_special_result;
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -121,10 +122,10 @@ module fp16_mul (
     //----------------------------------------------------------------
     reg [15:0] result_reg;
 
-    reg signed [5:0] final_exp;
-    reg [21:0]       norm_mant;
-    reg [9:0] out_mant;
-    reg [4:0] out_exp;
+    reg signed [ 5:0] final_exp;
+    reg        [21:0] norm_mant;
+    reg        [ 9:0] out_mant;
+    reg        [ 4:0] out_exp;
     always @(posedge clk) begin
         if (!rst_n) begin
             result_reg <= 16'b0;

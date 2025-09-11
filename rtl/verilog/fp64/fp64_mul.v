@@ -28,12 +28,12 @@ module fp64_mul (
     //----------------------------------------------------------------
 
     // Unpack inputs a and b
-    wire sign_a = a[63];
-    wire [10:0] exp_a = a[62:52];
+    wire        sign_a = a[63];
+    wire [10:0] exp_a  = a[62:52];
     wire [51:0] mant_a = a[51:0];
 
-    wire sign_b = b[63];
-    wire [10:0] exp_b = b[62:52];
+    wire        sign_b = b[63];
+    wire [10:0] exp_b  = b[62:52];
     wire [51:0] mant_b = b[51:0];
 
     // Detect special values
@@ -49,21 +49,22 @@ module fp64_mul (
     wire [52:0] full_mant_a = {(exp_a != 0), mant_a};
     wire [52:0] full_mant_b = {(exp_b != 0), mant_b};
 
+    // Handle denormalized inputs where the effective exponent is 1.
+    wire [11:0] effective_exp_a = (exp_a == 0) ? 12'd1 : {1'b0, exp_a};
+    wire [11:0] effective_exp_b = (exp_b == 0) ? 12'd1 : {1'b0, exp_b};
+
     // Stage 1 pipeline registers
     reg signed [11:0] s1_exp_sum;
-    reg              s1_sign;
-    reg [52:0]       s1_mant_a;
-    reg [52:0]       s1_mant_b;
-    reg              s1_special_case;
-    reg [63:0]       s1_special_result;
+    reg               s1_sign;
+    reg        [52:0] s1_mant_a;
+    reg        [52:0] s1_mant_b;
+    reg               s1_special_case;
+    reg        [63:0] s1_special_result;
 
     always @(*) begin
         // Combinational logic for Stage 1
         
         // Exponent calculation: new_exp = exp_a + exp_b - bias (1023)
-        // Handle denormalized inputs where the effective exponent is 1.
-        wire [11:0] effective_exp_a = (exp_a == 0) ? 12'd1 : {1'b0, exp_a};
-        wire [11:0] effective_exp_b = (exp_b == 0) ? 12'd1 : {1'b0, exp_b};
         
         s1_exp_sum = effective_exp_a + effective_exp_b - 1023;
         s1_sign = sign_a ^ sign_b;
@@ -83,7 +84,7 @@ module fp64_mul (
         end else if (is_inf_a || is_inf_b) begin
             s1_special_case = 1'b1;
             s1_special_result = {s1_sign, 11'h7FF, 52'b0}; // Inf * anything = Inf
-        end else if (is_zero_a || is_zero_b) {
+        end else if (is_zero_a || is_zero_b) begin
             s1_special_case = 1'b1;
             s1_special_result = {s1_sign, 63'b0}; // Zero * anything = Zero
         end
@@ -92,11 +93,11 @@ module fp64_mul (
     //----------------------------------------------------------------
     // Stage 2: Mantissa Multiplication
     //----------------------------------------------------------------
-    reg signed [11:0] s2_exp;
-    reg              s2_sign;
-    reg [105:0]      s2_mant_product;
-    reg              s2_special_case;
-    reg [63:0]       s2_special_result;
+    reg signed [ 11:0] s2_exp;
+    reg                s2_sign;
+    reg        [105:0] s2_mant_product;
+    reg                s2_special_case;
+    reg        [ 63:0] s2_special_result;
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -118,7 +119,10 @@ module fp64_mul (
     // Stage 3: Normalize and Pack
     //----------------------------------------------------------------
     reg [63:0] result_reg;
-
+    reg signed [ 11:0] final_exp;
+    reg        [105:0] norm_mant;
+    reg        [ 51:0] out_mant;
+    reg        [ 10:0] out_exp;
     always @(posedge clk) begin
         if (!rst_n) begin
             result_reg <= 64'b0;
@@ -127,8 +131,6 @@ module fp64_mul (
                 result_reg <= s2_special_result;
             end else begin
                 // Normalize the result from the multiplier
-                reg signed [11:0] final_exp;
-                reg [105:0]       norm_mant;
 
                 // The product of two 53-bit mantissas is 106 bits.
                 // The result is either 01.f... (bit 104 is 1) or 1x.f... (bit 105 is 1).
@@ -143,8 +145,6 @@ module fp64_mul (
                 end
 
                 // Pack the final result
-                reg [51:0] out_mant;
-                reg [10:0] out_exp;
                 
                 // Truncate mantissa to 52 bits. The implicit bit is at index 104 of norm_mant.
                 out_mant = norm_mant[103:52];
