@@ -100,9 +100,9 @@ module fp32_div (
     //----------------------------------------------------------------
     
     // Arrays of registers to pipeline the division state
-    reg  [24:0] rem_pipe [0:DIV_LATENCY];
+    reg  [24:0] rem_pipe      [0:DIV_LATENCY];
     reg  [46:0] dividend_pipe [0:DIV_LATENCY];
-    reg  [23:0] divisor_pipe [0:DIV_LATENCY];
+    reg  [23:0] divisor_pipe  [0:DIV_LATENCY];
     reg  [23:0] quotient_pipe [0:DIV_LATENCY];
 
     // Initialize first stage of the divider pipeline

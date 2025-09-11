@@ -32,12 +32,12 @@ module fp64_div (
     // Stage 1: Unpack and Handle Special Cases
     //----------------------------------------------------------------
     
-    wire sign_a = a[63];
-    wire [10:0] exp_a = a[62:52];
+    wire        sign_a = a[63];
+    wire [10:0] exp_a  = a[62:52];
     wire [51:0] mant_a = a[51:0];
 
-    wire sign_b = b[63];
-    wire [10:0] exp_b = b[62:52];
+    wire        sign_b = b[63];
+    wire [10:0] exp_b  = b[62:52];
     wire [51:0] mant_b = b[51:0];
 
     // Detect special values
@@ -98,9 +98,9 @@ module fp64_div (
     // Pipelined Divider Core (53 Stages)
     //----------------------------------------------------------------
     
-    reg  [ 53:0] rem_pipe [0:DIV_LATENCY];
+    reg  [ 53:0] rem_pipe      [0:DIV_LATENCY];
     reg  [104:0] dividend_pipe [0:DIV_LATENCY];
-    reg  [ 52:0] divisor_pipe [0:DIV_LATENCY];
+    reg  [ 52:0] divisor_pipe  [0:DIV_LATENCY];
     reg  [ 52:0] quotient_pipe [0:DIV_LATENCY];
 
     always @(posedge clk) begin
@@ -121,6 +121,7 @@ module fp64_div (
     genvar i;
     generate
         for (i = 0; i < DIV_LATENCY; i = i + 1) begin : div_stages
+            // Combinational logic for one stage of restoring division
             wire [53:0] shifted_rem = {rem_pipe[i][52:0], dividend_pipe[i][104]};
             wire [53:0] sub_res = shifted_rem - {1'b0, divisor_pipe[i]};
             wire q_bit = ~sub_res[53];
@@ -184,10 +185,12 @@ module fp64_div (
     // Final Stage: Normalize and Pack
     //----------------------------------------------------------------
     
+    // Result of the mantissa division
     wire [52:0] final_quotient = quotient_pipe[DIV_LATENCY];
     
-    reg signed [11:0] final_exp;
-    reg        [51:0] final_mant;
+    // Normalize the mantissa and adjust exponent
+    reg  signed [11:0] final_exp;
+    reg         [51:0] final_mant;
     
     always @(*) begin
         if(!final_quotient[52]) begin // result < 1.0, normalize left
@@ -199,6 +202,7 @@ module fp64_div (
         end
     end
     
+    // Handle final exponent overflow/underflow
     reg  [10:0] out_exp;
     reg  [51:0] out_mant;
     
@@ -215,7 +219,8 @@ module fp64_div (
         end
     end
     
-    reg [63:0] result_reg;
+    // Final registered output
+    reg  [63:0] result_reg;
     always @(posedge clk) begin
         if (!rst_n) begin
             result_reg <= 64'b0;
