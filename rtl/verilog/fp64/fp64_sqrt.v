@@ -29,8 +29,8 @@ module fp64_sqrt (
     // Stage 1: Unpack and Handle Special Cases
     //----------------------------------------------------------------
     
-    wire sign_a = a[63];
-    wire [10:0] exp_a = a[62:52];
+    wire        sign_a = a[63];
+    wire [10:0] exp_a  = a[62:52];
     wire [51:0] mant_a = a[51:0];
 
     // Detect special values
@@ -54,8 +54,11 @@ module fp64_sqrt (
             s1_exp_res <= 12'b0;
             s1_radicand <= 54'b0;
         end else begin
+            // Default path for normal operation
             s1_special_case <= 1'b0;
 
+            // For sqrt, the exponent must be even. If it's odd, we adjust it
+            // and shift the mantissa to compensate. (sqrt(m*2^e) = sqrt(m/2)*2^((e+1)/2))
             if(exp_a[0]) begin // Odd exponent
                 s1_exp_res <= {{1'b0, exp_a} + 1} >> 1;
                 s1_radicand <= full_mant_a << 1;
@@ -64,13 +67,14 @@ module fp64_sqrt (
                 s1_radicand <= full_mant_a;
             end
 
+            // Handle special cases
             if (is_nan_a || is_neg_normal) begin
                 s1_special_case <= 1'b1;
                 s1_special_result <= 64'h7FF8000000000001; // qNaN
             end else if (is_inf_a) begin
                 s1_special_case <= 1'b1;
                 s1_special_result <= 64'h7FF0000000000000; // +Infinity
-            end else if (is_zero_a) {
+            end else if (is_zero_a) begin
                 s1_special_case <= 1'b1;
                 s1_special_result <= 64'h0000000000000000; // +Zero
             end
@@ -81,29 +85,35 @@ module fp64_sqrt (
     // Pipelined Square Root Core
     //----------------------------------------------------------------
     
-    reg [54:0] rem_pipe [0:SQRT_LATENCY];
-    reg [52:0] root_pipe [0:SQRT_LATENCY];
+    reg  [54:0] rem_pipe [0:SQRT_LATENCY];
+    reg  [52:0] root_pipe [0:SQRT_LATENCY];
 
     always @(posedge clk) begin
-        rem_pipe[0] <= {2'b0, s1_radicand};
-        root_pipe[0] <= 53'b0;
+        if (!rst_n) begin
+            rem_pipe[0] <= 12'b0;
+            root_pipe[0] <= 11'b0;
+        end else begin
+            rem_pipe[0] <= {2'b0, s1_radicand};
+            root_pipe[0] <= 53'b0;
+        end
     end
 
     genvar i;
     generate
         for (i = 0; i < SQRT_LATENCY; i = i + 1) begin : sqrt_stages
-            wire [54:0] trial_rem;
             wire [52:0] trial_root = {root_pipe[i], 1'b1};
+            wire [54:0] trial_rem = (rem_pipe[i][54])
+                ? {rem_pipe[i][52:0], 2'b00} + {2'b0, trial_root}
+                : {rem_pipe[i][52:0], 2'b00} - {2'b0, trial_root};
             
-            if (rem_pipe[i][54]) begin // Remainder is negative
-                trial_rem = {rem_pipe[i][52:0], 2'b00} + {2'b0, trial_root};
-            end else begin // Remainder is positive
-                trial_rem = {rem_pipe[i][52:0], 2'b00} - {2'b0, trial_root};
-            end
-
             always @(posedge clk) begin
-                rem_pipe[i+1] <= trial_rem;
-                root_pipe[i+1] <= trial_rem[54] ? {root_pipe[i], 1'b0} : {root_pipe[i], 1'b1};
+                if(!rst_n) begin
+                    rem_pipe[i+1] <= 12'b0;
+                    root_pipe[i+1] <= 11'b0;
+                end else begin
+                    rem_pipe[i+1] <= trial_rem;
+                    root_pipe[i+1] <= trial_rem[54] ? {root_pipe[i], 1'b0} : {root_pipe[i], 1'b1};
+                end
             end
         end
     endgenerate
@@ -112,7 +122,7 @@ module fp64_sqrt (
     reg [TOTAL_LATENCY:0] special_case_pipe;
     reg [63:0] special_result_pipe [TOTAL_LATENCY:0];
     reg signed [11:0] exp_res_pipe [TOTAL_LATENCY:0];
-
+    
     always @(posedge clk) begin
         special_case_pipe[0] <= s1_special_case;
         special_result_pipe[0] <= s1_special_result;
@@ -135,13 +145,15 @@ module fp64_sqrt (
     
     wire [52:0] final_root = root_pipe[SQRT_LATENCY];
     
-    reg signed [11:0] final_exp = (exp_res_pipe[TOTAL_LATENCY] - 1023) + 1023;
-    reg [51:0] out_mant = final_root[51:0];
-    reg [10:0] out_exp;
+    wire signed [11:0] final_exp = (exp_res_pipe[TOTAL_LATENCY] - 1023) + 1023;
+    reg         [51:0] out_mant;
+    reg         [10:0] out_exp;
     
     always @(*) begin
+        out_mant = final_root[51:0];
         if (final_exp >= 2047) begin // Overflow
-            out_exp = 11'h7FF; out_mant = 52'b0;
+            out_mant = 52'b0;
+            out_exp = 11'h7FF;
         end else if (final_exp <= 0) begin // Underflow
             out_mant = ({1'b1, final_root[51:0]}) >> (1 - final_exp);
             out_exp = 11'b0;

@@ -29,8 +29,8 @@ module fp16_sqrt (
     // Stage 1: Unpack and Handle Special Cases
     //----------------------------------------------------------------
     
-    wire sign_a = a[15];
-    wire [4:0] exp_a = a[14:10];
+    wire       sign_a = a[15];
+    wire [4:0] exp_a  = a[14:10];
     wire [9:0] mant_a = a[9:0];
 
     // Detect special values
@@ -43,10 +43,10 @@ module fp16_sqrt (
     wire [10:0] full_mant_a = {(exp_a != 0), mant_a};
 
     // Stage 1 Pipeline Registers
-    reg        s1_special_case;
-    reg [15:0] s1_special_result;
-    reg signed [5:0] s1_exp_res;
-    reg [10:0] s1_radicand; // The number to be square-rooted
+    reg         s1_special_case;
+    reg  [15:0] s1_special_result;
+    reg  signed [5:0] s1_exp_res;
+    reg  [10:0] s1_radicand; // The number to be square-rooted
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -75,7 +75,7 @@ module fp16_sqrt (
             end else if (is_inf_a) begin
                 s1_special_case <= 1'b1;
                 s1_special_result <= 16'h7C00; // +Infinity
-            end else if (is_zero_a) {
+            end else if (is_zero_a) begin
                 s1_special_case <= 1'b1;
                 s1_special_result <= 16'h0000; // +Zero
             end
@@ -86,8 +86,8 @@ module fp16_sqrt (
     // Pipelined Square Root Core
     //----------------------------------------------------------------
     
-    reg [11:0] rem_pipe [0:SQRT_LATENCY];
-    reg [10:0] root_pipe [0:SQRT_LATENCY];
+    reg  [11:0] rem_pipe [0:SQRT_LATENCY];
+    reg  [10:0] root_pipe [0:SQRT_LATENCY];
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -102,18 +102,14 @@ module fp16_sqrt (
     genvar i;
     generate
         for (i = 0; i < SQRT_LATENCY; i = i + 1) begin : sqrt_stages
-            wire [11:0] trial_rem;
-            wire [10:0] trial_root = {root_pipe[i], 1'b1};
-            
             // Non-restoring algorithm step
-            if (rem_pipe[i][11]) begin // Remainder is negative
-                trial_rem = {rem_pipe[i][9:0], 2'b00} + {1'b0, trial_root};
-            end else begin // Remainder is positive
-                trial_rem = {rem_pipe[i][9:0], 2'b00} - {1'b0, trial_root};
-            end
+            wire [10:0] trial_root = {root_pipe[i], 1'b1};
+            wire [11:0] trial_rem = (rem_pipe[i][11]) 
+                ? {rem_pipe[i][9:0], 2'b00} + {1'b0, trial_root}
+                : {rem_pipe[i][9:0], 2'b00} - {1'b0, trial_root};
 
             always @(posedge clk) begin
-                 if(!rst_n) begin
+                if(!rst_n) begin
                     rem_pipe[i+1] <= 12'b0;
                     root_pipe[i+1] <= 11'b0;
                 end else begin
@@ -151,13 +147,15 @@ module fp16_sqrt (
     
     wire [10:0] final_root = root_pipe[SQRT_LATENCY];
     
-    reg signed [5:0] final_exp = (exp_res_pipe[TOTAL_LATENCY] - 15) + 15;
-    reg [9:0] out_mant = final_root[9:0]; // The root is already normalized as 1.f
-    reg [4:0] out_exp;
+    wire signed [5:0] final_exp = (exp_res_pipe[TOTAL_LATENCY] - 15) + 15;
+    reg         [9:0] out_mant;
+    reg         [4:0] out_exp;
     
     always @(*) begin
+        out_mant = final_root[9:0]; // The root is already normalized as 1.f
         if (final_exp >= 31) begin // Overflow
-            out_exp = 5'h1F; out_mant = 10'b0;
+            out_exp = 5'h1F;
+            out_mant = 10'b0;
         end else if (final_exp <= 0) begin // Underflow
             out_mant = ({1'b1, final_root[9:0]}) >> (1 - final_exp);
             out_exp = 5'b0;
