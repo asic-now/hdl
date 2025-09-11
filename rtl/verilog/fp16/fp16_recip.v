@@ -14,9 +14,9 @@ module fp16_recip (
 );
 
     // Unpack input
-    wire sign_in = fp_in[15];
-    wire [4:0] exp_in = fp_in[14:10];
-    wire [9:0] mant_in = fp_in[9:0];
+    wire        sign_in = fp_in[15];
+    wire [ 4:0] exp_in  = fp_in[14:10];
+    wire [ 9:0] mant_in = fp_in[9:0];
     wire [10:0] full_mant_in = {(exp_in != 0), mant_in};
 
     // Detect special values
