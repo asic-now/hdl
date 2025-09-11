@@ -32,12 +32,12 @@ module fp32_div (
     // Stage 1: Unpack and Handle Special Cases
     //----------------------------------------------------------------
     
-    wire sign_a = a[31];
-    wire [ 7:0] exp_a = a[30:23];
+    wire        sign_a = a[31];
+    wire [ 7:0] exp_a  = a[30:23];
     wire [22:0] mant_a = a[22:0];
 
-    wire sign_b = b[31];
-    wire [ 7:0] exp_b = b[30:23];
+    wire        sign_b = b[31];
+    wire [ 7:0] exp_b  = b[30:23];
     wire [22:0] mant_b = b[22:0];
 
     // Detect special values
@@ -57,12 +57,12 @@ module fp32_div (
     wire [ 8:0] eff_exp_b = (exp_b == 0) ? 1 : exp_b;
 
     // Stage 1 Pipeline Registers
-    reg        s1_special_case;
-    reg [31:0] s1_special_result;
-    reg signed [8:0] s1_exp_res;
-    reg        s1_sign_res;
-    reg [46:0] s1_dividend; // For (mant_a << 23)
-    reg [23:0] s1_divisor;
+    reg         s1_special_case;
+    reg  [31:0] s1_special_result;
+    reg  signed [8:0] s1_exp_res;
+    reg         s1_sign_res;
+    reg  [46:0] s1_dividend; // For (mant_a << 23)
+    reg  [23:0] s1_divisor;
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -100,10 +100,10 @@ module fp32_div (
     //----------------------------------------------------------------
     
     // Arrays of registers to pipeline the division state
-    reg [24:0] rem_pipe [0:DIV_LATENCY];
-    reg [46:0] dividend_pipe [0:DIV_LATENCY];
-    reg [23:0] divisor_pipe [0:DIV_LATENCY];
-    reg [23:0] quotient_pipe [0:DIV_LATENCY];
+    reg  [24:0] rem_pipe [0:DIV_LATENCY];
+    reg  [46:0] dividend_pipe [0:DIV_LATENCY];
+    reg  [23:0] divisor_pipe [0:DIV_LATENCY];
+    reg  [23:0] quotient_pipe [0:DIV_LATENCY];
 
     // Initialize first stage of the divider pipeline
     always @(posedge clk) begin
@@ -226,7 +226,7 @@ module fp32_div (
     end
     
     // Final registered output
-    reg [31:0] result_reg;
+    reg  [31:0] result_reg;
     always @(posedge clk) begin
         if (!rst_n) begin
             result_reg <= 32'b0;

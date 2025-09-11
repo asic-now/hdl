@@ -57,12 +57,12 @@ module fp64_div (
     wire [11:0] eff_exp_b = (exp_b == 0) ? 1 : exp_b;
 
     // Stage 1 Pipeline Registers
-    reg        s1_special_case;
-    reg [63:0] s1_special_result;
-    reg signed [11:0] s1_exp_res;
-    reg        s1_sign_res;
-    reg [104:0] s1_dividend; // For (mant_a << 52)
-    reg [52:0] s1_divisor;
+    reg          s1_special_case;
+    reg  [ 63:0] s1_special_result;
+    reg  signed [11:0] s1_exp_res;
+    reg          s1_sign_res;
+    reg  [104:0] s1_dividend; // For (mant_a << 52)
+    reg  [ 52:0] s1_divisor;
     always @(posedge clk) begin
         if (!rst_n) begin
             s1_special_case <= 1'b0;
@@ -98,10 +98,10 @@ module fp64_div (
     // Pipelined Divider Core (53 Stages)
     //----------------------------------------------------------------
     
-    reg [53:0] rem_pipe [0:DIV_LATENCY];
-    reg [104:0] dividend_pipe [0:DIV_LATENCY];
-    reg [52:0] divisor_pipe [0:DIV_LATENCY];
-    reg [52:0] quotient_pipe [0:DIV_LATENCY];
+    reg  [ 53:0] rem_pipe [0:DIV_LATENCY];
+    reg  [104:0] dividend_pipe [0:DIV_LATENCY];
+    reg  [ 52:0] divisor_pipe [0:DIV_LATENCY];
+    reg  [ 52:0] quotient_pipe [0:DIV_LATENCY];
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -117,6 +117,7 @@ module fp64_div (
         end
     end
 
+    // Generate the divider stages
     genvar i;
     generate
         for (i = 0; i < DIV_LATENCY; i = i + 1) begin : div_stages
@@ -124,6 +125,7 @@ module fp64_div (
             wire [53:0] sub_res = shifted_rem - {1'b0, divisor_pipe[i]};
             wire q_bit = ~sub_res[53];
 
+            // Register the results for the next stage
             always @(posedge clk) begin
                 if(!rst_n) begin
                     rem_pipe[i+1] <= 54'b0;
@@ -197,8 +199,8 @@ module fp64_div (
         end
     end
     
-    reg [10:0] out_exp;
-    reg [51:0] out_mant;
+    reg  [10:0] out_exp;
+    reg  [51:0] out_mant;
     
     always @(*) begin
         out_exp = final_exp[10:0];

@@ -32,12 +32,12 @@ module fp16_div (
     // Stage 1: Unpack and Handle Special Cases
     //----------------------------------------------------------------
     
-    wire sign_a = a[15];
-    wire [4:0] exp_a = a[14:10];
+    wire       sign_a = a[15];
+    wire [4:0] exp_a  = a[14:10];
     wire [9:0] mant_a = a[9:0];
 
-    wire sign_b = b[15];
-    wire [4:0] exp_b = b[14:10];
+    wire       sign_b = b[15];
+    wire [4:0] exp_b  = b[14:10];
     wire [9:0] mant_b = b[9:0];
 
     // Detect special values
@@ -100,10 +100,10 @@ module fp16_div (
     //----------------------------------------------------------------
     
     // Arrays of registers to pipeline the division state
-    reg [11:0] rem_pipe [0:DIV_LATENCY];
-    reg [20:0] dividend_pipe [0:DIV_LATENCY];
-    reg [10:0] divisor_pipe [0:DIV_LATENCY];
-    reg [10:0] quotient_pipe [0:DIV_LATENCY];
+    reg  [11:0] rem_pipe [0:DIV_LATENCY];
+    reg  [20:0] dividend_pipe [0:DIV_LATENCY];
+    reg  [10:0] divisor_pipe [0:DIV_LATENCY];
+    reg  [10:0] quotient_pipe [0:DIV_LATENCY];
 
     // Initialize first stage of the divider pipeline
     always @(posedge clk) begin
@@ -208,8 +208,8 @@ module fp16_div (
     end
     
     // Handle final exponent overflow/underflow
-    reg [4:0] out_exp;
-    reg [9:0] out_mant;
+    reg  [ 4:0] out_exp;
+    reg  [ 9:0] out_mant;
     
     always @(*) begin
         out_exp = final_exp[4:0];
@@ -225,7 +225,7 @@ module fp16_div (
     end
     
     // Final registered output
-    reg [15:0] result_reg;
+    reg  [15:0] result_reg;
     always @(posedge clk) begin
         if (!rst_n) begin
             result_reg <= 16'b0;
