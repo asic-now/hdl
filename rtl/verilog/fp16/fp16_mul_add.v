@@ -220,7 +220,7 @@ module fp16_mul_add (
     reg         [ 9:0] out_mant;
     reg         [ 4:0] out_exp;
     always @(posedge clk) begin
-        if (!rst_n) begin
+        if(!rst_n) begin
             result_reg <= 16'b0;
         end else begin
             if (s3_special_case) begin

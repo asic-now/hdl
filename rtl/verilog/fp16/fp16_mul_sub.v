@@ -30,8 +30,8 @@ module fp16_mul_sub (
     //----------------------------------------------------------------
     
     // Unpack all three inputs
-    wire sign_a = a[15], sign_b = b[15], sign_c = c[15];
-    wire [4:0] exp_a = a[14:10], exp_b = b[14:10], exp_c = c[14:10];
+    wire       sign_a = a[15], sign_b = b[15], sign_c = c[15];
+    wire [4:0] exp_a  = a[14:10], exp_b = b[14:10], exp_c = c[14:10];
     wire [9:0] mant_a = a[9:0], mant_b = b[9:0], mant_c = c[9:0];
 
     // Detect special values for all three inputs
@@ -54,13 +54,13 @@ module fp16_mul_sub (
     wire [ 5:0] effective_exp_b = (exp_b == 0) ? 1 : exp_b;
 
     // Stage 1 pipeline registers
-    reg signed [5:0] s1_product_exp_sum;
-    reg              s1_product_sign;
-    reg [10:0]       s1_mant_a, s1_mant_b;
+    reg signed [ 5:0] s1_product_exp_sum;
+    reg               s1_product_sign;
+    reg        [10:0] s1_mant_a, s1_mant_b;
 
-    reg              s1_sign_c;
-    reg [4:0]        s1_exp_c;
-    reg [10:0]       s1_mant_c;
+    reg               s1_sign_c;
+    reg        [ 4:0] s1_exp_c;
+    reg        [10:0] s1_mant_c;
 
     // Propagate special case flags
     reg s1_is_nan_a, s1_is_inf_a, s1_is_zero_a;
@@ -104,13 +104,13 @@ module fp16_mul_sub (
     // Mantissa multiplication
     wire [21:0] mant_product = s1_mant_a * s1_mant_b;
 
-    reg signed [5:0] s2_norm_exp_ab;
-    reg [21:0]       s2_norm_mant_ab;
-    reg              s2_sign_ab;
+    reg signed [ 5:0] s2_norm_exp_ab;
+    reg        [21:0] s2_norm_mant_ab;
+    reg               s2_sign_ab;
     
-    reg              s2_sign_c;
-    reg [4:0]        s2_exp_c;
-    reg [10:0]       s2_mant_c;
+    reg               s2_sign_c;
+    reg        [ 4:0] s2_exp_c;
+    reg        [10:0] s2_mant_c;
     
     reg s2_prop_is_nan, s2_prop_is_inf, s2_prop_inf_sign;
     reg s2_ab_is_zero;
@@ -147,11 +147,11 @@ module fp16_mul_sub (
     //----------------------------------------------------------------
     // Stage 3: Align and Subtract
     //----------------------------------------------------------------
-    reg [5:0]  s3_res_exp;
+    reg [ 5:0] s3_res_exp;
     reg        s3_res_sign;
     reg [47:0] s3_mant_sum; // Wide mantissa for calculation
     
-    reg s3_special_case;
+    reg        s3_special_case;
     reg [15:0] s3_special_result;
     reg signed [5:0] exp_diff;
     reg [47:0] mant_ab_extended, mant_c_extended;

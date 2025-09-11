@@ -156,8 +156,8 @@ module fp64_mul_add (
     reg         s3_special_case;
     reg [ 63:0] s3_special_result;
 
-    reg signed [11:0] exp_diff;
-    reg [211:0] mant_ab_extended, mant_c_extended;
+    reg signed [ 11:0] exp_diff;
+    reg        [211:0] mant_ab_extended, mant_c_extended;
     always @(posedge clk) begin
         if (!rst_n) begin
             // TODO: reset registers
