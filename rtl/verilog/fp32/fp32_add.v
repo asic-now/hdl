@@ -28,8 +28,8 @@ module fp32_add (
     //----------------------------------------------------------------
     
     // Unpack inputs a and b
-    wire sign_a = a[31];
-    wire [7:0] exp_a = a[30:23];
+    wire        sign_a = a[31];
+    wire [ 7:0] exp_a  = a[30:23];
     wire [22:0] mant_a = a[22:0];
 
     wire sign_b = b[31];
@@ -51,20 +51,20 @@ module fp32_add (
     wire [23:0] full_mant_b = {(exp_b != 0), mant_b};
 
     // Stage 1 pipeline registers
-    reg [7:0]  s1_larger_exp;
-    reg        s1_result_sign;
-    reg        s1_op_is_sub;
-    reg [47:0] s1_mant_a; // Extended mantissa for alignment
-    reg [47:0] s1_mant_b;
-    reg        s1_special_case;
-    reg [31:0] s1_special_result;
-
+    reg  [ 7:0] s1_larger_exp;
+    reg         s1_result_sign;
+    reg         s1_op_is_sub;
+    reg  [47:0] s1_mant_a; // Extended mantissa for alignment
+    reg  [47:0] s1_mant_b;
+    reg         s1_special_case;
+    reg  [31:0] s1_special_result;
+    
+    reg  [ 7:0] exp_diff;
+    reg  [23:0] temp_mant_a, temp_mant_b;
+    reg         sign_larger, sign_smaller;
+    reg  [ 7:0] larger_exp_comb;
     always @(*) begin
         // Combinational logic for Stage 1
-        wire [7:0] exp_diff;
-        wire [23:0] temp_mant_a, temp_mant_b;
-        wire sign_larger, sign_smaller;
-        reg [7:0] larger_exp_comb;
 
         // Magnitude comparison to determine alignment and result sign for subtraction
         if (exp_a > exp_b || (exp_a == exp_b && mant_a >= mant_b)) begin
@@ -111,7 +111,7 @@ module fp32_add (
         end else if (is_zero_a) begin
             s1_special_case = 1'b1;
             s1_special_result = b;
-        end else if (is_zero_b) {
+        end else if (is_zero_b) begin
             s1_special_case = 1'b1;
             s1_special_result = a;
         end
@@ -120,11 +120,11 @@ module fp32_add (
     //----------------------------------------------------------------
     // Stage 2: Add or Subtract
     //----------------------------------------------------------------
-    reg [7:0]  s2_exp;
-    reg        s2_sign;
-    reg [48:0] s2_mant; // Extra bit for carry/borrow
-    reg        s2_special_case;
-    reg [31:0] s2_special_result;
+    reg  [ 7:0] s2_exp;
+    reg         s2_sign;
+    reg  [48:0] s2_mant; // Extra bit for carry/borrow
+    reg         s2_special_case;
+    reg  [31:0] s2_special_result;
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -149,8 +149,12 @@ module fp32_add (
     //----------------------------------------------------------------
     // Stage 3: Normalize and Pack
     //----------------------------------------------------------------
-    reg [31:0] result_reg;
-
+    integer shift_amount;
+    reg         [31:0] result_reg;
+    reg         [22:0] out_mant;
+    reg         [ 7:0] out_exp;
+    reg  signed [ 8:0] final_exp;
+    reg         [48:0] final_mant;
     always @(posedge clk) begin
         if (!rst_n) begin
             result_reg <= 32'b0;
@@ -159,9 +163,6 @@ module fp32_add (
                 result_reg <= s2_special_result;
             end else begin
                 // Normalize the result from the adder/subtractor
-                integer shift_amount;
-                reg signed [8:0] final_exp;
-                reg [48:0] final_mant;
 
                 final_mant = s2_mant;
                 final_exp = s2_exp;
@@ -187,8 +188,6 @@ module fp32_add (
                 end
 
                 // Pack the final result
-                reg [22:0] out_mant;
-                reg [7:0] out_exp;
                 
                 // Truncate mantissa to 23 bits, removing the implicit leading 1
                 out_mant = final_mant[46:24];

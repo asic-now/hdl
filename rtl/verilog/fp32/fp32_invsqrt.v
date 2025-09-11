@@ -33,6 +33,8 @@ module fp32_invsqrt (
     // LUT on exponent LSB and top 7 mantissa bits
     invsqrt_lut_32b lut (.addr({exp_in[0], mant_in[22:16]}), .data(y0));
 
+    reg  signed [ 8:0] exp_out_unnorm;
+    reg         [22:0] mant_out_final;
     always @(*) begin
         if (is_nan || is_neg) begin
             fp_out = 32'h7FC00001; // qNaN
@@ -41,8 +43,6 @@ module fp32_invsqrt (
         end else if (is_zero) begin
             fp_out = 32'h7F800000;
         end else begin
-            reg signed [8:0] exp_out_unnorm;
-            reg [22:0] mant_out_final;
             
             exp_out_unnorm = (3*127 - exp_in) >> 1;
 

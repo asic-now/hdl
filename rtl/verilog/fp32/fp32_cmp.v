@@ -39,6 +39,9 @@ module fp32_cmp (
     wire is_zero_a = (exp_a == 0) && (mant_a == 0);
     wire is_zero_b = (exp_b == 0) && (mant_b == 0);
 
+    // Determine which has a larger magnitude
+    wire mag_a_gt_b = (exp_a > exp_b) || ((exp_a == exp_b) && (mant_a > mant_b));
+
     always @(*) begin
         // Default all flags to 0
         lt = 1'b0;
@@ -69,9 +72,6 @@ module fp32_cmp (
                 eq = 1'b1;
             // Check for magnitude difference
             end else begin
-                // Determine which has a larger magnitude
-                wire mag_a_gt_b = (exp_a > exp_b) || ((exp_a == exp_b) && (mant_a > mant_b));
-
                 if (sign_a == 1'b0) begin // Both positive
                     if (mag_a_gt_b) gt = 1'b1;
                     else lt = 1'b1;

@@ -50,18 +50,18 @@ module fp16_add (
     wire [10:0] full_mant_b = {(exp_b != 0), mant_b};
 
     // Stage 1 pipeline registers
-    reg [4:0]  s1_larger_exp;
-    reg        s1_result_sign;
-    reg        s1_op_is_sub;
-    reg [21:0] s1_mant_a; // Extended mantissa for alignment and guard bits
-    reg [21:0] s1_mant_b;
-    reg        s1_special_case;
-    reg [15:0] s1_special_result;
-
-    wire [4:0] exp_diff;
-    wire [10:0] temp_mant_a, temp_mant_b;
-    wire sign_larger, sign_smaller;
-    reg [4:0] larger_exp_comb;
+    reg  [ 4:0] s1_larger_exp;
+    reg         s1_result_sign;
+    reg         s1_op_is_sub;
+    reg  [21:0] s1_mant_a; // Extended mantissa for alignment and guard bits
+    reg  [21:0] s1_mant_b;
+    reg         s1_special_case;
+    reg  [15:0] s1_special_result;
+ 
+    reg  [ 4:0] exp_diff;
+    reg  [10:0] temp_mant_a, temp_mant_b;
+    reg         sign_larger, sign_smaller;
+    reg  [ 4:0] larger_exp_comb;
     always @(*) begin
         // Combinational logic for Stage 1
 
@@ -119,11 +119,11 @@ module fp16_add (
     //----------------------------------------------------------------
     // Stage 2: Add or Subtract
     //----------------------------------------------------------------
-    reg [4:0]  s2_exp;
-    reg        s2_sign;
-    reg [22:0] s2_mant; // Extra bit for carry/borrow
-    reg        s2_special_case;
-    reg [15:0] s2_special_result;
+    reg  [ 4:0] s2_exp;
+    reg         s2_sign;
+    reg  [22:0] s2_mant; // Extra bit for carry/borrow
+    reg         s2_special_case;
+    reg  [15:0] s2_special_result;
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -148,9 +148,13 @@ module fp16_add (
     //----------------------------------------------------------------
     // Stage 3: Normalize and Pack
     //----------------------------------------------------------------
-    reg [15:0] result_reg;
-    reg [9:0] out_mant;
-    reg [4:0] out_exp;
+    reg         [15:0] result_reg;
+    reg         [ 9:0] out_mant;
+    reg         [ 4:0] out_exp;
+
+    reg         [ 4:0] shift_amount;
+    reg  signed [ 5:0] final_exp;
+    reg         [22:0] final_mant;
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -160,9 +164,6 @@ module fp16_add (
                 result_reg <= s2_special_result;
             end else begin
                 // Normalize the result from the adder/subtractor
-                reg [4:0] shift_amount;
-                reg signed [5:0] final_exp;
-                reg [22:0] final_mant;
 
                 final_mant = s2_mant;
                 final_exp = s2_exp;

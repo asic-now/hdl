@@ -53,6 +53,8 @@ module fp16_recip (
     assign mul2_res = y0 * sub_res;
     // --- End of Combinational Calculation ---
 
+    reg signed [  5:0] exp_out_unnorm;
+    reg        [P+1:0] mant_out_unnorm;
     always @(*) begin
         if (is_nan) begin
             fp_out = 16'h7C01; // qNaN
@@ -62,8 +64,6 @@ module fp16_recip (
             fp_out = {sign_in, 5'h1F, 10'b0}; // 1/0 -> inf
         end else begin
             // Normal calculation
-            reg signed [5:0] exp_out_unnorm;
-            reg [P+1:0] mant_out_unnorm;
 
             // The reciprocal of a normalized mantissa is in (0.5, 1.0].
             // If the result is < 1.0, we need to normalize.

@@ -1,6 +1,6 @@
 // fp16_mul_add.v
 //
-// Verilog RTL for a 16-bit (half-precision) floating-point multiply-accumulator (FMA).
+// Verilog RTL for a 16-bit (half-precision) floating-point Fused Multiply-Accumulate (FMA).
 //
 // Operation: result = a * b + c
 //
@@ -11,10 +11,10 @@
 //
 // Features:
 // - 4-stage pipelined architecture.
-// - Fused multiply-add for higher precision (one rounding at the end).
+// - Fused operation for higher precision.
 // - Handles normalized and denormalized numbers.
-// - Handles special cases: NaN, Infinity, and Zero.
-// - Truncates the result (no rounding).
+// - Handles all special cases (NaN, Infinity, Zero).
+// - Truncates the result (no rounding). // TODO: rounding.
 
 module fp16_mul_add (
     input clk,
@@ -52,6 +52,9 @@ module fp16_mul_add (
     wire [10:0] full_mant_b = {(exp_b != 0), mant_b};
     wire [10:0] full_mant_c = {(exp_c != 0), mant_c};
 
+    wire [ 5:0] effective_exp_a = (exp_a == 0) ? 1 : exp_a;
+    wire [ 5:0] effective_exp_b = (exp_b == 0) ? 1 : exp_b;
+
     // Stage 1 pipeline registers
     reg signed [5:0] s1_product_exp_sum;
     reg              s1_product_sign;
@@ -65,7 +68,6 @@ module fp16_mul_add (
     reg s1_is_nan_a, s1_is_inf_a, s1_is_zero_a;
     reg s1_is_nan_b, s1_is_inf_b, s1_is_zero_b;
     reg s1_is_nan_c, s1_is_inf_c, s1_is_zero_c;
-
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -81,8 +83,6 @@ module fp16_mul_add (
             s1_is_nan_c <= 0; s1_is_inf_c <= 0; s1_is_zero_c <= 0;
         end else begin
             // Product (a*b) preliminary calculations
-            wire [5:0] effective_exp_a = (exp_a == 0) ? 1 : exp_a;
-            wire [5:0] effective_exp_b = (exp_b == 0) ? 1 : exp_b;
             s1_product_exp_sum <= effective_exp_a + effective_exp_b - 15;
             s1_product_sign <= sign_a ^ sign_b;
             s1_mant_a <= full_mant_a;
@@ -103,6 +103,9 @@ module fp16_mul_add (
     //----------------------------------------------------------------
     // Stage 2: Mantissa Multiplication and Product Normalization
     //----------------------------------------------------------------
+    // Mantissa multiplication
+    wire [21:0] mant_product = s1_mant_a * s1_mant_b;
+
     reg signed [5:0] s2_norm_exp_ab;
     reg [21:0]       s2_norm_mant_ab;
     reg              s2_sign_ab;
@@ -117,11 +120,8 @@ module fp16_mul_add (
 
     always @(posedge clk) begin
         if (!rst_n) begin
-            //... reset all s2 registers ...
+            // TODO: reset registers (optional by param)
         end else begin
-            // Mantissa multiplication
-            reg [21:0] mant_product = s1_mant_a * s1_mant_b;
-
             // Normalize the product
             if (mant_product[21]) begin // Result is 1x.f..., shift right
                 s2_norm_exp_ab <= s1_product_exp_sum + 1;
@@ -155,10 +155,11 @@ module fp16_mul_add (
     
     reg s3_special_case;
     reg [15:0] s3_special_result;
-
+    reg signed [5:0] exp_diff;
+    reg [47:0] mant_ab_extended, mant_c_extended;
     always @(posedge clk) begin
         if (!rst_n) begin
-            // ... reset all s3 registers ...
+            // TODO: reset registers
         end else begin
             // Logic to handle special case propagation before alignment
             if (s2_prop_is_nan || s2_is_nan_c) begin
@@ -184,8 +185,6 @@ module fp16_mul_add (
             end else begin
                 // Normal path: Align and add/subtract
                 s3_special_case <= 0;
-                reg signed [5:0] exp_diff;
-                reg [47:0] mant_ab_extended, mant_c_extended;
                 
                 if(s2_norm_exp_ab >= s2_exp_c) begin
                     s3_res_exp <= s2_norm_exp_ab;
@@ -201,9 +200,9 @@ module fp16_mul_add (
                     mant_c_extended = {s2_mant_c, 37'b0};
                 end
 
-                if (s2_sign_ab == s3_res_sign) { // Add magnitudes
+                if (s2_sign_ab == s3_res_sign) begin // Add magnitudes
                     s3_mant_sum <= mant_ab_extended + mant_c_extended;
-                end else { // Subtract magnitudes
+                end else begin // Subtract magnitudes
                     s3_mant_sum <= mant_ab_extended - mant_c_extended;
                 end
             end
@@ -215,6 +214,11 @@ module fp16_mul_add (
     //----------------------------------------------------------------
     reg [15:0] result_reg;
 
+    integer shift_amount;
+    reg  signed [ 6:0] final_exp;
+    reg         [47:0] final_mant;
+    reg         [ 9:0] out_mant;
+    reg         [ 4:0] out_exp;
     always @(posedge clk) begin
         if (!rst_n) begin
             result_reg <= 16'b0;
@@ -222,9 +226,8 @@ module fp16_mul_add (
             if (s3_special_case) begin
                 result_reg <= s3_special_result;
             end else begin
-                integer shift_amount;
-                reg signed [6:0] final_exp = s3_res_exp;
-                reg [47:0] final_mant = s3_mant_sum;
+                final_exp = s3_res_exp;
+                final_mant = s3_mant_sum;
 
                 if (final_mant == 0) begin
                     final_exp = 0;
@@ -243,8 +246,6 @@ module fp16_mul_add (
                 end
 
                 // Pack final result
-                reg [9:0] out_mant;
-                reg [4:0] out_exp;
 
                 out_mant = final_mant[45:36];
 

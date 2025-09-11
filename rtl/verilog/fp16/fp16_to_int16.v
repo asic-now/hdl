@@ -14,8 +14,8 @@ module fp16_to_int16 (
 );
 
     // Unpack input
-    wire sign = fp_in[15];
-    wire [4:0] exp = fp_in[14:10];
+    wire       sign = fp_in[15];
+    wire [4:0] exp  = fp_in[14:10];
     wire [9:0] mant = fp_in[9:0];
 
     // Detect special values
@@ -27,6 +27,9 @@ module fp16_to_int16 (
     localparam INT16_MAX = 16'h7FFF;
     localparam INT16_MIN = 16'h8000;
 
+    reg signed [ 5:0] true_exp;
+    reg        [10:0] full_mant;
+    reg        [26:0] shifted_val; // 11 mant bits + 15 max shift
     always @(*) begin
         if (is_nan) begin
             int_out = 16'h0000; // Return 0 for NaN
@@ -36,9 +39,8 @@ module fp16_to_int16 (
             int_out = 16'h0000;
         end else begin
             // Normal conversion
-            reg signed [5:0] true_exp = exp - 15;
-            reg [10:0] full_mant = {1'b1, mant}; // Add implicit 1
-            reg [26:0] shifted_val; // 11 mant bits + 15 max shift
+            true_exp = exp - 15;
+            full_mant = {1'b1, mant}; // Add implicit 1
 
             if (true_exp < 0) begin // Value is < 1.0
                 int_out = 16'h0000;

@@ -53,6 +53,9 @@ module fp16_div (
     wire [10:0] full_mant_a = {(exp_a != 0), mant_a};
     wire [10:0] full_mant_b = {(exp_b != 0), mant_b};
 
+    wire [ 5:0] eff_exp_a = (exp_a == 0) ? 1 : exp_a;
+    wire [ 5:0] eff_exp_b = (exp_b == 0) ? 1 : exp_b;
+
     // Stage 1 Pipeline Registers
     reg        s1_special_case;
     reg [15:0] s1_special_result;
@@ -76,8 +79,6 @@ module fp16_div (
             s1_divisor <= full_mant_b;
             s1_sign_res <= sign_a ^ sign_b;
 
-            wire [5:0] eff_exp_a = (exp_a == 0) ? 1 : exp_a;
-            wire [5:0] eff_exp_b = (exp_b == 0) ? 1 : exp_b;
             s1_exp_res <= eff_exp_a - eff_exp_b + 15;
 
             // Handle special cases
@@ -87,7 +88,7 @@ module fp16_div (
             end else if (is_inf_a || is_zero_b) begin
                 s1_special_case <= 1'b1;
                 s1_special_result <= {sign_a ^ sign_b, 5'h1F, 10'b0}; // Infinity
-            end else if (is_zero_a || is_inf_b) {
+            end else if (is_zero_a || is_inf_b) begin
                 s1_special_case <= 1'b1;
                 s1_special_result <= {sign_a ^ sign_b, 15'b0}; // Zero
             end
@@ -191,8 +192,8 @@ module fp16_div (
     wire [10:0] final_quotient = quotient_pipe[DIV_LATENCY];
     
     // Normalize the mantissa and adjust exponent
-    reg signed [5:0] final_exp;
-    reg [9:0]        final_mant;
+    reg  signed [5:0] final_exp;
+    reg         [9:0] final_mant;
     
     always @(*) begin
         // The quotient is in the format i.f... where i is quotient[10].

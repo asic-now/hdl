@@ -53,6 +53,9 @@ module fp64_div (
     wire [52:0] full_mant_a = {(exp_a != 0), mant_a};
     wire [52:0] full_mant_b = {(exp_b != 0), mant_b};
 
+    wire [11:0] eff_exp_a = (exp_a == 0) ? 1 : exp_a;
+    wire [11:0] eff_exp_b = (exp_b == 0) ? 1 : exp_b;
+
     // Stage 1 Pipeline Registers
     reg        s1_special_case;
     reg [63:0] s1_special_result;
@@ -60,7 +63,6 @@ module fp64_div (
     reg        s1_sign_res;
     reg [104:0] s1_dividend; // For (mant_a << 52)
     reg [52:0] s1_divisor;
-
     always @(posedge clk) begin
         if (!rst_n) begin
             s1_special_case <= 1'b0;
@@ -76,8 +78,6 @@ module fp64_div (
             s1_divisor <= full_mant_b;
             s1_sign_res <= sign_a ^ sign_b;
 
-            wire [11:0] eff_exp_a = (exp_a == 0) ? 1 : exp_a;
-            wire [11:0] eff_exp_b = (exp_b == 0) ? 1 : exp_b;
             s1_exp_res <= eff_exp_a - eff_exp_b + 1023;
 
             // Handle special cases
@@ -87,7 +87,7 @@ module fp64_div (
             end else if (is_inf_a || is_zero_b) begin
                 s1_special_case <= 1'b1;
                 s1_special_result <= {sign_a ^ sign_b, 11'h7FF, 52'b0}; // Infinity
-            end else if (is_zero_a || is_inf_b) {
+            end else if (is_zero_a || is_inf_b) begin
                 s1_special_case <= 1'b1;
                 s1_special_result <= {sign_a ^ sign_b, 63'b0}; // Zero
             end
@@ -185,7 +185,7 @@ module fp64_div (
     wire [52:0] final_quotient = quotient_pipe[DIV_LATENCY];
     
     reg signed [11:0] final_exp;
-    reg [51:0]        final_mant;
+    reg        [51:0] final_mant;
     
     always @(*) begin
         if(!final_quotient[52]) begin // result < 1.0, normalize left

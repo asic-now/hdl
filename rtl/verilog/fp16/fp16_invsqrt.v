@@ -54,6 +54,8 @@ module fp16_invsqrt (
     assign y1 = y0 * sub_res;
     // --- End of Combinational Calculation ---
     
+    reg  signed [5:0] exp_out_unnorm;
+    reg         [9:0] mant_out_final;
     always @(*) begin
         if (is_nan || is_neg) begin
             fp_out = 16'h7C01; // qNaN
@@ -62,8 +64,6 @@ module fp16_invsqrt (
         end else if (is_zero) begin
             fp_out = 16'h7C00; // 1/sqrt(0) -> inf
         end else begin
-            reg signed [5:0] exp_out_unnorm;
-            reg [9:0] mant_out_final;
             
             // Exponent is approx (3*bias - E)/2
             exp_out_unnorm = (3*15 - exp_in) >> 1;

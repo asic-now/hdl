@@ -33,11 +33,11 @@ module fp32_div (
     //----------------------------------------------------------------
     
     wire sign_a = a[31];
-    wire [7:0] exp_a = a[30:23];
+    wire [ 7:0] exp_a = a[30:23];
     wire [22:0] mant_a = a[22:0];
 
     wire sign_b = b[31];
-    wire [7:0] exp_b = b[30:23];
+    wire [ 7:0] exp_b = b[30:23];
     wire [22:0] mant_b = b[22:0];
 
     // Detect special values
@@ -52,6 +52,9 @@ module fp32_div (
     // Add implicit leading bit
     wire [23:0] full_mant_a = {(exp_a != 0), mant_a};
     wire [23:0] full_mant_b = {(exp_b != 0), mant_b};
+
+    wire [ 8:0] eff_exp_a = (exp_a == 0) ? 1 : exp_a;
+    wire [ 8:0] eff_exp_b = (exp_b == 0) ? 1 : exp_b;
 
     // Stage 1 Pipeline Registers
     reg        s1_special_case;
@@ -76,8 +79,6 @@ module fp32_div (
             s1_divisor <= full_mant_b;
             s1_sign_res <= sign_a ^ sign_b;
 
-            wire [8:0] eff_exp_a = (exp_a == 0) ? 1 : exp_a;
-            wire [8:0] eff_exp_b = (exp_b == 0) ? 1 : exp_b;
             s1_exp_res <= eff_exp_a - eff_exp_b + 127;
 
             // Handle special cases
@@ -87,7 +88,7 @@ module fp32_div (
             end else if (is_inf_a || is_zero_b) begin
                 s1_special_case <= 1'b1;
                 s1_special_result <= {sign_a ^ sign_b, 8'hFF, 23'b0}; // Infinity
-            end else if (is_zero_a || is_inf_b) {
+            end else if (is_zero_a || is_inf_b) begin
                 s1_special_case <= 1'b1;
                 s1_special_result <= {sign_a ^ sign_b, 31'b0}; // Zero
             end
@@ -191,8 +192,8 @@ module fp32_div (
     wire [23:0] final_quotient = quotient_pipe[DIV_LATENCY];
     
     // Normalize the mantissa and adjust exponent
-    reg signed [8:0] final_exp;
-    reg [22:0]       final_mant;
+    reg  signed [ 8:0] final_exp;
+    reg         [22:0] final_mant;
     
     always @(*) begin
         // The division of two normalized mantissas (1.f / 1.f) gives a result
@@ -208,8 +209,8 @@ module fp32_div (
     end
     
     // Handle final exponent overflow/underflow
-    reg [7:0] out_exp;
-    reg [22:0] out_mant;
+    reg  [ 7:0] out_exp;
+    reg  [22:0] out_mant;
     
     always @(*) begin
         out_exp = final_exp[7:0];

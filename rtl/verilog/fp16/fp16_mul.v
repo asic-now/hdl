@@ -49,6 +49,9 @@ module fp16_mul (
     wire [10:0] full_mant_a = {(exp_a != 0), mant_a};
     wire [10:0] full_mant_b = {(exp_b != 0), mant_b};
 
+    wire [5:0] effective_exp_a = (exp_a == 0) ? 1 : exp_a;
+    wire [5:0] effective_exp_b = (exp_b == 0) ? 1 : exp_b;
+
     // Stage 1 pipeline registers
     reg signed [5:0] s1_exp_sum;
     reg              s1_sign;
@@ -63,8 +66,6 @@ module fp16_mul (
         // Exponents are biased by 15. So, E_res = (E_a - 15) + (E_b - 15) = (E_a + E_b) - 30
         // New exponent = E_a + E_b - 15.
         // Need to handle denormalized numbers, where exponent is effectively 1-bias, not 0-bias.
-        wire [5:0] effective_exp_a = (exp_a == 0) ? 1 : exp_a;
-        wire [5:0] effective_exp_b = (exp_b == 0) ? 1 : exp_b;
         
         s1_exp_sum = effective_exp_a + effective_exp_b - 15;
         s1_sign = sign_a ^ sign_b;
@@ -84,7 +85,7 @@ module fp16_mul (
         end else if (is_inf_a || is_inf_b) begin
             s1_special_case = 1'b1;
             s1_special_result = {s1_sign, 5'h1F, 10'b0}; // Inf * anything = Inf
-        end else if (is_zero_a || is_zero_b) {
+        end else if (is_zero_a || is_zero_b) begin
             s1_special_case = 1'b1;
             s1_special_result = {s1_sign, 15'b0}; // Zero * anything = Zero
         end
@@ -120,6 +121,10 @@ module fp16_mul (
     //----------------------------------------------------------------
     reg [15:0] result_reg;
 
+    reg signed [5:0] final_exp;
+    reg [21:0]       norm_mant;
+    reg [9:0] out_mant;
+    reg [4:0] out_exp;
     always @(posedge clk) begin
         if (!rst_n) begin
             result_reg <= 16'b0;
@@ -128,8 +133,6 @@ module fp16_mul (
                 result_reg <= s2_special_result;
             end else begin
                 // Normalize the result from the multiplier
-                reg signed [5:0] final_exp;
-                reg [21:0]       norm_mant;
 
                 // The product of two 11-bit mantissas (1.f * 1.f) results in a 22-bit number.
                 // The result is either 01.f or 1x.f.
@@ -144,8 +147,6 @@ module fp16_mul (
                 end
 
                 // Pack the final result
-                reg [9:0] out_mant;
-                reg [4:0] out_exp;
                 
                 // Truncate mantissa to 10 bits. The implicit bit is at index 20 of norm_mant.
                 out_mant = norm_mant[19:10];
