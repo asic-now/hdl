@@ -1,6 +1,7 @@
 {
         "recommendations": [
                 "sterben.fpga-support",
-                "gvekony.systemverilog-1800-2012"
+                "gvekony.systemverilog-1800-2012",
+                "altairengineering.dsim-studio"
         ]
 }

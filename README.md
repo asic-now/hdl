@@ -32,6 +32,32 @@ The Vivado Design Suite from AMD/Xilinx includes a UVM-compliant simulator (xsim
   * On Linux: source /path/to/Xilinx/Vivado/2023.2/settings64.sh  
   * On Windows: Run the Vivado command prompt, or execute the settings64.bat script.
 
+### Altair DSim
+
+This section was written with Altair DSim v2025.1.
+
+<https://learn.altair.com/learn/course/getting-started-with-dsim-elearning/table-of-contents/getting-started-with-dsim?page=1>
+
+* **Installation**
+  * Register for user account on [www.altairone.com](https://admin.altairone.com/register)
+  * Download and install VSCode DSim Studio extension:  
+    <https://marketplace.visualstudio.com/items?itemName=AltairEngineering.dsim-studio>
+  * In the VSCode primary sidebar select "DSim Studio" extension tab  
+  ![DSim](images/vscode_tab_DSim.png)
+  * There is an interactive "Installing DSim Walkthrough" that can be opened by clicking `( i )` icon in "DSim Installations" section, which will open in a "Welcome" window.  
+  ![DSim](images/vscode_DSim_install.png)
+  * Click "Sign in to DSim Cloud..." in "DSim Studio" section.
+  * Click "Download" button in "DSim Installations" section.  
+  ![DSim](images/vscode_DSim_install.png)
+  * Download and install DSim (simulator).
+  * Activate installed DSim version in the DSim Studio "DSim Installations" section - right-click on the DSim version to activate it.
+  * Activate and download free license on Altair DSim Cloud - click "Manage Free Individual License" icon in "Versions" sub-section of "DSim Installations" section:  
+    <https://app.metricsvcloud.com/security/licenses>  
+    Make sure to click "Install license using DSim Studio" icon next to the license on the website and follow through to complete the action using VSCode.
+    DSim Studio will show check mark "License Activated" next to "Manage Free Individual License" icon in "Versions" sub-section of "DSim Installations" section.
+  * Open "DSim Studio" terminal.
+  * DSim Studio projects are configured by `*.dpf` files.
+
 ### Synopsys VCS
 
 VCS is a high-performance commercial simulator.
