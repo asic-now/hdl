@@ -4,6 +4,8 @@ Hardware Description Language library
 
 This project contains a library of synthesizable Verilog RTL for various floating-point operations, along with a comprehensive UVM-based verification environment.
 
+It is WIP (Work In Progress), and not everything has been verified.
+
 ## Project Structure
 
 The repository is organized into two main directories: rtl/ and verif/.

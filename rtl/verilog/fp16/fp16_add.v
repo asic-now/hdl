@@ -58,12 +58,12 @@ module fp16_add (
     reg        s1_special_case;
     reg [15:0] s1_special_result;
 
+    wire [4:0] exp_diff;
+    wire [10:0] temp_mant_a, temp_mant_b;
+    wire sign_larger, sign_smaller;
+    reg [4:0] larger_exp_comb;
     always @(*) begin
         // Combinational logic for Stage 1
-        wire [4:0] exp_diff;
-        wire [10:0] temp_mant_a, temp_mant_b;
-        wire sign_larger, sign_smaller;
-        reg [4:0] larger_exp_comb;
 
         // Magnitude comparison to determine alignment and result sign for subtraction
         if (exp_a > exp_b || (exp_a == exp_b && mant_a >= mant_b)) begin
@@ -110,7 +110,7 @@ module fp16_add (
         end else if (is_zero_a) begin
             s1_special_case = 1'b1;
             s1_special_result = b;
-        end else if (is_zero_b) {
+        end else if (is_zero_b) begin
             s1_special_case = 1'b1;
             s1_special_result = a;
         end
@@ -149,6 +149,8 @@ module fp16_add (
     // Stage 3: Normalize and Pack
     //----------------------------------------------------------------
     reg [15:0] result_reg;
+    reg [9:0] out_mant;
+    reg [4:0] out_exp;
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -183,8 +185,7 @@ module fp16_add (
                          // Let's use a more compact (but potentially slower) approach for clarity.
                          
                          // A more practical approach is to find the amount to shift left
-                         integer i;
-                         for (i = 21; i >= 0; i = i - 1) begin
+                         for (integer i = 21; i >= 0; i = i - 1) begin
                              if (final_mant[i]) begin
                                  shift_amount = 21 - i;
                              end
@@ -196,9 +197,7 @@ module fp16_add (
                 end
 
                 // Pack the final result
-                reg [9:0] out_mant;
-                reg [4:0] out_exp;
-                
+               
                 // Truncate mantissa to 10 bits, removing the implicit leading 1
                 out_mant = final_mant[20:11];
 
