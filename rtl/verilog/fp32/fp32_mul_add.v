@@ -32,8 +32,8 @@ module fp32_mul_add (
     //----------------------------------------------------------------
     
     // Unpack all three inputs
-    wire sign_a = a[31], sign_b = b[31], sign_c = c[31];
-    wire [7:0] exp_a = a[30:23], exp_b = b[30:23], exp_c = c[30:23];
+    wire        sign_a = a[31], sign_b = b[31], sign_c = c[31];
+    wire [ 7:0] exp_a  = a[30:23], exp_b = b[30:23], exp_c = c[30:23];
     wire [22:0] mant_a = a[22:0], mant_b = b[22:0], mant_c = c[22:0];
 
     // Detect special values for all three inputs
@@ -52,20 +52,22 @@ module fp32_mul_add (
     wire [23:0] full_mant_b = {(exp_b != 0), mant_b};
     wire [23:0] full_mant_c = {(exp_c != 0), mant_c};
 
-    // Stage 1 pipeline registers
-    reg signed [8:0] s1_product_exp_sum;
-    reg              s1_product_sign;
-    reg [23:0]       s1_mant_a, s1_mant_b;
+    wire [ 8:0] effective_exp_a = (exp_a == 0) ? 1 : exp_a;
+    wire [ 8:0] effective_exp_b = (exp_b == 0) ? 1 : exp_b;
 
-    reg              s1_sign_c;
-    reg [7:0]        s1_exp_c;
-    reg [23:0]       s1_mant_c;
+    // Stage 1 pipeline registers
+    reg signed [ 8:0] s1_product_exp_sum;
+    reg               s1_product_sign;
+    reg        [23:0] s1_mant_a, s1_mant_b;
+
+    reg               s1_sign_c;
+    reg        [ 7:0] s1_exp_c;
+    reg        [23:0] s1_mant_c;
 
     // Propagate special case flags
     reg s1_is_nan_a, s1_is_inf_a, s1_is_zero_a;
     reg s1_is_nan_b, s1_is_inf_b, s1_is_zero_b;
     reg s1_is_nan_c, s1_is_inf_c, s1_is_zero_c;
-
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -81,8 +83,6 @@ module fp32_mul_add (
             s1_is_nan_c <= 0; s1_is_inf_c <= 0; s1_is_zero_c <= 0;
         end else begin
             // Product (a*b) preliminary calculations
-            wire [8:0] effective_exp_a = (exp_a == 0) ? 1 : exp_a;
-            wire [8:0] effective_exp_b = (exp_b == 0) ? 1 : exp_b;
             s1_product_exp_sum <= effective_exp_a + effective_exp_b - 127;
             s1_product_sign <= sign_a ^ sign_b;
             s1_mant_a <= full_mant_a;
@@ -103,25 +103,25 @@ module fp32_mul_add (
     //----------------------------------------------------------------
     // Stage 2: Mantissa Multiplication and Product Normalization
     //----------------------------------------------------------------
-    reg signed [8:0] s2_norm_exp_ab;
-    reg [47:0]       s2_norm_mant_ab;
-    reg              s2_sign_ab;
+    // Mantissa multiplication
+    wire [47:0] mant_product = s1_mant_a * s1_mant_b;
+
+    reg signed [ 8:0] s2_norm_exp_ab;
+    reg        [47:0] s2_norm_mant_ab;
+    reg               s2_sign_ab;
     
-    reg              s2_sign_c;
-    reg [7:0]        s2_exp_c;
-    reg [23:0]       s2_mant_c;
+    reg               s2_sign_c;
+    reg        [ 7:0] s2_exp_c;
+    reg        [23:0] s2_mant_c;
     
     reg s2_prop_is_nan, s2_prop_is_inf, s2_prop_inf_sign;
     reg s2_ab_is_zero;
     reg s2_is_nan_c, s2_is_inf_c, s2_is_zero_c;
-
+    
     always @(posedge clk) begin
         if (!rst_n) begin
-            //... reset all s2 registers ...
+            // TODO: reset registers (optional by param)
         end else begin
-            // Mantissa multiplication
-            reg [47:0] mant_product = s1_mant_a * s1_mant_b;
-
             // Normalize the product
             if (mant_product[47]) begin // Result is 1x.f..., shift right
                 s2_norm_exp_ab <= s1_product_exp_sum + 1;
@@ -149,16 +149,18 @@ module fp32_mul_add (
     //----------------------------------------------------------------
     // Stage 3: Align and Add
     //----------------------------------------------------------------
-    reg [8:0]  s3_res_exp;
+    reg [ 8:0] s3_res_exp;
     reg        s3_res_sign;
     reg [95:0] s3_mant_sum; // Wide mantissa for calculation
     
-    reg s3_special_case;
+    reg        s3_special_case;
     reg [31:0] s3_special_result;
 
+    reg signed [8:0] exp_diff;
+    reg [95:0] mant_ab_extended, mant_c_extended;
     always @(posedge clk) begin
         if (!rst_n) begin
-            // ... reset all s3 registers ...
+            // TODO: reset registers
         end else begin
             // Logic to handle special case propagation before alignment
             if (s2_prop_is_nan || s2_is_nan_c) begin
@@ -184,8 +186,6 @@ module fp32_mul_add (
             end else begin
                 // Normal path: Align and add/subtract
                 s3_special_case <= 0;
-                reg signed [8:0] exp_diff;
-                reg [95:0] mant_ab_extended, mant_c_extended;
                 
                 if(s2_norm_exp_ab >= s2_exp_c) begin
                     s3_res_exp <= s2_norm_exp_ab;
@@ -201,9 +201,9 @@ module fp32_mul_add (
                     mant_c_extended = {s2_mant_c, 72'b0};
                 end
 
-                if (s2_sign_ab == s2_sign_c) { // Add magnitudes
+                if (s2_sign_ab == s2_sign_c) begin // Add magnitudes
                     s3_mant_sum <= mant_ab_extended + mant_c_extended;
-                end else { // Subtract magnitudes, depends on which one is larger
+                end else begin // Subtract magnitudes, depends on which one is larger
                     if(s2_norm_exp_ab > s2_exp_c) begin
                         s3_mant_sum <= mant_ab_extended - mant_c_extended;
                     end else if (s2_exp_c > s2_norm_exp_ab) begin
@@ -222,6 +222,11 @@ module fp32_mul_add (
     //----------------------------------------------------------------
     reg [31:0] result_reg;
 
+    integer shift_amount;
+    reg signed [ 9:0] final_exp;
+    reg        [95:0] final_mant;
+    reg        [22:0] out_mant;
+    reg        [ 7:0] out_exp;
     always @(posedge clk) begin
         if (!rst_n) begin
             result_reg <= 32'b0;
@@ -229,9 +234,8 @@ module fp32_mul_add (
             if (s3_special_case) begin
                 result_reg <= s3_special_result;
             end else begin
-                integer shift_amount;
-                reg signed [9:0] final_exp = s3_res_exp;
-                reg [95:0] final_mant = s3_mant_sum;
+                final_exp = s3_res_exp;
+                final_mant = s3_mant_sum;
 
                 if (final_mant == 0) begin
                     final_exp = 0;
@@ -250,8 +254,6 @@ module fp32_mul_add (
                 end
 
                 // Pack final result
-                reg [22:0] out_mant;
-                reg [7:0] out_exp;
 
                 out_mant = final_mant[93:71];
 
