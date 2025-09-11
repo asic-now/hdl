@@ -21,8 +21,8 @@ module fp16_classify (
 );
 
     // Unpack the input floating-point number
-    wire sign      = in[15];
-    wire [4:0] exp = in[14:10];
+    wire       sign = in[15];
+    wire [4:0] exp  = in[14:10];
     wire [9:0] mant = in[9:0];
 
     // Intermediate category checks based on IEEE 754 standard

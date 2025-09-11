@@ -21,7 +21,7 @@ module fp64_classify (
 );
 
     // Unpack the input floating-point number
-    wire sign        = in[63];
+    wire        sign = in[63];
     wire [10:0] exp  = in[62:52];
     wire [51:0] mant = in[51:0];
 

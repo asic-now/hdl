@@ -21,8 +21,8 @@ module fp32_classify (
 );
 
     // Unpack the input floating-point number
-    wire sign       = in[31];
-    wire [7:0] exp  = in[30:23];
+    wire        sign = in[31];
+    wire [ 7:0] exp  = in[30:23];
     wire [22:0] mant = in[22:0];
 
     // Intermediate category checks based on IEEE 754 standard
