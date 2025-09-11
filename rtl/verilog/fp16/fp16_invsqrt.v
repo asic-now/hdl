@@ -13,8 +13,8 @@ module fp16_invsqrt (
     output reg [15:0] fp_out
 );
 
-    wire sign_in = fp_in[15];
-    wire [4:0] exp_in = fp_in[14:10];
+    wire       sign_in = fp_in[15];
+    wire [4:0] exp_in  = fp_in[14:10];
     wire [9:0] mant_in = fp_in[9:0];
     
     wire is_neg = sign_in && !((exp_in == 0) && (mant_in == 0));
@@ -26,6 +26,8 @@ module fp16_invsqrt (
 
     // Wires for N-R iteration
     wire [P:0] y0;
+    
+    // N-R Iteration: y1 = y0 * (1.5 - (x/2) * y0^2)
     wire [2*P+1:0] y0_sq; // y0^2
     wire [10+2*P+2:0] mul1_res; // x * y0^2
     wire [10+2*P+1:0] mul1_div2; // (x/2) * y0^2
@@ -38,6 +40,7 @@ module fp16_invsqrt (
         .data(y0)
     );
 
+    `ifdef `NO_LUT
     // --- Newton-Raphson Calculation (Combinational) ---
     assign y0_sq = y0 * y0;
     assign mul1_res = {1'b0, (exp_in != 0), mant_in} * y0_sq;
@@ -53,7 +56,8 @@ module fp16_invsqrt (
     
     assign y1 = y0 * sub_res;
     // --- End of Combinational Calculation ---
-    
+    `endif
+
     reg  signed [5:0] exp_out_unnorm;
     reg         [9:0] mant_out_final;
     always @(*) begin

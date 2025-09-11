@@ -10,8 +10,8 @@ module fp32_invsqrt (
     output reg [31:0] fp_out
 );
 
-    wire sign_in = fp_in[31];
-    wire [7:0] exp_in = fp_in[30:23];
+    wire        sign_in = fp_in[31];
+    wire [ 7:0] exp_in  = fp_in[30:23];
     wire [22:0] mant_in = fp_in[22:0];
     
     wire is_neg = sign_in && !((exp_in == 0) && (mant_in == 0));
@@ -21,6 +21,7 @@ module fp32_invsqrt (
 
     localparam P = 25; // Internal fractional precision
     
+    // Wires for N-R iteration
     wire [P:0] y0;
 
     // N-R Iteration: y1 = y0 * (1.5 - (x/2) * y0^2)
@@ -31,7 +32,10 @@ module fp32_invsqrt (
     wire [2*P+2:0] y1 = y0 * sub_res;
     
     // LUT on exponent LSB and top 7 mantissa bits
-    invsqrt_lut_32b lut (.addr({exp_in[0], mant_in[22:16]}), .data(y0));
+    invsqrt_lut_32b lut (
+        .addr({exp_in[0], mant_in[22:16]}),
+        .data(y0)
+    );
 
     reg  signed [ 8:0] exp_out_unnorm;
     reg         [22:0] mant_out_final;

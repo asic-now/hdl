@@ -21,6 +21,7 @@ module fp64_invsqrt (
 
     localparam P = 54;
     
+    // Wires for N-R iteration
     wire [P:0] y0;
 
     // N-R Iteration: y1 = y0 * (1.5 - (x/2) * y0^2)
@@ -30,8 +31,14 @@ module fp64_invsqrt (
     wire signed [P+2:0] sub_res = (3'b011 << (P-1)) - mul1_div2[52+P:0];
     wire [2*P+2:0] y1 = y0 * sub_res;
     
-    invsqrt_lut_64b lut (.addr({exp_in[0], mant_in[51:43]}), .data(y0));
+    // LUT on exponent LSB and top 7 mantissa bits
+    invsqrt_lut_64b lut (
+        .addr({exp_in[0], mant_in[51:43]}),
+        .data(y0)
+    );
 
+    reg signed [11:0] exp_out_unnorm;
+    reg        [51:0] mant_out_final;
     always @(*) begin
         if (is_nan || is_neg) begin
             fp_out = 64'h7FF8000000000001;
@@ -40,8 +47,6 @@ module fp64_invsqrt (
         end else if (is_zero) begin
             fp_out = 64'h7FF0000000000000;
         end else begin
-            reg signed [11:0] exp_out_unnorm;
-            reg [51:0] mant_out_final;
             
             exp_out_unnorm = (3*1023 - exp_in) >> 1;
 
