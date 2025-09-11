@@ -1,60 +1,94 @@
 // fp64_to_fp32.v
 //
-// Verilog RTL to convert a 64-bit float to a 32-bit float.
+// Converts a 64-bit double-precision float to a 32-bit single-precision float.
 //
 // Features:
-// - Combinational logic.
-// - Handles NaN, Infinity, Zero.
-// - Saturates on overflow (to Infinity).
-// - Handles underflow (to denormalized or zero).
-// - Truncates mantissa.
+// - Uses fp64_classify for special case handling.
+// - Handles overflow (to infinity) and underflow (to denormalized/zero).
+// - Truncates mantissa on conversion.
+// - Uses simple, sequential assignments for better compiler compatibility.
 
 module fp64_to_fp32 (
     input  [63:0] fp64_in,
     output reg [31:0] fp32_out
 );
 
-    wire sign = fp64_in[63];
-    wire [10:0] exp64 = fp64_in[62:52];
-    wire [51:0] mant64 = fp64_in[51:0];
+    //==================================================================
+    // 1. Classification of the FP64 Input
+    //==================================================================
+    wire is_snan, is_qnan, is_neg_inf, is_pos_inf, is_neg_norm, is_pos_norm,
+         is_neg_denorm, is_pos_denorm, is_neg_zero, is_pos_zero;
 
-    wire is_nan64 = (exp64 == 11'h7FF) && (mant64 != 0);
-    wire is_inf64 = (exp64 == 11'h7FF) && (mant64 == 0);
-    wire is_zero64 = (exp64 == 0) && (mant64 == 0);
+    fp64_classify classifier (
+        .in(fp64_in),
+        .is_snan(is_snan), .is_qnan(is_qnan),
+        .is_neg_inf(is_neg_inf), .is_pos_inf(is_pos_inf),
+        .is_neg_norm(is_neg_norm), .is_pos_norm(is_pos_norm),
+        .is_neg_denorm(is_neg_denorm), .is_pos_denorm(is_pos_denorm),
+        .is_neg_zero(is_neg_zero), .is_pos_zero(is_pos_zero)
+    );
 
-    // FP32 Exponent range:
-    // Max normal: 127 (biased 254)
-    // Min normal: -126 (biased 1)
+    wire is_nan = is_snan || is_qnan;
+    wire is_inf = is_pos_inf || is_neg_inf;
+    wire is_zero = is_pos_zero || is_neg_zero;
 
-    reg signed [11:0] true_exp;
-    reg [7:0] exp32;
-    reg [22:0] mant32;
-    reg [52:0] full_mant64;
-    integer shift_amount;
+    //==================================================================
+    // 2. Unpack FP64 components
+    //==================================================================
+    wire        sign_in = fp64_in[63];
+    wire [10:0] exp_in  = fp64_in[62:52];
+    wire [51:0] mant_in = fp64_in[51:0];
+
+    //==================================================================
+    // 3. Conversion Logic
+    //==================================================================
+    reg [31:0] temp_nan;
+    reg signed [11:0] new_exp;
+    reg [22:0] new_mant;
+    reg [52:0] full_mant;
+    reg [11:0] shift_amount;
     always @(*) begin
-        if (is_nan64) begin
-            fp32_out = {sign, 8'hFF, {1'b1, mant64[51:29]}}; // Propagate quiet NaN
-        end else if (is_inf64) begin
-            fp32_out = {sign, 8'hFF, 23'b0};
-        end else if (is_zero64) begin
-            fp32_out = {sign, 31'b0};
-        end else begin
-            true_exp = exp64 - 1023;
-            
-            if (true_exp > 127) begin // Overflow
-                fp32_out = {sign, 8'hFF, 23'b0}; // Infinity
-            end else if (true_exp < -149) begin // Underflow to zero
-                fp32_out = {sign, 31'b0};
-            end else if (true_exp < -126) begin // Underflow to denormalized
-                full_mant64 = {1'b1, mant64};
-                shift_amount = -126 - true_exp;
-                mant32 = (full_mant64 >> shift_amount) >> 29;
-                fp32_out = {sign, 8'b0, mant32};
-            end else begin // Normal conversion
-                exp32 = true_exp + 127;
-                mant32 = mant64[51:29];
-                fp32_out = {sign, exp32, mant32};
+        if (is_nan) begin
+            // Propagate NaN, converting to a 32-bit qNaN.
+            temp_nan = {sign_in, 8'hFF, mant_in[51:29]};
+            temp_nan[22] = 1'b1; // Ensure it's a quiet NaN
+            fp32_out = temp_nan;
+        end
+        else if (is_inf) begin
+            fp32_out = {sign_in, 8'hFF, 23'b0};
+        end
+        else if (is_zero) begin
+            fp32_out = {sign_in, 31'b0};
+        end
+        else begin // Is normal or denormal (denormal fp64 is treated as zero fp32)
+
+            // Adjust exponent for the new bias. (127 - 1023 = -896)
+            new_exp = exp_in - 896;
+
+            if (new_exp > 254) begin // Overflow
+                fp32_out = {sign_in, 8'hFF, 23'b0}; // Becomes infinity
+            end
+            else if (new_exp < -22) begin // Underflow completely to zero
+                fp32_out = {sign_in, 31'b0};
+            end
+            else if (new_exp < 1) begin // Underflow to denormalized
+                
+                full_mant = {1'b1, mant_in};
+                
+                // Calculate how far to shift right
+                shift_amount = 1 - new_exp + 29;
+                
+                // Perform the shift
+                new_mant = full_mant >> shift_amount;
+
+                fp32_out = {sign_in, 8'b0, new_mant};
+            end
+            else begin // Normal number
+                // Truncate mantissa
+                new_mant = mant_in[51:29];
+                fp32_out = {sign_in, new_exp[7:0], new_mant};
             end
         end
     end
+
 endmodule
