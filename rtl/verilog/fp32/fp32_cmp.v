@@ -25,12 +25,12 @@ module fp32_cmp (
 );
 
     // Unpack inputs a and b
-    wire sign_a = a[31];
-    wire [7:0] exp_a = a[30:23];
+    wire        sign_a = a[31];
+    wire [ 7:0] exp_a  = a[30:23];
     wire [22:0] mant_a = a[22:0];
 
-    wire sign_b = b[31];
-    wire [7:0] exp_b = b[30:23];
+    wire        sign_b = b[31];
+    wire [ 7:0] exp_b  = b[30:23];
     wire [22:0] mant_b = b[22:0];
 
     // Detect special values

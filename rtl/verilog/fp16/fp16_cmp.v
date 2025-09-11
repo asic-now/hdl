@@ -25,12 +25,12 @@ module fp16_cmp (
 );
 
     // Unpack inputs a and b
-    wire sign_a = a[15];
-    wire [4:0] exp_a = a[14:10];
+    wire       sign_a = a[15];
+    wire [4:0] exp_a  = a[14:10];
     wire [9:0] mant_a = a[9:0];
 
-    wire sign_b = b[15];
-    wire [4:0] exp_b = b[14:10];
+    wire       sign_b = b[15];
+    wire [4:0] exp_b  = b[14:10];
     wire [9:0] mant_b = b[9:0];
 
     // Detect special values
@@ -38,6 +38,8 @@ module fp16_cmp (
     wire is_nan_b = (exp_b == 5'h1F) && (mant_b != 0);
     wire is_zero_a = (exp_a == 0) && (mant_a == 0);
     wire is_zero_b = (exp_b == 0) && (mant_b == 0);
+
+    // Determine which has a larger magnitude
     wire mag_a_gt_b = (exp_a > exp_b) || ((exp_a == exp_b) && (mant_a > mant_b));
 
     always @(*) begin
@@ -71,7 +73,6 @@ module fp16_cmp (
             // Check for magnitude difference
             end else begin
                 // Determine which has a larger magnitude
-
                 if (sign_a == 1'b0) begin // Both positive
                     if (mag_a_gt_b) gt = 1'b1;
                     else lt = 1'b1;

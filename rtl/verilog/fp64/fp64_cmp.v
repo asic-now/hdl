@@ -1,6 +1,6 @@
-// fp32_cmp.v
+// fp64_cmp.v
 //
-// Verilog RTL for a 32-bit (single-precision) floating-point comparator.
+// Verilog RTL for a 64-bit (double-precision) floating-point comparator.
 //
 // Operation: Compares a and b.
 //
@@ -14,9 +14,9 @@
 // - Combinational logic.
 // - Handles all special cases: NaN, Infinity, and Zero.
 
-module fp32_cmp (
-    input  [31:0] a,
-    input  [31:0] b,
+module fp64_cmp (
+    input  [63:0] a,
+    input  [63:0] b,
 
     output reg lt,
     output reg eq,
@@ -25,19 +25,22 @@ module fp32_cmp (
 );
 
     // Unpack inputs a and b
-    wire sign_a = a[31];
-    wire [7:0] exp_a = a[30:23];
-    wire [22:0] mant_a = a[22:0];
+    wire        sign_a = a[63];
+    wire [10:0] exp_a  = a[62:52];
+    wire [51:0] mant_a = a[51:0];
 
-    wire sign_b = b[31];
-    wire [7:0] exp_b = b[30:23];
-    wire [22:0] mant_b = b[22:0];
+    wire        sign_b = b[63];
+    wire [10:0] exp_b  = b[62:52];
+    wire [51:0] mant_b = b[51:0];
 
     // Detect special values
-    wire is_nan_a = (exp_a == 8'hFF) && (mant_a != 0);
-    wire is_nan_b = (exp_b == 8'hFF) && (mant_b != 0);
+    wire is_nan_a = (exp_a == 11'h7FF) && (mant_a != 0);
+    wire is_nan_b = (exp_b == 11'h7FF) && (mant_b != 0);
     wire is_zero_a = (exp_a == 0) && (mant_a == 0);
     wire is_zero_b = (exp_b == 0) && (mant_b == 0);
+
+    // Determine which has a larger magnitude
+    wire mag_a_gt_b = (exp_a > exp_b) || ((exp_a == exp_b) && (mant_a > mant_b));
 
     always @(*) begin
         // Default all flags to 0
@@ -69,9 +72,6 @@ module fp32_cmp (
                 eq = 1'b1;
             // Check for magnitude difference
             end else begin
-                // Determine which has a larger magnitude
-                wire mag_a_gt_b = (exp_a > exp_b) || ((exp_a == exp_b) && (mant_a > mant_b));
-
                 if (sign_a == 1'b0) begin // Both positive
                     if (mag_a_gt_b) gt = 1'b1;
                     else lt = 1'b1;
