@@ -21,22 +21,24 @@ class fp_scoreboard #(
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         // Get the handle to the reference model from the environment
-        if(!uvm_config_db#(T_MODEL)::get(this, "", "model", model))
+        if(!uvm_config_db#(T_MODEL)::get(this, "*", "model", model))
             `uvm_fatal("NO_MODEL", "Could not get model handle in scoreboard")
     endfunction
 
     // The write task is called when the monitor broadcasts a transaction
-    virtual function void write(T_TRANS trans);
+    virtual function void write(T_TRANS dut_trans);
         T_TRANS golden_trans;
 
         // Call the model to predict the golden result
-        model.predict(trans, golden_trans);
+        model.predict(dut_trans, golden_trans);
 
-        // Perform the comparison
-        if (trans.compare(golden_trans)) begin
-            `uvm_info("SCOREBOARD", $sformatf("Compare OK:\n%s", trans.sprint()), UVM_HIGH)
+        // Explicitly compare the DUT result with the model's prediction
+        if (dut_trans.result == golden_trans.golden_result) begin
+            `uvm_info("SCOREBOARD", $sformatf("Compare OK: a=0x%h, b=0x%h, result=0x%h", dut_trans.a, dut_trans.b, dut_trans.result), UVM_LOW)
         end else begin
-            `uvm_error("SCOREBOARD", $sformatf("Compare FAIL:\nDUT:   %s\nMODEL: %s", trans.sprint(), golden_trans.sprint()))
+            `uvm_error("SCOREBOARD", $sformatf("Compare FAIL:\n  DUT received:   a=0x%h, b=0x%h --> result=0x%h\n  MODEL predicted: a=0x%h, b=0x%h --> result=0x%h",
+                dut_trans.a, dut_trans.b, dut_trans.result,
+                golden_trans.a, golden_trans.b, golden_trans.golden_result))
         end
     endfunction
 

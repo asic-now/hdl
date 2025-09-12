@@ -32,12 +32,17 @@ class fp16_add_monitor extends uvm_monitor;
         fp16_add_transaction trans;
         trans = fp16_add_transaction::type_id::create("trans");
 
+        // 1. Wait for valid inputs to appear
         @(vif.monitor_cb);
-        // Wait for 3 cycles for the pipelined result
-        repeat(3) @(vif.monitor_cb);
         
+        // 2. Sample the inputs
         trans.a = vif.monitor_cb.a;
         trans.b = vif.monitor_cb.b;
+        
+        // 3. Wait for the 3-cycle pipeline latency of the DUT
+        repeat(3) @(vif.monitor_cb);
+        
+        // 4. Sample the corresponding result
         trans.result = vif.monitor_cb.result;
 
         `uvm_info("MONITOR", $sformatf("Collected transaction: a=0x%h, b=0x%h, result=0x%h", trans.a, trans.b, trans.result), UVM_HIGH)

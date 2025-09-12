@@ -79,7 +79,9 @@ class fp16_add_model extends fp_model_base #(fp16_add_transaction);
 
         // Copy original inputs and set the predicted result
         trans_out = new trans_in;
-        trans_out.result = shortreal_to_fp16(r_result);
+
+        // Place the prediction in the dedicated golden_result field
+        trans_out.golden_result = shortreal_to_fp16(r_result);
     endfunction
 
 endclass

@@ -12,6 +12,7 @@ package fp16_add_pkg;
     `include "fp_scoreboard.sv"
 
     // Include DUT-specific components
+    `include "fp16_add_if.sv"
     `include "fp16_add_transaction.sv"
     `include "fp16_add_sequence.sv"
     `include "fp16_add_driver.sv"
