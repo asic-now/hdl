@@ -1,5 +1,5 @@
 // fp16_add_monitor.sv
-// DUT-specific monitor.
+// Monitors the DUT interface and reports transactions.
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
@@ -10,8 +10,6 @@ class fp16_add_monitor extends uvm_monitor;
     virtual fp16_add_if vif;
     uvm_analysis_port #(fp16_add_transaction) ap;
 
-    localparam DUT_LATENCY = 3;
-
     function new(string name, uvm_component parent);
         super.new(name, parent);
         ap = new("ap", this);
@@ -19,30 +17,31 @@ class fp16_add_monitor extends uvm_monitor;
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        if (!uvm_config_db#(virtual fp16_add_if)::get(this, "", "vif", vif)) begin
-            `uvm_fatal("NOVIF", "Virtual interface must be set for monitor!")
+        if(!uvm_config_db#(virtual fp16_add_if)::get(this, "", "dut_vif", vif)) begin
+            `uvm_fatal("NOVIF", "Could not get virtual interface handle")
         end
     endfunction
 
     virtual task run_phase(uvm_phase phase);
-        fp16_add_transaction tx_q[$];
-
         forever begin
-            @(vif.cb);
-            if (vif.rst_n) begin
-                fp16_add_transaction new_tx = fp16_add_transaction::type_id::create("new_tx");
-                new_tx.a = vif.a;
-                new_tx.b = vif.b;
-                tx_q.push_back(new_tx);
-                
-                if (tx_q.size() > DUT_LATENCY) begin
-                    fp16_add_transaction captured_tx = tx_q.pop_front();
-                    captured_tx.result = vif.result;
-                    ap.write(captured_tx);
-                end
-            end else begin
-                tx_q.delete();
-            end
+            collect_transaction();
         end
     endtask
+
+    virtual task collect_transaction();
+        fp16_add_transaction trans;
+        trans = fp16_add_transaction::type_id::create("trans");
+
+        @(vif.monitor_cb);
+        // Wait for 3 cycles for the pipelined result
+        repeat(3) @(vif.monitor_cb);
+        
+        trans.a = vif.monitor_cb.a;
+        trans.b = vif.monitor_cb.b;
+        trans.result = vif.monitor_cb.result;
+
+        `uvm_info("MONITOR", $sformatf("Collected transaction: a=0x%h, b=0x%h, result=0x%h", trans.a, trans.b, trans.result), UVM_HIGH)
+        ap.write(trans);
+    endtask
+
 endclass

@@ -5,11 +5,11 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-virtual class fp_transaction_base extends uvm_sequence_item;
+virtual class fp_transaction_base #(int WIDTH=32) extends uvm_sequence_item;
 
     // Data fields common to all operations
-    logic [63:0] result;
-    logic [63:0] golden_result;
+    logic [WIDTH-1:0] result;
+    logic [WIDTH-1:0] golden_result;
 
     // Constructor
     function new(string name = "fp_transaction_base");
@@ -17,6 +17,6 @@ virtual class fp_transaction_base extends uvm_sequence_item;
     endfunction
 
     // Pure virtual function to ensure subclasses implement it
-    pure virtual function string convert2string();
+    // pure virtual function string convert2string();
 
 endclass

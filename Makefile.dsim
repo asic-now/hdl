@@ -1,0 +1,59 @@
+# Makefile for compiling and running with Altair DSim.
+#
+
+#==============================================================================
+# Variables
+#==============================================================================
+
+# Simulator command for DSim
+COMPILER = dsim
+
+# Default test to run
+TESTNAME ?= fp16_add_random_test
+
+# Project Structure
+RTL_DIR      = rtl/verilog/fp16
+TEST_DIR     = verif/tests/fp16_add
+VERIF_LIB_DIR= verif/lib
+
+# Source Files
+DUT_FILES    = $(RTL_DIR)/fp16_add.v
+SV_FILES     = $(wildcard $(TEST_DIR)/*.sv) $(wildcard $(VERIF_LIB_DIR)/*.sv)
+TB_TOP_NAME  = fp16_add_tb_top
+
+# Include paths for your specific project files
+INCLUDE_DIRS = -incdir $(VERIF_LIB_DIR) -incdir $(TEST_DIR)
+
+# Compilation & Run Flags for DSim
+# -sv       : Enable SystemVerilog
+# -uvm      : **This is the crucial flag to enable the UVM library**
+# -top      : Specify the top-level module
+# -gen-elab-scripts : Generate scripts for elaboration and simulation
+DSIM_FLAGS = \
+	-sv \
+	-uvm 1.2 \
+	-top $(TB_TOP_NAME) \
+	$(INCLUDE_DIRS)
+
+# Runtime Plusarg
+RUN_PLUSARGS = +UVM_TESTNAME=$(TESTNAME)
+
+#==============================================================================
+# Targets
+#==============================================================================
+
+all: run
+
+compile:
+	@echo "--- Compiling with DSim ---"
+	$(COMPILER) -compile $(DSIM_FLAGS) $(DUT_FILES) $(SV_FILES)
+
+run: compile
+	@echo "--- Running Test: $(TESTNAME) with DSim ---"
+	$(COMPILER) -run $(RUN_PLUSARGS)
+
+clean:
+	@echo "--- Cleaning up DSim files ---"
+	rm -rf *.log *.syn DSim.sln dsim_out/
+
+.PHONY: all compile run clean

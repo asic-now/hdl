@@ -9,7 +9,7 @@ class fp16_add_env extends uvm_env;
 
     fp16_add_agent agent;
     fp16_add_model model;
-    fp_scoreboard #(fp16_add_transaction) scbd; // Using the generic scoreboard
+    fp_scoreboard #(fp16_add_transaction, fp16_add_model) scoreboard; // Using the generic scoreboard
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -19,12 +19,14 @@ class fp16_add_env extends uvm_env;
         super.build_phase(phase);
         agent = fp16_add_agent::type_id::create("agent", this);
         model = fp16_add_model::type_id::create("model", this);
-        scbd  = fp_scoreboard #(fp16_add_transaction)::type_id::create("scbd", this);
+        scoreboard  = fp_scoreboard #(fp16_add_transaction, fp16_add_model)::type_id::create("scoreboard", this);
     endfunction
 
     virtual function void connect_phase(uvm_phase phase);
-        agent.mon.ap.connect(scbd.actual_export);
-        agent.mon.ap.connect(model.port);
-        model.ap.connect(scbd.expected_fifo.analysis_export);
+        super.connect_phase(phase);
+        agent.monitor.ap.connect(scoreboard.ap);
+        // agent.monitor.ap.connect(scoreboard.actual_export);
+        // agent.monitor.ap.connect(model.port);
+        // model.ap.connect(scoreboard.expected_fifo.analysis_export);
     endfunction
 endclass

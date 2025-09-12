@@ -1,36 +1,20 @@
 // fp_model_base.sv
-// Provides a virtual base class for all reference models.
+// Generic base class for a reference model.
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-// Abstract class that defines the interface for a reference model.
-virtual class fp_model_base #(type REQ = uvm_sequence_item) extends uvm_component;
+virtual class fp_model_base #(type T = uvm_sequence_item) extends uvm_object;
+    // `uvm_object_utils(fp_model_base #(T))
 
-    // The analysis port where the model receives transactions from the monitor
-    uvm_analysis_export #(REQ) port;
-    
-    // The analysis port to send predicted transactions to the scoreboard
-    uvm_analysis_port #(REQ) ap;
 
-    function new(string name, uvm_component parent);
-        super.new(name, parent);
-        port = new("port", this);
-        ap = new("ap", this);
+    // This is a pure virtual function. Any class that extends this base
+    // MUST implement a function with this exact signature.
+    pure virtual function void predict(T trans_in, ref T trans_out);
+
+    // Standard constructor for a uvm_object
+    function new(string name="fp_model_base");
+        super.new(name);
     endfunction
-
-    // Pure virtual function that MUST be implemented by child classes
-    // to define the DUT-specific behavior.
-    pure virtual function void calculate_golden(REQ tx);
-
-    virtual task run_phase(uvm_phase phase);
-        REQ tx;
-        forever begin
-            port.get(tx);
-            calculate_golden(tx);
-            ap.write(tx);
-            `uvm_info("MODEL", $sformatf("Predicted: %s", tx.convert2string()), UVM_HIGH)
-        end
-    endtask
 
 endclass

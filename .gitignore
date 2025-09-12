@@ -2,5 +2,8 @@
 # Temporary & staging
 _import
 
-# Generated files
-dsim_work/
+# Generated files and folders
+dsim_work
+*.log
+*.env
+*.db

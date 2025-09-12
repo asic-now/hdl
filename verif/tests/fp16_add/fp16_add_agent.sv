@@ -1,5 +1,5 @@
 // fp16_add_agent.sv
-// DUT-specific agent.
+// UVM Agent for the fp16_add DUT.
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
@@ -7,9 +7,9 @@ import uvm_pkg::*;
 class fp16_add_agent extends uvm_agent;
     `uvm_component_utils(fp16_add_agent)
 
-    fp16_add_driver drv;
-    uvm_sequencer #(fp16_add_transaction) sqr;
-    fp16_add_monitor mon;
+    fp16_add_driver driver;
+    fp16_add_monitor monitor;
+    uvm_sequencer #(fp16_add_transaction) seqr;
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -17,12 +17,18 @@ class fp16_add_agent extends uvm_agent;
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        sqr = uvm_sequencer #(fp16_add_transaction)::type_id::create("sqr", this);
-        drv = fp16_add_driver::type_id::create("drv", this);
-        mon = fp16_add_monitor::type_id::create("mon", this);
+        monitor = fp16_add_monitor::type_id::create("monitor", this);
+        if(get_is_active() == UVM_ACTIVE) begin
+            driver = fp16_add_driver::type_id::create("driver", this);
+            seqr = uvm_sequencer #(fp16_add_transaction)::type_id::create("seqr", this);
+        end
     endfunction
 
     virtual function void connect_phase(uvm_phase phase);
-        drv.seq_item_port.connect(sqr.seq_item_export);
+        super.connect_phase(phase);
+        if(get_is_active() == UVM_ACTIVE) begin
+            driver.seq_item_port.connect(seqr.seq_item_export);
+        end
     endfunction
+
 endclass
