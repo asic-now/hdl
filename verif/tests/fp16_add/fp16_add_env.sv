@@ -1,5 +1,5 @@
 // fp16_add_env.sv
-// Top-level environment for the fp16_add test.
+// Top-level environment for the fp16_add testbench.
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
@@ -15,18 +15,19 @@ class fp16_add_env extends uvm_env;
         super.new(name, parent);
     endfunction
 
-    virtual function void build_phase(uvm_phase phase);
+    function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         agent = fp16_add_agent::type_id::create("agent", this);
-        model = fp16_add_model::type_id::create("model", this);
-        scoreboard  = fp_scoreboard #(fp16_add_transaction, fp16_add_model)::type_id::create("scoreboard", this);
+        model = fp16_add_model::type_id::create("model"); // model has no parent
+        scoreboard = fp_scoreboard #(fp16_add_transaction, fp16_add_model)::type_id::create("scoreboard", this);
+
+        // Pass the model handle to all children of this component
+        uvm_config_db#(fp16_add_model)::set(this, "*", "model", model);
     endfunction
 
-    virtual function void connect_phase(uvm_phase phase);
+    function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
         agent.monitor.ap.connect(scoreboard.ap);
-        // agent.monitor.ap.connect(scoreboard.actual_export);
-        // agent.monitor.ap.connect(model.port);
-        // model.ap.connect(scoreboard.expected_fifo.analysis_export);
     endfunction
+
 endclass

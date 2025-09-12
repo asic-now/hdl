@@ -3,7 +3,8 @@
 _import
 
 # Generated files and folders
-dsim_work
+dsim_work/
 *.log
 *.env
 *.db
+dfx_runtime.txt

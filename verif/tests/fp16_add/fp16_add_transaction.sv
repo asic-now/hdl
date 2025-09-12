@@ -1,19 +1,19 @@
 // fp16_add_transaction.sv
-// Specific transaction for the fp16_add DUT.
+// Transaction item for the fp16_add testbench.
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-class fp16_add_transaction extends fp_transaction_base;
+class fp16_add_transaction extends fp_transaction_base #(16);
 
     // `uvm_object_utils(fp16_add_transaction)
 
     // DUT-specific data fields
     rand logic [15:0] a;
     rand logic [15:0] b;
-    // 'result' and 'golden_result' are inherited as 16-bit values
+    // 'result' and 'golden_result' are inherited as 16-bit values.
 
-    function new(string name = "fp16_add_transaction");
+    function new(string name="fp16_add_transaction");
         super.new(name);
     endfunction
 
@@ -26,7 +26,7 @@ class fp16_add_transaction extends fp_transaction_base;
     `uvm_object_utils_begin(fp16_add_transaction)
         `uvm_field_int(a, UVM_ALL_ON)
         `uvm_field_int(b, UVM_ALL_ON)
-        `uvm_field_int(result, UVM_ALL_ON | UVM_NOCOMPARE)
+        `uvm_field_int(result, UVM_ALL_ON)
         `uvm_field_int(golden_result, UVM_ALL_ON)
     `uvm_object_utils_end
 
