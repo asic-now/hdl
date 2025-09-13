@@ -23,7 +23,7 @@ class fp16_add_driver extends uvm_driver #(fp16_add_transaction);
         // Wait for reset to de-assert before starting
         @(posedge vif.rst_n);
         // Add one cycle delay for synchronization with monitor
-        @(vif.driver_cb);
+        // @(vif.driver_cb);
 
         forever begin
             seq_item_port.get_next_item(req);

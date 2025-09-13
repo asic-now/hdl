@@ -27,9 +27,6 @@ class fp16_add_monitor extends uvm_monitor;
     endfunction
 
     virtual task run_phase(uvm_phase phase);
-        // Wait for reset to finish before starting any monitoring
-        @(posedge vif.rst_n);
-
         // Fork the two parallel processes
         fork
             collect_inputs();
@@ -39,6 +36,8 @@ class fp16_add_monitor extends uvm_monitor;
 
     virtual task collect_inputs();
         fp16_add_transaction trans;
+        // Wait for reset to finish
+        @(posedge vif.rst_n);
         forever begin
             @(vif.monitor_cb);
             // Only capture the transaction if it's valid (not X)
@@ -54,7 +53,9 @@ class fp16_add_monitor extends uvm_monitor;
     virtual task collect_outputs_and_send();
         fp16_add_transaction trans_out;
         
-        // Wait for the pipeline to fill with valid data after reset
+        // Wait for reset to finish
+        @(posedge vif.rst_n);
+        // Wait for the exact pipeline latency to fill up *after* reset
         repeat(PIPELINE_LATENCY) @(vif.monitor_cb);
 
         forever begin
