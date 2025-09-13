@@ -6,6 +6,10 @@ This project contains a library of synthesizable Verilog RTL for various floatin
 
 It is WIP (Work In Progress), and not everything has been verified.
 
+## Floating Point Numbers - IEEE 754
+
+<https://numeral-systems.com/ieee-754-converter/>
+
 ## Project Structure
 
 The repository is organized into two main directories: rtl/ and verif/.
@@ -59,6 +63,13 @@ This section was written with Altair DSim v2025.1.
     DSim Studio will show check mark "License Activated" next to "Manage Free Individual License" icon in "Versions" sub-section of "DSim Installations" section.
   * Open "DSim Studio" terminal.
   * DSim Studio projects are configured by `*.dpf` files.
+
+#### DSim DPI-C
+
+Most verification models are implemented with C reference functions. C functions are called from UVM testbench model using DPI-C.
+
+* <https://help.metrics.ca/support/solutions/articles/154000141123-how-to-integrate-c-c-files-with-your-design>
+* <https://help.metrics.ca/support/solutions/articles/154000141203-user-guide-dsim-using-the-dpi-and-pli>
 
 ### Synopsys VCS
 

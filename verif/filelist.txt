@@ -16,11 +16,11 @@
 ../verif/lib/fp_transaction_base.sv
 
 # List of Testbench Files
+../verif/tests/fp16_add/fp16_add_if.sv
 # ../verif/tests/fp16_add/fp16_add_transaction.sv
 # ../verif/tests/fp16_add/fp16_add_driver.sv
 # ../verif/tests/fp16_add/fp16_add_monitor.sv
 # ../verif/tests/fp16_add/fp16_add_agent.sv
-# ../verif/tests/fp16_add/fp16_add_if.sv
 # ../verif/tests/fp16_add/fp16_add_model.sv
 # ../verif/tests/fp16_add/fp16_add_env.sv
 # ../verif/tests/fp16_add/fp16_add_sequence.sv

@@ -1,59 +1,77 @@
-# Makefile for compiling and running with Altair DSim.
+# Makefile for compiling and running the UVM testbench with a C model via DPI-C.
+# Toolchain: Altair DSim
+#
+# Usage:
+#   make compile      - Compiles the C model, DUT, and testbench.
+#   make run          - Runs the simulation.
+#   make all          - Compiles and runs.
+#   make clean        - Removes all generated files.
 #
 
 #==============================================================================
 # Variables
 #==============================================================================
 
-# Simulator command for DSim
-COMPILER = dsim
+# --- Simulators ---
+# C Compiler for the DPI model
+CC = gcc
+# Verilog/SV Simulator
+SIM = dsim
 
-# Default test to run
+# --- Test Configuration ---
 TESTNAME ?= fp16_add_random_test
+TB_TOP   = fp16_add_tb_top
 
-# Project Structure
-RTL_DIR      = rtl/verilog/fp16
-TEST_DIR     = verif/tests/fp16_add
-VERIF_LIB_DIR= verif/lib
+# --- Project Structure ---
+RTL_DIR       = rtl/verilog/fp16
+TEST_DIR      = verif/tests/fp16_add
+VERIF_LIB_DIR = verif/lib
 
-# Source Files
-DUT_FILES    = $(RTL_DIR)/fp16_add.v
-SV_FILES     = $(wildcard $(TEST_DIR)/*.sv) $(wildcard $(VERIF_LIB_DIR)/*.sv)
-TB_TOP_NAME  = fp16_add_tb_top
+# --- Source Files ---
+# C model source
+C_MODEL_SRC = $(VERIF_LIB_DIR)/fp16_model.c
+# Name of the resulting shared library
+C_MODEL_LIB = $(VERIF_LIB_DIR)/fp16_model.so
 
-# Include paths for your specific project files
-INCLUDE_DIRS = -incdir $(VERIF_LIB_DIR) -incdir $(TEST_DIR)
+# SystemVerilog filelist
+SV_FILELIST = filelist.txt
 
-# Compilation & Run Flags for DSim
-# -sv       : Enable SystemVerilog
-# -uvm      : **This is the crucial flag to enable the UVM library**
-# -top      : Specify the top-level module
-# -gen-elab-scripts : Generate scripts for elaboration and simulation
-DSIM_FLAGS = \
-	-sv \
-	-uvm 1.2 \
-	-top $(TB_TOP_NAME) \
-	$(INCLUDE_DIRS)
+# --- Compiler and Sim Flags ---
+# C flags: create a position-independent shared object
+CFLAGS = -fPIC -shared
 
-# Runtime Plusarg
-RUN_PLUSARGS = +UVM_TESTNAME=$(TESTNAME)
+# DSim flags
+DSIM_FLAGS = -uvm 1.2 -F $(SV_FILELIST) -top $(TB_TOP)
+DSIM_RUN_FLAGS = +UVM_TESTNAME=$(TESTNAME)
+
+# DSim DPI-C flag to load the shared library
+DSIM_DPI_FLAG = -sv_lib $(C_MODEL_LIB)
 
 #==============================================================================
 # Targets
 #==============================================================================
 
+.PHONY: all compile run clean
+
 all: run
 
-compile:
-	@echo "--- Compiling with DSim ---"
-	$(COMPILER) -compile $(DSIM_FLAGS) $(DUT_FILES) $(SV_FILES)
+# Main run target depends on the compiled SV and C model
+run: $(C_MODEL_LIB)
+	@echo "--- Running Simulation with DSim ---"
+	$(SIM) $(DSIM_FLAGS) $(DSIM_DPI_FLAG) -run $(DSIM_RUN_FLAGS)
 
-run: compile
-	@echo "--- Running Test: $(TESTNAME) with DSim ---"
-	$(COMPILER) -run $(RUN_PLUSARGS)
+# Target to compile the C model into a shared library
+$(C_MODEL_LIB): $(C_MODEL_SRC)
+	@echo "--- Compiling C Model ---"
+	$(CC) $(CFLAGS) -o $@ $<
+
+# Target to compile the SystemVerilog code (optional, as dsim can do all-in-one)
+compile: $(C_MODEL_LIB)
+	@echo "--- Compiling SystemVerilog with DSim ---"
+	$(SIM) $(DSIM_FLAGS) $(DSIM_DPI_FLAG) -compile
 
 clean:
-	@echo "--- Cleaning up DSim files ---"
-	rm -rf *.log *.syn DSim.sln dsim_out/
+	@echo "--- Cleaning up ---"
+	rm -rf simv* csrc *.log *.vdb ucli.key DVEfiles/ novas.* verdiLog/ *.fsdb
+	rm -rf DSim.sln dsim_out/ *.so
 
-.PHONY: all compile run clean

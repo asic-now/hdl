@@ -5,9 +5,9 @@
 // Operation: result = sqrt(a)
 //
 // Format (IEEE 754 half-precision):
-// [15]   : Sign bit
+// [   15]: Sign bit (1 for negative, 0 for positive)
 // [14:10]: 5-bit exponent (bias of 15)
-// [9:0]  : 10-bit mantissa
+// [ 9: 0]: 10-bit mantissa (fraction/significand)
 //
 // Features:
 // - Pipelined architecture using a non-restoring square root algorithm.

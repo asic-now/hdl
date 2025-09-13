@@ -10,6 +10,9 @@ simulations:
       -top work.fp16_add_tb_top
       -uvm 1.2
       +UVM_TESTNAME=fp16_add_random_test
+      +acc+b ../verif/lib/fp16_model.c
+      -c-opts "-shared"
+      -cc-verbose
 source_files:
   - language: verilog
     path: filelist.txt

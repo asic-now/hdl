@@ -1,6 +1,5 @@
 // fp16_add_if.sv
 // Interface for the fp16_add DUT.
-// This interface now correctly includes the clock and reset ports.
 
 interface fp16_add_if (
     input bit clk,

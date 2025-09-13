@@ -3,15 +3,15 @@
 // Verilog RTL for a 16-bit (half-precision) floating-point adder.
 //
 // Format (IEEE 754 half-precision):
-// [15]   : Sign bit (1 for negative, 0 for positive)
+// [   15]: Sign bit (1 for negative, 0 for positive)
 // [14:10]: 5-bit exponent (bias of 15)
-// [9:0]  : 10-bit mantissa (fraction)
+// [ 9: 0]: 10-bit mantissa (fraction/significand)
 //
 // Features:
 // - 3-stage pipelined architecture for improved clock frequency.
 // - Handles normalized and denormalized numbers.
 // - Handles special cases: NaN, Infinity, and Zero.
-// - Truncates the result (no rounding).
+// - Truncates the result (no rounding implemented).
 
 module fp16_add (
     input clk,
@@ -24,8 +24,9 @@ module fp16_add (
 );
 
     //----------------------------------------------------------------
-    // Stage 1: Unpack, Compare, and Align
+    // Wires and Registers
     //----------------------------------------------------------------
+
     // Unpack inputs a and b
     wire sign_a = a[15];
     wire [4:0] exp_a = a[14:10];
@@ -49,19 +50,42 @@ module fp16_add (
     wire [10:0] full_mant_a = {(exp_a != 0), mant_a};
     wire [10:0] full_mant_b = {(exp_b != 0), mant_b};
 
-    // Stage 1 pipeline registers
+    // --- Stage 1 (Combinational) Registers ---
     reg  [ 4:0] s1_larger_exp;
     reg         s1_result_sign;
     reg         s1_op_is_sub;
-    reg  [21:0] s1_mant_a; // Extended mantissa for alignment and guard bits
-    reg  [21:0] s1_mant_b;
+    reg  [24:0] s1_mant_a; // Extended mantissa for alignment
+    reg  [24:0] s1_mant_b;
     reg         s1_special_case;
     reg  [15:0] s1_special_result;
- 
-    reg  [ 4:0] exp_diff;
-    reg  [10:0] temp_mant_a, temp_mant_b;
-    reg         sign_larger, sign_smaller;
-    reg  [ 4:0] larger_exp_comb;
+
+    // --- Stage 2 (Pipelined) Registers ---
+    reg         [ 4:0] s2_exp;
+    reg                s2_sign;
+    reg  signed [24:0] s2_mant;
+    reg                s2_special_case;
+    reg         [15:0] s2_special_result;
+    
+    // --- Stage 3 (Pipelined) Registers ---
+    reg         [15:0] result_reg;
+    
+    // --- Temporary calculation regs for always blocks ---
+    reg         [ 4:0] exp_diff;
+    reg         [10:0] temp_mant_a, temp_mant_b;
+    reg                sign_larger, sign_smaller;
+    reg         [ 4:0] larger_exp_comb;
+    integer            shift_amount;
+    reg  signed [ 5:0] final_exp;
+    reg         [23:0] final_mant;
+    integer            i;
+    reg                found_msb;
+    reg         [ 9:0] out_mant;
+    reg         [ 4:0] out_exp;
+
+
+    //----------------------------------------------------------------
+    // Stage 1: Unpack, Compare, and Align (Combinational Logic)
+    //----------------------------------------------------------------
     always @(*) begin
         // Combinational logic for Stage 1
 
@@ -83,13 +107,13 @@ module fp16_add (
         end
 
         // Align the mantissa of the smaller number by shifting it right
-        s1_mant_a = {temp_mant_a, 11'b0};
-        s1_mant_b = {temp_mant_b, 11'b0} >> exp_diff;
-        
+        s1_mant_a = {temp_mant_a, 14'b0};
+        s1_mant_b = {temp_mant_b, 14'b0} >> exp_diff;
+
         // Set up for stage 2
         s1_larger_exp = larger_exp_comb;
         s1_result_sign = sign_larger;
-        s1_op_is_sub = (sign_larger != sign_smaller);
+        s1_op_is_sub = (sign_a != sign_b);
 
         // Handle special cases - bypass the main logic
         s1_special_case = 1'b0;
@@ -99,7 +123,7 @@ module fp16_add (
             s1_special_case = 1'b1;
             s1_special_result = 16'h7C01; // Return quiet NaN
         end else if (is_inf_a && is_inf_b) begin
-             s1_special_case = (sign_a != sign_b); // Result is NaN if signs differ
+             s1_special_case = (sign_a != sign_b); // Result is NaN if signs differ (inf - inf)
              s1_special_result = (sign_a == sign_b) ? a : 16'h7C01;
         end else if (is_inf_a) begin
             s1_special_case = 1'b1;
@@ -117,45 +141,33 @@ module fp16_add (
     end
 
     //----------------------------------------------------------------
-    // Stage 2: Add or Subtract
+    // Stage 2: Add or Subtract (Pipelined Logic)
     //----------------------------------------------------------------
-    reg  [ 4:0] s2_exp;
-    reg         s2_sign;
-    reg  [22:0] s2_mant; // Extra bit for carry/borrow
-    reg         s2_special_case;
-    reg  [15:0] s2_special_result;
-
     always @(posedge clk) begin
         if (!rst_n) begin
             s2_exp <= 5'b0;
             s2_sign <= 1'b0;
-            s2_mant <= 23'b0;
+            s2_mant <= 25'b0;
             s2_special_case <= 1'b0;
             s2_special_result <= 16'b0;
         end else begin
-            if (s1_op_is_sub) begin
-                s2_mant <= s1_mant_a - s1_mant_b;
-            end else begin
-                s2_mant <= s1_mant_a + s1_mant_b;
-            end
             s2_exp <= s1_larger_exp;
-            s2_sign <= s1_result_sign;
             s2_special_case <= s1_special_case;
             s2_special_result <= s1_special_result;
+
+            if (s1_op_is_sub) begin
+                s2_mant <= s1_mant_a - s1_mant_b;
+                s2_sign <= s1_result_sign;
+            end else begin
+                s2_mant <= s1_mant_a + s1_mant_b;
+                s2_sign <= s1_result_sign;
+            end
         end
     end
 
     //----------------------------------------------------------------
-    // Stage 3: Normalize and Pack
+    // Stage 3: Normalize and Pack (Pipelined Logic)
     //----------------------------------------------------------------
-    reg         [15:0] result_reg;
-    reg         [ 9:0] out_mant;
-    reg         [ 4:0] out_exp;
-
-    reg         [ 4:0] shift_amount;
-    reg  signed [ 5:0] final_exp;
-    reg         [22:0] final_mant;
-
     always @(posedge clk) begin
         if (!rst_n) begin
             result_reg <= 16'b0;
@@ -165,58 +177,50 @@ module fp16_add (
             end else begin
                 // Normalize the result from the adder/subtractor
 
-                final_mant = s2_mant;
+                final_mant = s2_mant[23:0]; // The result from S2 is always positive magnitude
                 final_exp = s2_exp;
 
-                if (s2_mant == 0) begin
+                if (final_mant == 0) begin
                     // Result is zero
                     final_exp = 0;
-                end else if (s2_mant[22]) begin // Overflow from addition
+                end else if (s2_mant[24]) begin // Overflow from addition
                     final_exp = s2_exp + 1;
-                    final_mant = s2_mant >> 1;
-                end else begin // Check for leading zeros after subtraction
-                    // Find first '1' to normalize (priority encoder)
-                    // This is a simplified, synthesizable version of a priority encoder
-                    // A more optimized version might use a case statement or function.
+                    final_mant = s2_mant[24:1];
+                end else if (final_mant[23] == 0) begin // Normalize after subtraction
+                    // Find first '1' to normalize (leading zero counter)
                     shift_amount = 0;
-                    if (final_mant[21:11] == 0) begin // Check upper bits first
-                         if      (!final_mant[21]) shift_amount = shift_amount + 1;
-                         if      (!final_mant[20]) shift_amount = shift_amount + 1;
-                         // ... and so on. This becomes very verbose.
-                         // Let's use a more compact (but potentially slower) approach for clarity.
-                         
-                         // A more practical approach is to find the amount to shift left
-                         for (integer i = 21; i >= 0; i = i - 1) begin
-                             if (final_mant[i]) begin
-                                 shift_amount = 21 - i;
-                             end
-                         end
-
-                         final_mant = final_mant << shift_amount;
-                         final_exp = s2_exp - shift_amount;
+                    found_msb = 1'b0;
+                    for (i = 22; i >= 0; i = i - 1) begin
+                        if (!found_msb && final_mant[i]) begin
+                            shift_amount = 23 - i;
+                            found_msb = 1'b1;
+                        end
                     end
+                    final_mant = final_mant << shift_amount;
+                    final_exp = s2_exp - shift_amount;
                 end
 
                 // Pack the final result
-               
-                // Truncate mantissa to 10 bits, removing the implicit leading 1
-                out_mant = final_mant[20:11];
+
+                // Truncate mantissa to 10 bits
+                out_mant = final_mant[22:13];
 
                 // Check for overflow/underflow on final exponent
                 if (final_exp >= 31) begin // Overflow -> Infinity
                     out_exp = 5'h1F;
                     out_mant = 10'b0;
                 end else if (final_exp <= 0) begin // Underflow -> Denormalized or Zero
-                    // Shift mantissa right for denormalized representation
-                    out_mant = (final_mant[21:11]) >> (1 - final_exp);
+                    // A proper denormalization stage would be more complex.
+                    // For this design, we flush to zero on underflow.
                     out_exp = 5'b0;
+                    out_mant = 10'b0;
                 end else begin
                     out_exp = final_exp[4:0];
                 end
 
                 if (out_exp == 0 && out_mant == 0) begin
-                    // Ensure zero result has a positive sign
-                    result_reg <= 16'b0;
+                    // Ensure zero result has a positive sign, unless it was intentional
+                    result_reg <= {s2_sign, 15'b0};
                 end else begin
                     result_reg <= {s2_sign, out_exp, out_mant};
                 end

@@ -15,12 +15,16 @@ class fp16_add_driver extends uvm_driver #(fp16_add_transaction);
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        if(!uvm_config_db#(virtual fp16_add_if)::get(this, "", "dut_vif", vif)) begin
+        if(!uvm_config_db#(virtual fp16_add_if)::get(this, "", "dut_vif", vif))
             `uvm_fatal("NOVIF", "Could not get virtual interface handle")
-        end
     endfunction
 
     virtual task run_phase(uvm_phase phase);
+        // Wait for reset to de-assert before starting
+        @(posedge vif.rst_n);
+        // Add one cycle delay for synchronization with monitor
+        @(vif.driver_cb);
+
         forever begin
             seq_item_port.get_next_item(req);
             drive_transfer(req);
