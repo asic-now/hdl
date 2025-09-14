@@ -5,11 +5,27 @@ version: '0.2'
 work_dir: .
 design_root_dir: ..
 simulations:
-  - name: fp16_add
+  - name: fp16_add_random
     options: |-
       -top work.fp16_add_tb_top
       -uvm 1.2
       +UVM_TESTNAME=fp16_add_random_test
+      +acc+b ../verif/lib/fp16_model.c
+      -c-opts "-shared"
+      -cc-verbose
+  - name: fp16_add_special
+    options: |-
+      -top work.fp16_add_tb_top
+      -uvm 1.2
+      +UVM_TESTNAME=fp16_add_special_cases_test
+      +acc+b ../verif/lib/fp16_model.c
+      -c-opts "-shared"
+      -cc-verbose
+  - name: fp16_add_all
+    options: |-
+      -top work.fp16_add_tb_top
+      -uvm 1.2
+      +UVM_TESTNAME=fp16_add_combined_test
       +acc+b ../verif/lib/fp16_model.c
       -c-opts "-shared"
       -cc-verbose

@@ -1,4 +1,4 @@
-// fp16_add_sequence.sv
+// fp16_add_random_sequence.sv
 // Sequence to generate random transactions for the fp16_add DUT.
 
 `include "uvm_macros.svh"

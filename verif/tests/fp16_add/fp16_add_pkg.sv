@@ -14,12 +14,16 @@ package fp16_add_pkg;
     // Include DUT-specific components
     // `include "fp16_add_if.sv" // TODO: (when needed) Does not work in the package.
     `include "fp16_add_transaction.sv"
-    `include "fp16_add_sequence.sv"
     `include "fp16_add_driver.sv"
     `include "fp16_add_monitor.sv"
     `include "fp16_add_agent.sv"
     `include "fp16_add_model.sv"
     `include "fp16_add_env.sv"
     `include "fp16_add_base_test.sv"
+    `include "fp16_add_random_sequence.sv"
     `include "fp16_add_random_test.sv"
+    `include "fp16_add_special_cases_sequence.sv"
+    `include "fp16_add_special_cases_test.sv"
+    `include "fp16_add_combined_sequence.sv"
+    `include "fp16_add_combined_test.sv"
 endpackage
