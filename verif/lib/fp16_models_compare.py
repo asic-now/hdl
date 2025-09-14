@@ -51,25 +51,48 @@ def fp16_add_c(a_hex: str, b_hex: str) -> str:
     result = lib.c_fp16_add(c_uint16(a_val), c_uint16(b_val))
     return f'{result:04x}'
 
-def compare_fp16_add(a_hex: str, b_hex: str) -> int:
+def compare_fp16_add(a_hex: str, b_hex: str, c_py: str, c_c: str) -> int:
     """
     Compare C and Python fp16_add implementations and print results.
 
     Args:
         a_hex (str): hex string of first operand.
         b_hex (str): hex string of second operand.
+        c_py  (str): hex string of expected Py output.
+        c_c   (str): hex string of expected C  output.
     """
     c_result = fp16_add_c(a_hex, b_hex)
     py_result = fp16_add(a_hex, b_hex)['hex']
-    if c_result == py_result:
-        s = "MATCH"
-        res = 0
-    else:
-        s = "DIFFER"
+    exp_py = ""
+    exp_c = ""
+    s = "PASS"
+    res = 0
+    if c_py and py_result != c_py:
+        exp_py = f", Expected: 0x{c_py}"
+        s = "FAIL"
         res = 1
-    print(f"{s} fp16_add(0x{a_hex}, 0x{b_hex}) results - C: 0x{c_result}, Python: 0x{py_result}")
+    if not res and c_c and py_result != c_py:
+        exp_c = f", Expected: 0x{c_c}"
+        s = "FAIL"
+        res = 1
+    if not res and (not c_py or not c_c) and c_result != py_result:
+        exp_py = f", Expected: 0x{c_py}" if c_py else "Expected: 0x{c_result}"
+        exp_c = f", Expected: 0x{c_c}" if c_c else "Expected: 0x{py_result}"
+        s = "FAIL"
+        res = 1
+    print(
+        f"{s} fp16_add(0x{a_hex}, 0x{b_hex}) results - Python: 0x{py_result}{exp_py}, C: 0x{c_result}{exp_c}"
+    )
     if s == "DIFFER":
-        fp16_print(['0x'+a_hex, '0x'+b_hex, '0x'+c_result, '0x'+py_result])
+        vals = [
+            "0x" + a_hex,
+            "0x" + b_hex,
+            "0x" + c_result,
+            "0x" + py_result,
+        ]
+        if c_py:
+            vals.append("0x" + c_py)
+        fp16_print(vals)
     return res
 
 def compile_lib():
@@ -117,13 +140,31 @@ def main():
     res = 0
 
     test_cases = [
-        ('c540', '0000'),
-        ('c540', '2cab'),
-        ('5a63', 'dbdb'),
+        # (   a,      b,   c_py,    c_c),
+        # Edge cases
+        ("7c01", "3c00", "7e01", "7e00"),  # qNaN +   1.0 -> qNaN, py != C, DUT=7c01=qNaN
+        ("4000", "fc01", "fe01", "fe00"),  #  2.0 + -qNaN -> qNaN, py != C, DUT=7c01=qNaN
+        ("7c00", "7c00", "7c00", "7c00"),  # +Inf +  +Inf -> +Inf
+        ("fc00", "fc00", "fc00", "fc00"),  # -Inf +  -Inf -> -Inf
+        ("7c00", "fc00", "fe00", "fe00"),  # +Inf +  -Inf -> qNaN
+        ("fc00", "7c00", "fe00", "fe00"),  # -Inf +  +Inf -> qNaN
+        ("7c00", "4000", "7c00", "7c00"),  # +Inf +   2.0 -> +Inf
+        ("0000", "8000", "0000", "0000"),  #   +0 +    -0 ->   +0
+        ("8000", "8000", "8000", "8000"),  #   -0 +    -0 ->   -0
+        ("c200", "0000", "c200", "c200"),  #  4.0 +    +0 ->  4.0
+        #  Some random test cases
+        ("c540", "0000", "c540", "c540"),
+        ("c540", "2cab", "c52d", "c52d"),
+        ("5a63", "dbdb", "d1e0", "d1e0"),
     ]
-    for a, b in test_cases:
-        print(f"Testing: fp16_add(0x{a}, 0x{b})")
-        res += compare_fp16_add(a, b)
+    for a, b, c_py, c_c in test_cases:
+        exp_str = ""
+        if c_py:
+            exp_str += f"=0x{c_py}/* py */"
+        if c_c:
+            exp_str += f"=0x{c_c}/* C */"
+        print(f"\nTesting: fp16_add(0x{a}, 0x{b}){exp_str}")
+        res += compare_fp16_add(a, b, c_py, c_c)
         total += 1
 
     if res:
