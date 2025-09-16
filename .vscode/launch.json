@@ -11,6 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal"
         },
+
         {
             "name": "generate_lut.py help",
             "type": "debugpy",
@@ -42,6 +43,7 @@
             ],
             "console": "integratedTerminal"
         },
+
         {
             "name": "fp16_model.py add 0xc540 0x2cab",
             "type": "debugpy",
@@ -50,6 +52,15 @@
             "args": [
                 "add", "0xc540", "0x2cab",
             ],
+            "console": "integratedTerminal"
+        },
+
+        {
+            "name": "fp16_models_compare.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "verif/lib/fp16_models_compare.py",
+            "args": [],
             "console": "integratedTerminal"
         },
     ]
