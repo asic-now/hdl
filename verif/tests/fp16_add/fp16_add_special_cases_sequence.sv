@@ -17,63 +17,112 @@ class fp16_add_special_cases_sequence extends uvm_sequence #(fp16_add_transactio
         
         `uvm_info("SEQ", "Starting special cases sequence", UVM_LOW)
 
-        // Case 1: NaN + Normal -> NaN
-        req = fp16_add_transaction::type_id::create("req_nan_1");
+        // Case 1: sNaN + Normal -> qNaN
+        req = fp16_add_transaction::type_id::create("req_snan_1");
         start_item(req);
-        req.a = 16'h7C01; // qNaN
+        req.a = 16'h7C00; // sNaN
         req.b = 16'h3C00; // 1.0
         finish_item(req);
 
-        // Case 2: Normal + NaN -> NaN
-        req = fp16_add_transaction::type_id::create("req_nan_2");
+        // Case 2: Normal + sNaN -> qNaN
+        req = fp16_add_transaction::type_id::create("req_snan_2");
         start_item(req);
-        req.a = 16'h4000; // 2.0
-        req.b = 16'hFC01; // -qNaN
+        req.a = 16'h3C00; // 1.0
+        req.b = 16'h7C00; // sNaN
         finish_item(req);
 
-        // Case 3: +Inf + +Inf -> +Inf
+        // Case 3: -sNan + Normal -> -qNaN
+        req = fp16_add_transaction::type_id::create("req_snan_3");
+        start_item(req);
+        req.a = 16'hFC00; // -sNaN
+        req.b = 16'h4000; // 2.0
+        finish_item(req);
+
+        // Case 4: Normal + -sNan -> -qNaN
+        req = fp16_add_transaction::type_id::create("req_snan_4");
+        start_item(req);
+        req.a = 16'h4000; // 2.0
+        req.b = 16'hFC00; // -sNaN
+        finish_item(req);
+
+        // Case 5: qNaN + Normal -> qNaN
+        req = fp16_add_transaction::type_id::create("req_qnan_1");
+        start_item(req);
+        req.a = 16'h7E01; // -qNaN
+        req.b = 16'h3C00; // 1.0
+        finish_item(req);
+
+        // Case 6: Normal + qNaN -> qNaN
+        req = fp16_add_transaction::type_id::create("req_qnan_2");
+        start_item(req);
+        req.a = 16'h3C00; // 1.0
+        req.b = 16'h7E01; // -qNaN
+        finish_item(req);
+
+        // Case 7: -qNaN + Normal -> -qNaN
+        req = fp16_add_transaction::type_id::create("req_qnan_3");
+        start_item(req);
+        req.a = 16'hFE01; // -qNaN
+        req.b = 16'h4000; // 2.0
+        finish_item(req);
+
+        // Case 8: Normal + -qNaN -> -qNaN
+        req = fp16_add_transaction::type_id::create("req_qnan_4");
+        start_item(req);
+        req.a = 16'h4000; // 2.0
+        req.b = 16'hFE01; // -qNaN
+        finish_item(req);
+
+        // Case 9: +Inf + +Inf -> +Inf
         req = fp16_add_transaction::type_id::create("req_inf_1");
         start_item(req);
         req.a = 16'h7C00; // +Inf
         req.b = 16'h7C00; // +Inf
         finish_item(req);
         
-        // Case 4: -Inf + -Inf -> -Inf
+        // Case 10: -Inf + -Inf -> -Inf
         req = fp16_add_transaction::type_id::create("req_inf_2");
         start_item(req);
         req.a = 16'hFC00; // -Inf
         req.b = 16'hFC00; // -Inf
         finish_item(req);
 
-        // Case 5: +Inf + -Inf -> NaN (Invalid operation)
+        // Case 11: +Inf + -Inf -> qNaN (Invalid operation)
         req = fp16_add_transaction::type_id::create("req_inf_3");
         start_item(req);
         req.a = 16'h7C00; // +Inf
         req.b = 16'hFC00; // -Inf
         finish_item(req);
         
-        // Case 6: +Inf + Normal -> +Inf
+        // Case 12: -Inf + +Inf -> qNaN (Invalid operation)
         req = fp16_add_transaction::type_id::create("req_inf_4");
+        start_item(req);
+        req.a = 16'hFC00; // -Inf
+        req.b = 16'h7C00; // +Inf
+        finish_item(req);
+        
+        // Case 13: +Inf + Normal -> +Inf
+        req = fp16_add_transaction::type_id::create("req_inf_5");
         start_item(req);
         req.a = 16'h7C00; // +Inf
         req.b = 16'hC000; // -2.0
         finish_item(req);
 
-        // Case 7: +0 + -0 -> +0
+        // Case 14: +0 + -0 -> +0
         req = fp16_add_transaction::type_id::create("req_zero_1");
         start_item(req);
         req.a = 16'h0000; // +0
         req.b = 16'h8000; // -0
         finish_item(req);
         
-        // Case 8: -0 + -0 -> -0
+        // Case 15: -0 + -0 -> -0
         req = fp16_add_transaction::type_id::create("req_zero_2");
         start_item(req);
         req.a = 16'h8000; // -0
         req.b = 16'h8000; // -0
         finish_item(req);
         
-        // Case 9: Normal + +0 -> Normal
+        // Case 16: Normal + +0 -> Normal
         req = fp16_add_transaction::type_id::create("req_zero_3");
         start_item(req);
         req.a = 16'hC200; // -4.0

@@ -81,8 +81,8 @@ def compare_fp16_add(a_hex: str, b_hex: str, c_py: str, c_c: str) -> int:
         s = "FAIL"
         res = 1
     if not res and (not c_py or not c_c) and c_result != py_result:
-        exp_py = f", Expected: 0x{c_py}" if c_py else "Expected: 0x{c_result}"
-        exp_c = f", Expected: 0x{c_c}" if c_c else "Expected: 0x{py_result}"
+        exp_py = f", Expected: 0x{c_py}" if c_py else f", Expected: 0x{c_result}"
+        exp_c = f", Expected: 0x{c_c}" if c_c else f", Expected: 0x{py_result}"
         s = "FAIL"
         res = 1
     print(
@@ -149,17 +149,39 @@ def main():
     test_cases = [
         # (   a,      b,   c_py,    c_c),
         # Edge cases
-        ("7c01", "3c00", "7e01", "7e00"),  # qNaN +   1.0 -> qNaN, py!=C, DUT=7c01=qNaN
-        ("4000", "fc01", "fe01", "fe00"),  #  2.0 + -qNaN -> qNaN, py!=C, DUT=7c01=qNaN
-        ("7c00", "7c00", "7c00", "7c00"),  # +Inf +  +Inf -> +Inf
-        ("fc00", "fc00", "fc00", "fc00"),  # -Inf +  -Inf -> -Inf
-        ("7c00", "fc00", "fe00", "fe00"),  # +Inf +  -Inf -> qNaN
-        ("fc00", "7c00", "fe00", "fe00"),  # -Inf +  +Inf -> qNaN
-        ("7c00", "4000", "7c00", "7c00"),  # +Inf +   2.0 -> +Inf
-        ("0000", "8000", "0000", "0000"),  #   +0 +    -0 ->   +0
-        ("8000", "8000", "8000", "8000"),  #   -0 +    -0 ->   -0
-        ("c200", "0000", "c200", "c200"),  #  4.0 +    +0 ->  4.0
-        #  Some random test cases
+        # signaling NaN -> quiet NaN
+        ("7c01", "3c00", "7e01", "7e00"),  #  sNaN +   1.0 -> qNaN, py!=C, DUT=7c01=sNaN
+        ("3c00", "7c01", "7e01", "7e00"),  #   1.0 +  sNaN -> qNaN, py!=C, DUT=7c01=sNaN
+        ("fc01", "4000", "fe01", "fe00"),  # -sNaN +   2.0 ->-qNaN, py!=C, DUT=7c01=sNaN
+        ("4000", "fc01", "fe01", "fe00"),  #   2.0 + -sNaN ->-qNaN, py!=C, DUT=7c01=sNaN
+        ("7c01", "fc01", "", ""),  #  sNaN + -sNaN -> qNaN, py!=C, DUT=7c01=sNaN
+        ("fc01", "7c01", "", ""),  # -sNaN +  sNaN -> qNaN, py!=C, DUT=7c01=sNaN
+        #
+        # quiet NaN -> quiet NaN
+        ("7e01", "3c00", "7e01", "7e00"),  #  qNaN +   1.0 -> qNaN, py!=C, DUT=7c01=qNaN
+        ("3c00", "7e01", "7e01", "7e00"),  #   1.0 +  qNaN -> qNaN, py!=C, DUT=7c01=qNaN
+        ("fe01", "4000", "fe01", "fe00"),  # -qNaN +   2.0 ->-qNaN, py!=C, DUT=fc01=qNaN
+        ("4000", "fe01", "fe01", "fe00"),  #   2.0 + -qNaN ->-qNaN, py!=C, DUT=fc01=qNaN
+        ("7e01", "fe01", "", ""),  #  qNaN + -qNaN ->-qNaN, py!=C, DUT=fc01=qNaN
+        ("fe01", "7e01", "", ""),  # -qNaN +  qNaN -> qNaN, py!=C, DUT=fc01=qNaN
+        #
+        # mixed NaN -> quiet NaN
+        ("7e01", "7c01", "", ""),  #  qNaN +  sNaN -> qNaN, py!=C, DUT=7c01=qNaN
+        ("7c01", "7e01", "", ""),  #  sNaN +  qNaN -> qNaN, py!=C, DUT=7c01=qNaN
+        #
+        # Infinities:
+        ("7c00", "7c00", "7c00", "7c00"),  #  +Inf +  +Inf -> +Inf
+        ("fc00", "fc00", "fc00", "fc00"),  #  -Inf +  -Inf -> -Inf
+        ("7c00", "fc00", "fe00", "fe00"),  #  +Inf +  -Inf -> qNaN
+        ("fc00", "7c00", "fe00", "fe00"),  #  -Inf +  +Inf -> qNaN
+        ("7c00", "4000", "7c00", "7c00"),  #  +Inf +   2.0 -> +Inf
+        #
+        # Zeroes:
+        ("0000", "8000", "0000", "0000"),  #    +0 +    -0 ->   +0
+        ("8000", "8000", "8000", "8000"),  #    -0 +    -0 ->   -0
+        ("c200", "0000", "c200", "c200"),  #   4.0 +    +0 ->  4.0
+        #
+        #  Some random test cases:
         ("c540", "0000", "c540", "c540"),
         ("c540", "2cab", "c52d", "c52d"),
         ("5a63", "dbdb", "d1e0", "d1e0"),

@@ -17,14 +17,20 @@ package fp_utils_pkg;
         // Converts a 16-bit floating point number to a single, standard
         // representation for its class (e.g., all qNaNs become one pattern).
         static function logic [15:0] canonicalize_fp16(logic [15:0] val);
-            logic sign      = val[15];
-            logic [4:0] exp = val[14:10];
-            logic [9:0] mant = val[9:0];
+            logic       sign = val[15];
+            logic [4:0] exp  = val[14:10];
+            logic [9:0] mant = val[ 9: 0];
 
             logic is_nan      = (exp == 5'h1F) && (mant != 0);
+            logic is_snan     = is_nan && (mant[9] == 0); // Signaling NaN
+            // logic is_qnan     = is_nan && (mant[9] == 1); // Quiet NaN
             logic is_neg_zero = (val == 16'h8000);
             
-            if (is_nan) begin
+            if (is_snan) begin
+                // Return a single, standard signaling NaN representation.
+                // The sign bit is preserved.
+                return {sign, 5'h1F, 10'b0000000001};
+            end else if (is_nan) begin
                 // Return a single, standard quiet NaN representation.
                 // The sign bit is preserved.
                 return {sign, 5'h1F, 10'b1000000001};
