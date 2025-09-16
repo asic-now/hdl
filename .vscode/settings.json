@@ -1,0 +1,44 @@
+{
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/lib",
+        "${workspaceFolder}/pi_base/lib"
+    ],
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/lib",
+        "${workspaceFolder}/pi_base/lib"
+    ],
+
+    "[python]": {
+        // "editor.codeActionsOnSave": {"source.fixAll": "always", "source.organizeImports": "always" },
+        "editor.codeActionsOnSave": {"source.fixAll": "always", "source.organizeImports": "never" },
+        // "editor.defaultFormatter": "ms-python.autopep8",
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.formatOnSaveMode": "modificationsIfAvailable",
+
+        "editor.wordWrap": "off",
+        "editor.wordWrapColumn": 200,
+    },
+
+    "pylint.args": [
+        "--max-line-length=200",
+        "--disable=C0103,C0111,C0301,C0302,C0321,W0511,W0702,W0703,W0612,W0613",
+        "--init-hook",
+        "import sys; sys.path.append(\"./lib\"); sys.path.append(\"./pi_base/lib\");"
+    ],
+    "autopep8.args": [
+        "--max-line-length=200"
+    ],
+    "mypy.enabled": false,
+    "ruff.organizeImports": false,
+    "python.analysis.fixAll": [
+        // "ruff"
+        "source.convertImportFormat",
+        "source.unusedImports",
+    ],
+    "python.analysis.typeCheckingMode":"standard",
+        "digital-ide.lib.custom.path": "${workspaceFolder}/_import/UVM/1800.2-2020.3.1/src"
+
+}
