@@ -22,6 +22,17 @@ The repository is organized into two main directories: rtl/ and verif/.
   * lib/: Contains generic, reusable UVM base classes and components designed to be shared across different testbenches.  
   * tests/: Contains DUT-specific testbenches. Each subdirectory (e.g., fp16\_add/) is a complete testbench for a single RTL module.
 
+## Implementation Specifics
+
+Verification in testbenches is simplified:
+
+* Sign of NaN is not preserved.
+* sNaN and qNaN differences are ignored.
+* Results precision fitting is done by truncation, not rounding.
+* -0 may be used instead of +0.
+
+
+
 ## Tooling
 
 For simulator setup and other tools see [TOOLING.md](TOOLING.md)

@@ -34,8 +34,8 @@ class fp_scoreboard #(
         model.predict(dut_trans, golden_trans);
 
         // Canonicalize both results before comparing them
-        dut_canonical    = fp_utils::canonicalize_fp16(dut_trans.result);
-        golden_canonical = fp_utils::canonicalize_fp16(golden_trans.golden_result);
+        dut_canonical    = fp_utils::fp16_canonicalize(dut_trans.result);
+        golden_canonical = fp_utils::fp16_canonicalize(golden_trans.golden_result);
 
         if (dut_canonical == golden_canonical) begin
             `uvm_info("SCOREBOARD", $sformatf("Compare OK: a=0x%h, b=0x%h, result=0x%h", dut_trans.a, dut_trans.b, dut_trans.result), UVM_LOW)
