@@ -27,7 +27,7 @@ The repository is organized into two main directories: rtl/ and verif/.
 Verification in testbenches is simplified:
 
 * Sign of NaN is not preserved.
-* sNaN and qNaN differences are ignored.
+* sNaN and qNaN, -NaN and +NaN differences are ignored.
 * Results precision fitting is done by truncation, not rounding.
 * -0 may be used instead of +0.
 

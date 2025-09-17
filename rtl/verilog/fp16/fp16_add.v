@@ -13,6 +13,8 @@
 // - Handles special cases: NaN, Infinity, and Zero.
 // - Truncates the result (no rounding implemented).
 
+`include "fp16_inc.vh"
+
 module fp16_add (
     input clk,
     input rst_n,
@@ -96,11 +98,11 @@ module fp16_add (
 
         // Handle special cases - bypass the main logic
         s1_special_case = 1'b0;
-        s1_special_result = 16'h7E01; // Default to a quiet NaN
+        s1_special_result = `FP16_QNAN; // Default to a quiet NaN
 
         if (is_nan_a || is_nan_b || (is_inf_a && is_inf_b && (sign_a != sign_b))) begin
             s1_special_case = 1'b1;
-            s1_special_result = 16'h7E01; // Return quiet NaN for any NaN or Inf-Inf
+            s1_special_result = `FP16_QNAN; // Return quiet NaN for any NaN or Inf-Inf
         end else if (is_inf_a) begin
             s1_special_case = 1'b1;
             s1_special_result = a;

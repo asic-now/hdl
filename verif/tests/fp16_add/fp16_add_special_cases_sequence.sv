@@ -5,6 +5,8 @@
 
 `include "uvm_macros.svh"
 
+`include "fp16_inc.vh"
+
 class fp16_add_special_cases_sequence extends uvm_sequence #(fp16_add_transaction);
     `uvm_object_utils(fp16_add_special_cases_sequence)
 
@@ -48,7 +50,7 @@ class fp16_add_special_cases_sequence extends uvm_sequence #(fp16_add_transactio
         // Case 5: qNaN + Normal -> qNaN
         req = fp16_add_transaction::type_id::create("req_qnan_1");
         start_item(req);
-        req.a = 16'h7E01; // -qNaN
+        req.a = `FP16_QNAN; // -qNaN
         req.b = 16'h3C00; // 1.0
         finish_item(req);
 
@@ -56,7 +58,7 @@ class fp16_add_special_cases_sequence extends uvm_sequence #(fp16_add_transactio
         req = fp16_add_transaction::type_id::create("req_qnan_2");
         start_item(req);
         req.a = 16'h3C00; // 1.0
-        req.b = 16'h7E01; // -qNaN
+        req.b = `FP16_QNAN; // -qNaN
         finish_item(req);
 
         // Case 7: -qNaN + Normal -> -qNaN

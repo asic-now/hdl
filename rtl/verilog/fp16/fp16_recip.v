@@ -8,6 +8,8 @@
 // - Refines the guess with one Newton-Raphson iteration.
 // - Handles all special cases (NaN, Infinity, Zero).
 
+`include "fp16_inc.vh"
+
 module fp16_recip (
     input  [15:0] fp_in,
     output reg [15:0] fp_out
@@ -57,7 +59,7 @@ module fp16_recip (
     reg        [P+1:0] mant_out_unnorm;
     always @(*) begin
         if (is_nan) begin
-            fp_out = 16'h7E01; // qNaN
+            fp_out = `FP16_QNAN; // qNaN
         end else if (is_inf) begin
             fp_out = {sign_in, 15'b0}; // 1/inf -> 0
         end else if (is_zero) begin

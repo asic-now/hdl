@@ -14,6 +14,8 @@
 // - Fixed latency of 13 cycles.
 // - Handles special cases: NaN, Infinity, Zero, and Negative Input.
 
+`include "fp16_inc.vh"
+
 module fp16_sqrt (
     input clk,
     input rst_n,
@@ -71,7 +73,7 @@ module fp16_sqrt (
             // Handle special cases
             if (is_nan_a || is_neg_normal) begin
                 s1_special_case <= 1'b1;
-                s1_special_result <= 16'h7E01; // qNaN
+                s1_special_result <= `FP16_QNAN; // qNaN
             end else if (is_inf_a) begin
                 s1_special_case <= 1'b1;
                 s1_special_result <= 16'h7C00; // +Infinity

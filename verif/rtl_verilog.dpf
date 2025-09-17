@@ -34,6 +34,7 @@ source_files:
     path: filelist.txt
     library_name: work
     options: |-
+      +incdir+../rtl/verilog/lib
       +incdir+./lib
       +incdir+./tests/fp16_add
       -uvm 1.2
