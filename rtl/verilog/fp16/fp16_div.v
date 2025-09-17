@@ -84,7 +84,7 @@ module fp16_div (
             // Handle special cases
             if (is_nan_a || is_nan_b || (is_inf_a && is_inf_b) || (is_zero_a && is_zero_b)) begin
                 s1_special_case <= 1'b1;
-                s1_special_result <= 16'h7C01; // qNaN
+                s1_special_result <= 16'h7E01; // qNaN
             end else if (is_inf_a || is_zero_b) begin
                 s1_special_case <= 1'b1;
                 s1_special_result <= {sign_a ^ sign_b, 5'h1F, 10'b0}; // Infinity
