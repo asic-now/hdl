@@ -219,7 +219,7 @@ module fp16_add (
                 
                 // Correctly handle the sign of zero
                 if (out_exp == 0 && out_mant == 0) begin
-                    result_reg <= (is_zero_a && is_zero_b && sign_a && sign_b) ? 16'h8000 : 16'b0;
+                    result_reg <= (is_zero_a && is_zero_b && sign_a && sign_b) ? `FP16_N_ZERO : `FP16_P_ZERO;
                 end else begin
                     result_reg <= {s2_sign, out_exp, out_mant};
                 end

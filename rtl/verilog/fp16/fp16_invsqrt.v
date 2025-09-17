@@ -105,9 +105,9 @@ module fp16_invsqrt #(
         if (is_nan || is_invalid_neg) begin
             fp_out = `FP16_QNAN; // qNaN
         end else if (is_pos_inf) begin
-            fp_out = 16'h0000; // 1/sqrt(+inf) -> +0
+            fp_out = `FP16_P_ZERO; // 1/sqrt(+inf) -> +0
         end else if (is_zero) begin
-            fp_out = 16'h7C00; // 1/sqrt(0) -> +inf
+            fp_out = `FP16_P_INF; // 1/sqrt(0) -> +inf
         end else begin
             fp_out = y1_fp;
         end

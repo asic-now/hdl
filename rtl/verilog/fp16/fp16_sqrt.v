@@ -76,10 +76,10 @@ module fp16_sqrt (
                 s1_special_result <= `FP16_QNAN; // qNaN
             end else if (is_inf_a) begin
                 s1_special_case <= 1'b1;
-                s1_special_result <= 16'h7C00; // +Infinity
+                s1_special_result <= `FP16_P_INF; // +Infinity
             end else if (is_zero_a) begin
                 s1_special_case <= 1'b1;
-                s1_special_result <= 16'h0000; // +Zero
+                s1_special_result <= `FP16_P_ZERO; // +Zero
             end
         end
     end
