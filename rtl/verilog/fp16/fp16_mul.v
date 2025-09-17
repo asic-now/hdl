@@ -81,10 +81,10 @@ module fp16_mul (
 
         if (is_nan_a || is_nan_b) begin
             s1_special_case = 1'b1;
-            s1_special_result = 16'h7C01; // NaN * anything = NaN
+            s1_special_result = `FP16_SNAN; // NaN * anything = NaN
         end else if ((is_inf_a && is_zero_b) || (is_zero_a && is_inf_b)) begin
             s1_special_case = 1'b1;
-            s1_special_result = 16'h7C01; // Inf * 0 = NaN
+            s1_special_result = `FP16_SNAN; // Inf * 0 = NaN
         end else if (is_inf_a || is_inf_b) begin
             s1_special_case = 1'b1;
             s1_special_result = {s1_sign, 5'h1F, 10'b0}; // Inf * anything = Inf
@@ -109,7 +109,7 @@ module fp16_mul (
             s2_sign <= 1'b0;
             s2_mant_product <= 22'b0;
             s2_special_case <= 1'b0;
-            s2_special_result <= 16'b0;
+            s2_special_result <= `FP16_ZERO;
         end else begin
             s2_mant_product <= s1_mant_a * s1_mant_b;
             s2_exp <= s1_exp_sum;
@@ -130,7 +130,7 @@ module fp16_mul (
     reg        [ 4:0] out_exp;
     always @(posedge clk) begin
         if (!rst_n) begin
-            result_reg <= 16'b0;
+            result_reg <= `FP16_ZERO;
         end else begin
             if (s2_special_case) begin
                 result_reg <= s2_special_result;

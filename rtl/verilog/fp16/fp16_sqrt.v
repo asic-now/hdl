@@ -53,7 +53,7 @@ module fp16_sqrt (
     always @(posedge clk) begin
         if (!rst_n) begin
             s1_special_case <= 1'b0;
-            s1_special_result <= 16'b0;
+            s1_special_result <= `FP16_ZERO;
             s1_exp_res <= 6'b0;
             s1_radicand <= 11'b0;
         end else begin
@@ -169,7 +169,7 @@ module fp16_sqrt (
     reg [15:0] result_reg;
     always @(posedge clk) begin
         if (!rst_n) begin
-            result_reg <= 16'b0;
+            result_reg <= `FP16_ZERO;
         end else begin
             if (special_case_pipe[TOTAL_LATENCY]) begin
                 result_reg <= special_result_pipe[TOTAL_LATENCY];

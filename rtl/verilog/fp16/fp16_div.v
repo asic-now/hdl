@@ -69,7 +69,7 @@ module fp16_div (
     always @(posedge clk) begin
         if (!rst_n) begin
             s1_special_case <= 1'b0;
-            s1_special_result <= 16'b0;
+            s1_special_result <= `FP16_ZERO;
             s1_exp_res <= 6'b0;
             s1_sign_res <= 1'b0;
             s1_dividend <= 21'b0;
@@ -157,7 +157,7 @@ module fp16_div (
     always @(posedge clk) begin
         if(!rst_n) begin
             special_case_pipe[0] <= 1'b0;
-            special_result_pipe[0] <= 16'b0;
+            special_result_pipe[0] <= `FP16_ZERO;
             exp_res_pipe[0] <= 6'b0;
             sign_res_pipe[0] <= 1'b0;
         end else begin
@@ -173,7 +173,7 @@ module fp16_div (
             always @(posedge clk) begin
                 if(!rst_n) begin
                     special_case_pipe[i+1] <= 1'b0;
-                    special_result_pipe[i+1] <= 16'b0;
+                    special_result_pipe[i+1] <= `FP16_ZERO;
                     exp_res_pipe[i+1] <= 6'b0;
                     sign_res_pipe[i+1] <= 1'b0;
                 end else begin
@@ -230,7 +230,7 @@ module fp16_div (
     reg  [15:0] result_reg;
     always @(posedge clk) begin
         if (!rst_n) begin
-            result_reg <= 16'b0;
+            result_reg <= `FP16_ZERO;
         end else begin
             if (special_case_pipe[TOTAL_LATENCY]) begin
                 result_reg <= special_result_pipe[TOTAL_LATENCY];

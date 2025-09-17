@@ -164,10 +164,10 @@ module fp16_mul_add (
             // Logic to handle special case propagation before alignment
             if (s2_prop_is_nan || s2_is_nan_c) begin
                 s3_special_case <= 1'b1;
-                s3_special_result <= 16'h7C01; // NaN
+                s3_special_result <= `FP16_SNAN; // NaN
             end else if (s2_prop_is_inf && s2_is_inf_c && (s2_prop_inf_sign != s2_sign_c)) begin
                  s3_special_case <= 1'b1;
-                 s3_special_result <= 16'h7C01; // Inf - Inf = NaN
+                 s3_special_result <= `FP16_SNAN; // Inf - Inf = NaN
             end else if (s2_prop_is_inf) begin
                 s3_special_case <= 1'b1;
                 s3_special_result <= {s2_prop_inf_sign, 5'h1F, 10'b0};
@@ -221,7 +221,7 @@ module fp16_mul_add (
     reg         [ 4:0] out_exp;
     always @(posedge clk) begin
         if(!rst_n) begin
-            result_reg <= 16'b0;
+            result_reg <= `FP16_ZERO;
         end else begin
             if (s3_special_case) begin
                 result_reg <= s3_special_result;

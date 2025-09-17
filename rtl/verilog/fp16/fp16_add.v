@@ -132,7 +132,7 @@ module fp16_add (
             s2_sign         <= 1'b0;
             s2_mant         <= 26'b0;
             s2_special_case <= 1'b0;
-            s2_special_result <= 16'b0;
+            s2_special_result <= `FP16_ZERO;
         end else begin
             s2_exp          <= s1_larger_exp;
             s2_special_case <= s1_special_case;
@@ -166,7 +166,7 @@ module fp16_add (
     reg         [15:0] result_reg;
     always @(posedge clk) begin
         if (!rst_n) begin
-            result_reg <= 16'b0;
+            result_reg <= `FP16_ZERO;
         end else begin
             if (s2_special_case) begin
                 result_reg <= s2_special_result;

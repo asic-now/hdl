@@ -20,7 +20,7 @@ module int16_to_fp16 (
     reg [15:0] shifted_mant;
     always @(*) begin
         if (int_in == 16'd0) begin
-            fp_out = 16'd0;
+            fp_out = `FP16_ZERO;
         end else begin
             // Get sign and absolute value
             if (int_in[15]) begin
