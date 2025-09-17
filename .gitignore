@@ -4,6 +4,7 @@ _import
 
 # Generated files and folders
 dsim_work/
+log.*
 *.log
 *.env
 *.db
