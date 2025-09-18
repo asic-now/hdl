@@ -3,6 +3,8 @@
 Ilya I.  
 2025-0917
 
+![Vibe Verilogging](01-VibeVerilogging.png)
+
 It started with a series of interviews. I’m a senior RTL design engineer with extensive experience in computational math—I shipped the Leapfrog Leapster ASIC back in the day and engineered numerous high-speed instrumentation designs, like a 12Gbps clock recovery instrument for Tektronix and a 1.2GS/s real-time disk drive tester. And also an Ultrasound imaging design that restores 3D tissue structure from piezo sensor matrix. 
 
 But because those high-performance projects relied on fixed-point math to squeeze out every last drop of performance, my resume didn't specifically include shipping floating-point (FP) hardware.
