@@ -3,9 +3,6 @@
 // This file contains a package with utility classes and functions for
 // floating-point verification, such as the canonicalizer.
 
-`ifndef FP_UTILS_SV
-`define FP_UTILS_SV
-
 `include "uvm_macros.svh"
 
 `include "fp16_inc.vh"
@@ -51,5 +48,3 @@ package fp_utils_pkg;
     endclass
 
 endpackage
-
-`endif // FP_UTILS_SV
