@@ -5,16 +5,16 @@
 import uvm_pkg::*;
 
 typedef struct packed {
-    bit is_snan;
-    bit is_qnan;
-    bit is_neg_inf;
-    bit is_neg_normal;
-    bit is_neg_denormal;
-    bit is_neg_zero;
-    bit is_pos_zero;
-    bit is_pos_denormal;
-    bit is_pos_normal;
-    bit is_pos_inf;
+    bit is_snan;            // 'h200
+    bit is_qnan;            // 'h100
+    bit is_neg_inf;         // 'h080
+    bit is_neg_normal;      // 'h040
+    bit is_neg_denormal;    // 'h020
+    bit is_neg_zero;        // 'h010
+    bit is_pos_zero;        // 'h008
+    bit is_pos_denormal;    // 'h004
+    bit is_pos_normal;      // 'h002
+    bit is_pos_inf;         // 'h001
 } fp16_classify_outputs_s;
 
 
