@@ -13,6 +13,22 @@ simulations:
       +acc+b ../verif/lib/fp16_model.c
       -c-opts "-shared"
       -cc-verbose
+  - name: fp16_classify_special
+    options: |-
+      -top work.fp16_classify_tb_top
+      -uvm 1.2
+      +UVM_TESTNAME=fp16_classify_special_cases_test
+      +acc+b ../verif/lib/fp16_model.c
+      -c-opts "-shared"
+      -cc-verbose
+  - name: fp16_classify_all
+    options: |-
+      -top work.fp16_classify_tb_top
+      -uvm 1.2
+      +UVM_TESTNAME=fp16_classify_combined_test
+      +acc+b ../verif/lib/fp16_model.c
+      -c-opts "-shared"
+      -cc-verbose
   - name: fp16_add_random
     options: |-
       -top work.fp16_add_tb_top

@@ -24,6 +24,6 @@ package fp16_classify_pkg;
     `include "fp16_classify_random_test.sv"
     `include "fp16_classify_special_cases_sequence.sv"
     `include "fp16_classify_special_cases_test.sv"
-    // `include "fp16_classify_combined_sequence.sv"
-    // `include "fp16_classify_combined_test.sv"
+    `include "fp16_classify_combined_sequence.sv"
+    `include "fp16_classify_combined_test.sv"
 endpackage
