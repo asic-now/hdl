@@ -1,5 +1,5 @@
 // fp_scoreboard.sv
-// Generic scoreboard for comparing transactions.
+// Generic scoreboard for comparing FP transactions (using canonicalize).
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
