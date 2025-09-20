@@ -16,10 +16,10 @@ class fp16_add_monitor extends fp_monitor_base #(fp16_add_transaction, virtual f
         trans.inputs[0] = vif.monitor_cb.a;
         trans.inputs[1] = vif.monitor_cb.b;
     endtask
+
     // Implementation of the DUT-specific output sampling task
     virtual task sample_output(fp16_add_transaction trans);
         trans.result = vif.monitor_cb.result;
     endtask
-
 
 endclass
