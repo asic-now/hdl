@@ -64,11 +64,11 @@ source_files:
     path: filelist.txt
     library_name: work
     options: |-
-      +incdir+../rtl/verilog/lib
-      +incdir+./lib
-      +incdir+./tests/fp16_add
-      +incdir+./tests/fp16_classify
       -uvm 1.2
+      +incdir+../rtl/verilog/lib
+      +incdir+../verif/lib
+      +incdir+../verif/tests/fp16_add
+      +incdir+../verif/tests/fp16_classify
     file_list: relative-to-file
   - language: verilog
     path: tests\fp16_add\fp16_add_tb_top.sv
