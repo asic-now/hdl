@@ -14,7 +14,7 @@ class fp16_classify_monitor extends fp_monitor_base #(fp16_classify_transaction,
 
     // Implementation of the DUT-specific sample task
     // It only creates and returns a transaction if inputs are valid.
-    virtual task sample_ports(output fp16_classify_transaction trans);
+    virtual task sample_inputs(output fp16_classify_transaction trans);
         if (! (^vif.monitor_cb.in === 1'bx)) begin
             trans = fp16_classify_transaction::type_id::create("trans_input");
             trans.inputs[0] = vif.monitor_cb.in;

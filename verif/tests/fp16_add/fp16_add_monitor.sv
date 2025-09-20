@@ -1,5 +1,5 @@
 // fp16_add_monitor.sv
-// Implements the pure virtual 'sample_ports' task for the 2-input adder.
+// Implements the pure virtual 'sample_inputs' task for the 2-input adder.
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
@@ -13,7 +13,7 @@ class fp16_add_monitor extends fp_monitor_base #(fp16_add_transaction, virtual f
 
     // Implementation of the DUT-specific sample task
     // It only creates and returns a transaction if inputs are valid.
-    virtual task sample_ports(output fp16_add_transaction trans);
+    virtual task sample_inputs(output fp16_add_transaction trans);
         if (! (^vif.monitor_cb.a === 1'bx) && ! (^vif.monitor_cb.b === 1'bx)) begin
             trans = fp16_add_transaction::type_id::create("trans_input");
             trans.inputs[0] = vif.monitor_cb.a;

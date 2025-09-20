@@ -1,7 +1,7 @@
 // verif/lib/fp_monitor_base.sv
 //
 // Generic, parameterized base class for a monitor. It uses a queue to handle
-// pipelined designs and has a pure virtual task 'sample_ports' that must
+// pipelined designs and has a pure virtual task 'sample_inputs' that must
 // be implemented by a child class.
 
 `include "uvm_macros.svh"
@@ -48,7 +48,7 @@ virtual class fp_monitor_base #(
             T_TRANS trans;
             @(vif.monitor_cb);
             pre_sample(0);
-            sample_ports(trans);
+            sample_inputs(trans);
             if (trans != null) begin
                 input_queue.push_back(trans);
             end
@@ -86,7 +86,7 @@ virtual class fp_monitor_base #(
     endtask
 
     // This is a placeholder task that MUST be implemented by the DUT-specific monitor
-    pure virtual task sample_ports(output T_TRANS trans);
+    pure virtual task sample_inputs(output T_TRANS trans);
 
     pure virtual task sample_output(T_TRANS trans);
 
