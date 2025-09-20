@@ -1,51 +1,54 @@
-# Makefile for compiling and running the UVM testbench with a C model via DPI-C.
-# Toolchain: Altair DSim
+# Makefile for compiling and running a generic UVM testbench.
 #
-# Usage:
-#   make compile      - Compiles the C model, DUT, and testbench.
-#   make run          - Runs the simulation.
-#   make all          - Compiles and runs.
-#   make clean        - Removes all generated files.
+# This Makefile is designed to be reusable for different DUTs by
+# overriding variables on the command line.
+#
+# Default test: fp16_add
+#
+# To run a different test (e.g., fp32_mul):
+#   make run DUT_NAME=fp32_mul PIPELINE_LATENCY=3 TESTNAME=fp32_mul_random_test
 #
 
 #==============================================================================
-# Variables
+# Configurable Variables (can be overridden from the command line)
 #==============================================================================
+DUT_NAME         ?= fp16_add
+PIPELINE_LATENCY ?= 3
+TESTNAME         ?= fp16_add_combined_test
+C_MODEL_FILES    ?= verif/lib/fp16_model.c
 
-# --- Simulators ---
-# C Compiler for the DPI model
-CC = gcc
-# Verilog/SV Simulator
-SIM = dsim
+#==============================================================================
+# Static Variables (derived from the above)
+#==============================================================================
+DUT_PREFIX       = $(word 1, $(subst _, ,$(DUT_NAME))) # e.g., fp16
+TB_TOP_NAME      = $(DUT_NAME)_tb_top
 
-# --- Test Configuration ---
-TESTNAME ?= fp16_add_random_test
-TB_TOP   = fp16_add_tb_top
+# Simulator command for DSim
+COMPILER = dsim
 
-# --- Project Structure ---
-RTL_DIR       = rtl/verilog/fp16
-TEST_DIR      = verif/tests/fp16_add
-VERIF_LIB_DIR = verif/lib
+# Project Structure
+RTL_DIR          = rtl/verilog/$(DUT_PREFIX)
+TEST_DIR         = verif/tests/$(DUT_NAME)
+VERIF_LIB_DIR    = verif/lib
 
-# --- Source Files ---
-# C model source
-C_MODEL_SRC = $(VERIF_LIB_DIR)/fp16_model.c
-# Name of the resulting shared library
-C_MODEL_LIB = $(VERIF_LIB_DIR)/fp16_model.so
+# Source Files
+DUT_FILE         = $(RTL_DIR)/$(DUT_NAME).v
+TB_PKG_FILE      = $(TEST_DIR)/$(DUT_NAME)_pkg.sv
+TB_TOP_FILE      = $(TEST_DIR)/$(TB_TOP_NAME).sv
 
-# SystemVerilog filelist
-SV_FILELIST = filelist.txt
+# Compilation & Run Flags for DSim
+DSIM_FLAGS = \
+	-sv \
+	-uvm \
+	-top $(TB_TOP_NAME) \
+	-incdir $(VERIF_LIB_DIR) \
+	-incdir $(TEST_DIR) \
+	-access +rwc \
+	-c-opts "-shared -fPIC" \
+	$(C_MODEL_FILES)
 
-# --- Compiler and Sim Flags ---
-# C flags: create a position-independent shared object
-CFLAGS = -fPIC -shared
-
-# DSim flags
-DSIM_FLAGS = -uvm 1.2 -F $(SV_FILELIST) -top $(TB_TOP)
-DSIM_RUN_FLAGS = +UVM_TESTNAME=$(TESTNAME)
-
-# DSim DPI-C flag to load the shared library
-DSIM_DPI_FLAG = -sv_lib $(C_MODEL_LIB)
+# Runtime Plusargs
+RUN_PLUSARGS = +UVM_TESTNAME=$(TESTNAME) +pipeline_latency=$(PIPELINE_LATENCY)
 
 #==============================================================================
 # Targets
@@ -55,23 +58,15 @@ DSIM_DPI_FLAG = -sv_lib $(C_MODEL_LIB)
 
 all: run
 
-# Main run target depends on the compiled SV and C model
-run: $(C_MODEL_LIB)
-	@echo "--- Running Simulation with DSim ---"
-	$(SIM) $(DSIM_FLAGS) $(DSIM_DPI_FLAG) -run $(DSIM_RUN_FLAGS)
+compile:
+	@echo "--- Compiling DUT: $(DUT_NAME) ---"
+	$(COMPILER) -compile $(DSIM_FLAGS) $(DUT_FILE) $(TB_PKG_FILE) $(TB_TOP_FILE)
 
-# Target to compile the C model into a shared library
-$(C_MODEL_LIB): $(C_MODEL_SRC)
-	@echo "--- Compiling C Model ---"
-	$(CC) $(CFLAGS) -o $@ $<
-
-# Target to compile the SystemVerilog code (optional, as dsim can do all-in-one)
-compile: $(C_MODEL_LIB)
-	@echo "--- Compiling SystemVerilog with DSim ---"
-	$(SIM) $(DSIM_FLAGS) $(DSIM_DPI_FLAG) -compile
+run: compile
+	@echo "--- Running Test: $(TESTNAME) on $(DUT_NAME) ---"
+	$(COMPILER) -run $(RUN_PLUSARGS)
 
 clean:
-	@echo "--- Cleaning up ---"
-	rm -rf simv* csrc *.log *.vdb ucli.key DVEfiles/ novas.* verdiLog/ *.fsdb
-	rm -rf DSim.sln dsim_out/ *.so
+	@echo "--- Cleaning up DSim files ---"
+	rm -rf *.log *.syn DSim.sln dsim_out/ *.so *.o
 

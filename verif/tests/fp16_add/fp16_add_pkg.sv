@@ -6,10 +6,8 @@ package fp16_add_pkg;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
-    // Include reusable library components
-    `include "fp_transaction_base.sv"
-    `include "fp_model_base.sv"
-    `include "fp_scoreboard.sv"
+    // Reusable library components
+    import fp_lib_pkg::*; // Import the reusable library
 
     // Include DUT-specific components
     // `include "fp16_add_if.sv" // TODO: (when needed) Does not work in the package.
@@ -19,6 +17,8 @@ package fp16_add_pkg;
     `include "fp16_add_agent.sv"
     `include "fp16_add_model.sv"
     `include "fp16_add_env.sv"
+
+    // Sequences & Tests
     `include "fp16_add_base_test.sv"
     `include "fp16_add_random_sequence.sv"
     `include "fp16_add_random_test.sv"

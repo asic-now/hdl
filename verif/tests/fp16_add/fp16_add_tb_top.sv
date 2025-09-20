@@ -31,7 +31,7 @@ module fp16_add_tb_top;
     // Reset generator
     initial begin
         rst_n = 0;
-        repeat(5) @(posedge clk);
+        repeat(5) @(negedge clk);
         rst_n = 1;
     end
 

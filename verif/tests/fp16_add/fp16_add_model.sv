@@ -22,7 +22,7 @@ class fp16_add_model extends fp_model_base #(fp16_add_transaction);
     virtual function void predict(fp16_add_transaction trans_in, ref fp16_add_transaction trans_out);
         trans_out = new trans_in;
         // Call the imported C function to get the golden result
-        trans_out.golden_result = c_fp16_add(trans_in.a, trans_in.b);
+        trans_out.result = c_fp16_add(trans_in.inputs[0], trans_in.inputs[1]);
     endfunction
 
 endclass

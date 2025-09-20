@@ -6,6 +6,7 @@
 `include "uvm_macros.svh"
 
 `include "fp16_inc.vh"
+`include "fp_macros.svh"
 
 class fp16_add_special_cases_sequence extends uvm_sequence #(fp16_add_transaction);
     `uvm_object_utils(fp16_add_special_cases_sequence)
@@ -17,119 +18,55 @@ class fp16_add_special_cases_sequence extends uvm_sequence #(fp16_add_transactio
     virtual task body();
         fp16_add_transaction req;
         
-        `uvm_info("SEQ", "Starting special cases sequence", UVM_LOW)
+        `uvm_info(get_type_name(), "Starting special cases sequence", UVM_LOW)
 
         // Case 1: sNaN + Normal -> qNaN
-        req = fp16_add_transaction::type_id::create("req_snan_1");
-        start_item(req);
-        req.a = `FP16_SNAN; // sNaN
-        req.b = 16'h3C00; // 1.0
-        finish_item(req);
-
+        `uvm_do_special_case("req_snan_1", req, { req.inputs[0] == `FP16_SNAN; req.inputs[1] == 16'h3C00 /* 1.0 */;})
+        
         // Case 2: Normal + sNaN -> qNaN
-        req = fp16_add_transaction::type_id::create("req_snan_2");
-        start_item(req);
-        req.a = 16'h3C00; // 1.0
-        req.b = `FP16_SNAN; // sNaN
-        finish_item(req);
-
+        `uvm_do_special_case("req_snan_2", req, { req.inputs[1] == `FP16_SNAN; req.inputs[0] == 16'h3C00 /* 1.0 */;})
+        
         // Case 3: -sNan + Normal -> -qNaN
-        req = fp16_add_transaction::type_id::create("req_snan_3");
-        start_item(req);
-        req.a = `FP16_N_SNAN; // -sNaN
-        req.b = 16'h4000; // 2.0
-        finish_item(req);
-
+        `uvm_do_special_case("req_snan_3", req, { req.inputs[0] == `FP16_N_SNAN; req.inputs[1] == 16'h4000 /* 2.0 */;})
+        
         // Case 4: Normal + -sNan -> -qNaN
-        req = fp16_add_transaction::type_id::create("req_snan_4");
-        start_item(req);
-        req.a = 16'h4000; // 2.0
-        req.b = `FP16_N_SNAN; // -sNaN
-        finish_item(req);
-
+        `uvm_do_special_case("req_snan_4", req, { req.inputs[1] == `FP16_N_SNAN; req.inputs[0] == 16'h4000 /* 2.0 */;})
+        
         // Case 5: qNaN + Normal -> qNaN
-        req = fp16_add_transaction::type_id::create("req_qnan_1");
-        start_item(req);
-        req.a = `FP16_QNAN; // -qNaN
-        req.b = 16'h3C00; // 1.0
-        finish_item(req);
-
+        `uvm_do_special_case("req_qnan_1", req, { req.inputs[0] == `FP16_QNAN; req.inputs[1] == 16'h3C00 /* 1.0 */;})
+        
         // Case 6: Normal + qNaN -> qNaN
-        req = fp16_add_transaction::type_id::create("req_qnan_2");
-        start_item(req);
-        req.a = 16'h3C00; // 1.0
-        req.b = `FP16_QNAN; // -qNaN
-        finish_item(req);
-
+        `uvm_do_special_case("req_qnan_2", req, { req.inputs[1] == `FP16_QNAN; req.inputs[0] == 16'h3C00 /* 1.0 */;})
+        
         // Case 7: -qNaN + Normal -> -qNaN
-        req = fp16_add_transaction::type_id::create("req_qnan_3");
-        start_item(req);
-        req.a = `FP16_N_QNAN; // -qNaN
-        req.b = 16'h4000; // 2.0
-        finish_item(req);
-
+        `uvm_do_special_case("req_qnan_3", req, { req.inputs[0] == `FP16_N_QNAN; req.inputs[1] == 16'h4000 /* 2.0 */;})
+        
         // Case 8: Normal + -qNaN -> -qNaN
-        req = fp16_add_transaction::type_id::create("req_qnan_4");
-        start_item(req);
-        req.a = 16'h4000; // 2.0
-        req.b = `FP16_N_QNAN; // -qNaN
-        finish_item(req);
-
+        `uvm_do_special_case("req_qnan_4", req, { req.inputs[1] == `FP16_N_QNAN; req.inputs[0] == 16'h4000 /* 2.0 */;})
+        
         // Case 9: +Inf + +Inf -> +Inf
-        req = fp16_add_transaction::type_id::create("req_inf_1");
-        start_item(req);
-        req.a = `FP16_P_INF; // +Inf
-        req.b = `FP16_P_INF; // +Inf
-        finish_item(req);
+        `uvm_do_special_case("req_inf_1", req, { req.inputs[0] == `FP16_P_INF; req.inputs[1] == `FP16_P_INF;})
         
         // Case 10: -Inf + -Inf -> -Inf
-        req = fp16_add_transaction::type_id::create("req_inf_2");
-        start_item(req);
-        req.a = `FP16_N_INF; // -Inf
-        req.b = `FP16_N_INF; // -Inf
-        finish_item(req);
-
+        `uvm_do_special_case("req_inf_2", req, { req.inputs[0] == `FP16_N_INF; req.inputs[1] == `FP16_N_INF;})
+        
         // Case 11: +Inf + -Inf -> qNaN (Invalid operation)
-        req = fp16_add_transaction::type_id::create("req_inf_3");
-        start_item(req);
-        req.a = `FP16_P_INF; // +Inf
-        req.b = `FP16_N_INF; // -Inf
-        finish_item(req);
+        `uvm_do_special_case("req_inf_3", req, { req.inputs[0] == `FP16_P_INF; req.inputs[1] == `FP16_N_INF;})
         
         // Case 12: -Inf + +Inf -> qNaN (Invalid operation)
-        req = fp16_add_transaction::type_id::create("req_inf_4");
-        start_item(req);
-        req.a = `FP16_N_INF; // -Inf
-        req.b = `FP16_P_INF; // +Inf
-        finish_item(req);
+        `uvm_do_special_case("req_inf_4", req, { req.inputs[0] == `FP16_N_INF; req.inputs[1] == `FP16_P_INF;})
         
         // Case 13: +Inf + Normal -> +Inf
-        req = fp16_add_transaction::type_id::create("req_inf_5");
-        start_item(req);
-        req.a = `FP16_P_INF; // +Inf
-        req.b = 16'hC000; // -2.0
-        finish_item(req);
-
+        `uvm_do_special_case("req_inf_5", req, { req.inputs[0] == `FP16_P_INF; req.inputs[1] == 16'hC000 /* -2.0 */;})
+        
         // Case 14: +0 + -0 -> +0
-        req = fp16_add_transaction::type_id::create("req_zero_1");
-        start_item(req);
-        req.a = `FP16_P_ZERO; // +0
-        req.b = `FP16_N_ZERO; // -0
-        finish_item(req);
+        `uvm_do_special_case("req_zero_1", req, { req.inputs[0] == `FP16_P_ZERO; req.inputs[1] == `FP16_N_ZERO;})
         
         // Case 15: -0 + -0 -> -0
-        req = fp16_add_transaction::type_id::create("req_zero_2");
-        start_item(req);
-        req.a = `FP16_N_ZERO; // -0
-        req.b = `FP16_N_ZERO; // -0
-        finish_item(req);
+        `uvm_do_special_case("req_zero_2", req, { req.inputs[0] == `FP16_N_ZERO; req.inputs[1] == `FP16_N_ZERO;})
         
         // Case 16: Normal + +0 -> Normal
-        req = fp16_add_transaction::type_id::create("req_zero_3");
-        start_item(req);
-        req.a = 16'hC200; // -4.0
-        req.b = `FP16_P_ZERO; // +0
-        finish_item(req);
+        `uvm_do_special_case("req_zero_2", req, { req.inputs[0] == 16'hC200 /* -4.0 */; req.inputs[1] == `FP16_P_ZERO;})
 
         `uvm_info("SEQ", "Finished special cases sequence", UVM_LOW)
 

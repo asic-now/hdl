@@ -35,14 +35,14 @@ class fp_scoreboard #(
 
         // Canonicalize both results before comparing them
         dut_canonical    = fp_utils::fp16_canonicalize(dut_trans.result);
-        golden_canonical = fp_utils::fp16_canonicalize(golden_trans.golden_result);
+        golden_canonical = fp_utils::fp16_canonicalize(golden_trans.result);
 
         if (dut_canonical == golden_canonical) begin
-            `uvm_info("SCOREBOARD", $sformatf("Compare OK: a=0x%h, b=0x%h, result=0x%h", dut_trans.a, dut_trans.b, dut_trans.result), UVM_LOW)
+            `uvm_info("SCOREBOARD", $sformatf("PASS [%s]: a=0x%h, b=0x%h -> result=0x%h",
+                dut_trans.get_name(), dut_trans.inputs[0], dut_trans.inputs[1], dut_trans.result), UVM_HIGH)
         end else begin
-            `uvm_error("SCOREBOARD", $sformatf("Compare FAIL:\n  DUT received:   a=0x%h, b=0x%h --> result=0x%h (canon: 0x%h)\n  MODEL predicted: a=0x%h, b=0x%h --> result=0x%h (canon: 0x%h)",
-                dut_trans.a, dut_trans.b, dut_trans.result, dut_canonical,
-                golden_trans.a, golden_trans.b, golden_trans.golden_result, golden_canonical))
+            `uvm_error("SCOREBOARD", $sformatf("FAIL [%s]: a=0x%h, b=0x%h -> DUT=0x%h, MODEL=0x%h | Canonical: DUT=0x%h, MODEL=0x%h",
+                dut_trans.get_name(), dut_trans.inputs[0], dut_trans.inputs[1], dut_trans.result, golden_trans.result, dut_canonical, golden_canonical))
         end
     endfunction
 

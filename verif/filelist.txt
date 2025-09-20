@@ -11,11 +11,8 @@
 ../rtl/verilog/fp16/fp16_add.v
 ../rtl/verilog/fp16/fp16_classify.v
 
-# List of UVM Lib Files
-../verif/lib/fp_utils.sv
-../verif/lib/fp_model_base.sv
-../verif/lib/fp_scoreboard.sv
-../verif/lib/fp_transaction_base.sv
+# Lib
+../verif/lib/fp_lib_pkg.sv
 
 # List of Testbench Files
 ../verif/tests/fp16_add/fp16_add_if.sv
