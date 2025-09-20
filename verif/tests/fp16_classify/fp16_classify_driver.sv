@@ -4,38 +4,17 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-class fp16_classify_driver extends uvm_driver #(fp16_classify_transaction);
+class fp16_classify_driver extends fp_driver_base #(fp16_classify_transaction, virtual fp16_classify_if);
     `uvm_component_utils(fp16_classify_driver)
-
-    virtual fp16_classify_if vif;
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
     endfunction
 
-    virtual function void build_phase(uvm_phase phase);
-        super.build_phase(phase);
-        if(!uvm_config_db#(virtual fp16_classify_if)::get(this, "", "dut_vif", vif))
-            `uvm_fatal("NOVIF", "Could not get virtual interface handle")
-    endfunction
-
-    virtual task run_phase(uvm_phase phase);
-        // Wait for reset to de-assert before starting
-        @(posedge vif.rst_n);
-        // Add one cycle delay for synchronization with monitor
-        // @(vif.driver_cb);
-
-        forever begin
-            seq_item_port.get_next_item(req);
-            drive_transfer(req);
-            seq_item_port.item_done();
-        end
-    endtask
-
+    // Implementation of the DUT-specific drive task
     virtual task drive_transfer(fp16_classify_transaction trans);
-        @(vif.driver_cb);
-        vif.driver_cb.in <= trans.in;
-        `uvm_info("DRIVER", $sformatf("Drove transaction: in=0x%h", trans.in), UVM_HIGH)
+        vif.in <= trans.inputs[0];
+        `uvm_info("DRIVER", $sformatf("Drove transaction: in=0x%h", trans.inputs[0]), UVM_HIGH)
     endtask
 
 endclass

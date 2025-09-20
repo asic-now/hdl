@@ -17,7 +17,7 @@ class fp16_add_base_test extends uvm_test;
         printer.knobs.depth = 5;
     endfunction
 
-    function void build_phase(uvm_phase phase);
+    virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         
         // Read the pipeline latency from the command line plusargs

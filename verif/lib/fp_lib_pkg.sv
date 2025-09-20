@@ -15,5 +15,6 @@ package fp_lib_pkg;
     `include "fp_monitor_base.sv"
     `include "fp_model_base.sv"
     `include "fp_scoreboard.sv"
+    `include "vec_scoreboard.sv"
 
 endpackage

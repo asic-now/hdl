@@ -12,7 +12,6 @@ module fp16_classify_tb_top;
 
     // Instantiate the DUT interface
     fp16_classify_if dut_if(clk, rst_n);
-    // fp16_classify_if dut_if(clk);
 
     // Instantiate the DUT
     fp16_classify dut (

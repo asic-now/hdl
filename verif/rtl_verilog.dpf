@@ -10,6 +10,7 @@ simulations:
       -top work.fp16_classify_tb_top
       -uvm 1.2
       +UVM_TESTNAME=fp16_classify_random_test
+      +pipeline_latency=0
       +acc+b ../verif/lib/fp16_model.c
       -c-opts "-shared"
       -cc-verbose
@@ -18,6 +19,7 @@ simulations:
       -top work.fp16_classify_tb_top
       -uvm 1.2
       +UVM_TESTNAME=fp16_classify_special_cases_test
+      +pipeline_latency=0
       +acc+b ../verif/lib/fp16_model.c
       -c-opts "-shared"
       -cc-verbose
@@ -26,6 +28,7 @@ simulations:
       -top work.fp16_classify_tb_top
       -uvm 1.2
       +UVM_TESTNAME=fp16_classify_combined_test
+      +pipeline_latency=0
       +acc+b ../verif/lib/fp16_model.c
       -c-opts "-shared"
       -cc-verbose

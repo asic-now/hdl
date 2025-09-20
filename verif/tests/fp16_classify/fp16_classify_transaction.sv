@@ -18,55 +18,60 @@ typedef struct packed {
 } fp16_classify_outputs_s;
 
 
-class fp16_classify_transaction extends fp_transaction_base #(16);
+class fp16_classify_transaction extends fp_transaction_base #(16, 1);
 
-    // `uvm_object_utils(fp16_classify_transaction)
-
-    // DUT-specific data fields
-    rand logic [15:0] in;
-    // 'result' and 'golden_result' are inherited as 16-bit values, we need fp16_classify_outputs_s.
+    // Override:
     fp16_classify_outputs_s result; // dut_outputs
-    fp16_classify_outputs_s golden_result; // ref_outputs
+
+    // Defines the categories of numbers to generate
+    typedef enum { NORMAL, ZERO, INF, QNAN } fp_category_e;
+
+    // Random variables to control the category of each input
+    rand fp_category_e category_a;
+
+    `uvm_object_utils_begin(fp16_classify_transaction)
+        `uvm_field_array_int(inputs, UVM_ALL_ON)
+        `uvm_field_int(result, UVM_ALL_ON)
+        `uvm_field_enum(fp_category_e, category_a, UVM_ALL_ON)
+    `uvm_object_utils_end
 
     function new(string name="fp16_classify_transaction");
         super.new(name);
     endfunction
 
-    `uvm_object_utils_begin(fp16_classify_transaction)
-        `uvm_field_int(in, UVM_ALL_ON)
-        `uvm_field_int(result, UVM_ALL_ON)
-        `uvm_field_int(golden_result, UVM_ALL_ON)
-    `uvm_object_utils_end
-
-    // Constraint for normal values
-    constraint normal_values {
-        // in inside {[5'h01:5'h1E]};
+    // Controls the probability distribution of the different categories.
+    // 80% of inputs will be normal numbers, 20% will be special values.
+    constraint category_dist_c {
+        category_a dist { NORMAL := 80, ZERO := 5, INF := 10, QNAN := 5 };
     }
 
-    // Comparison function for the scoreboard
-    virtual function bit do_compare(uvm_object rhs, uvm_comparer comparer);
-        fp16_classify_transaction tx;
-        if (!$cast(tx, rhs)) begin
-            `uvm_error("do_compare", "Cast failed")
-            return 0;
-        end
-        return (super.do_compare(rhs, comparer) &&
-                tx.golden_result == this.result);
-    endfunction
+    // Generates the bit-patterns for the inputs based on the chosen category.
+    constraint values_c {
+        // --- Constraint for inputs[0] (a) ---
+        solve category_a before inputs[0];
+        if (category_a == NORMAL) {
+            inputs[0][14:10] inside {[5'h01:5'h1E]}; // Non-special exponent
+        }
+        if (category_a == ZERO) {
+            inputs[0][14:0] == 0; // Mantissa and exponent are zero
+        }
+        if (category_a == INF) {
+            inputs[0][14:10] == 5'h1F;
+            inputs[0][9:0]   == 0;
+        }
+        if (category_a == QNAN) {
+            inputs[0][14:10] == 5'h1F;
+            inputs[0][9:0]   != 0;
+        }
+    }
 
     // Convert transaction to a string for printing
-    // virtual function string convert2string();
-    //     return $sformatf("a=0x%0h, b=0x%0h, result=0x%0h, golden=0x%0h",
-    //                      a, b, result[15:0], golden_result[15:0]);
-    // endfunction
     virtual function string convert2string();
-        // return $sformatf("in: 0x%04h, result: %p, golden_result: %p", in, result, golden_result);
          string s;
-         s = $sformatf("in: 0x%04h", in);
+         s = $sformatf("in: 0x%04h", inputs[0]);
          // Check if result has been set by the monitor to avoid printing empty structs
          if (|result) s = {s, $sformatf(", result: %p", result)};
-         // Check if golden_result has been set by the model
-         if (|golden_result) s = {s, $sformatf(", golden_result: %p", golden_result)};
          return s;
     endfunction
+
 endclass

@@ -37,6 +37,7 @@ class fp_scoreboard #(
         dut_canonical    = fp_utils::fp16_canonicalize(dut_trans.result);
         golden_canonical = fp_utils::fp16_canonicalize(golden_trans.result);
 
+        // TODO: (now) Move reporting formatter into specific transaction
         if (dut_canonical == golden_canonical) begin
             `uvm_info("SCOREBOARD", $sformatf("PASS [%s]: a=0x%h, b=0x%h -> result=0x%h",
                 dut_trans.get_name(), dut_trans.inputs[0], dut_trans.inputs[1], dut_trans.result), UVM_HIGH)

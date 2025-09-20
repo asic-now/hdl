@@ -12,9 +12,15 @@ class fp16_add_monitor extends fp_monitor_base #(fp16_add_transaction, virtual f
     endfunction
 
     // Implementation of the DUT-specific sample task
-    virtual task sample_ports(fp16_add_transaction trans);
-        trans.inputs[0] = vif.monitor_cb.a;
-        trans.inputs[1] = vif.monitor_cb.b;
+    // It only creates and returns a transaction if inputs are valid.
+    virtual task sample_ports(output fp16_add_transaction trans);
+        if (! (^vif.monitor_cb.a === 1'bx) && ! (^vif.monitor_cb.b === 1'bx)) begin
+            trans = fp16_add_transaction::type_id::create("trans_input");
+            trans.inputs[0] = vif.monitor_cb.a;
+            trans.inputs[1] = vif.monitor_cb.b;
+        end else begin
+            trans = null;
+        end
     endtask
 
     // Implementation of the DUT-specific output sampling task

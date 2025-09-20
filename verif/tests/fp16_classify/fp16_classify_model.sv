@@ -5,9 +5,6 @@
 
 `include "uvm_macros.svh"
 
-// `include "fp_model_base.sv"
-// `include "fp16_classify_transaction.sv"
-
 // Import the C function. The name must match the C source.
 // The return and argument types must match the data types in C.
 // 'shortint' in SV is a 16-bit signed integer, which corresponds to
@@ -30,22 +27,7 @@ class fp16_classify_model extends fp_model_base #(fp16_classify_transaction);
     virtual function void predict(fp16_classify_transaction trans_in, ref fp16_classify_transaction trans_out);
         trans_out = new trans_in;
         // Call the imported C function to get the golden result
-        c_fp16_classify(trans_in.in, trans_out.golden_result);
+        c_fp16_classify(trans_in.inputs[0], trans_out.result);
     endfunction
-
-    // virtual task run_phase(uvm_phase phase);
-    //     forever begin
-    //         fp16_classify_transaction req, rsp;
-
-    //         req_port.get(req);
-    //         $cast(rsp, req.clone());
-
-    //         // Call the C model to get the expected results
-    //         c_fp16_classify(req.in, rsp.golden_result);
-
-    //         `uvm_info("MODEL", $sformatf("C model processed: %s", rsp.convert2string()), UVM_HIGH)
-    //         rsp_port.write(rsp);
-    //     end
-    // endtask
 
 endclass

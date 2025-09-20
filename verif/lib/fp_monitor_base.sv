@@ -45,13 +45,12 @@ virtual class fp_monitor_base #(
     virtual task collect_inputs();
         @(posedge vif.rst_n);
         forever begin
+            T_TRANS trans;
             @(vif.monitor_cb);
             pre_sample(0);
-            // if (! (^vif.monitor_cb.a === 1'bx)) begin // Use 'a' as a proxy for valid inputs
-            if (! (^vif.monitor_cb.a === 1'bx) && ! (^vif.monitor_cb.b === 1'bx)) begin
-                 T_TRANS trans = T_TRANS::type_id::create("trans_input");
-                 sample_ports(trans);
-                 input_queue.push_back(trans);
+            sample_ports(trans);
+            if (trans != null) begin
+                input_queue.push_back(trans);
             end
         end
     endtask
@@ -68,7 +67,7 @@ virtual class fp_monitor_base #(
             pre_sample(1);
             if (input_queue.size() > 0) begin
                 trans_out = input_queue.pop_front();
-                trans_out.result = vif.monitor_cb.result; //? sample_output(trans_out); // DUT-specific
+                sample_output(trans_out); // DUT-specific
                 `uvm_info(get_type_name(), $sformatf("Collected transaction"), UVM_HIGH)
                 ap.write(trans_out);
             end
@@ -87,8 +86,8 @@ virtual class fp_monitor_base #(
     endtask
 
     // This is a placeholder task that MUST be implemented by the DUT-specific monitor
-    pure virtual task sample_ports(T_TRANS trans);
+    pure virtual task sample_ports(output T_TRANS trans);
 
-    // pure virtual task sample_output(T_TRANS trans);
+    pure virtual task sample_output(T_TRANS trans);
 
 endclass

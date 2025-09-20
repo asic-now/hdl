@@ -33,12 +33,13 @@ class vec_scoreboard #(
         // Call the model to predict the golden result
         model.predict(dut_trans, golden_trans);
 
-        if (dut_trans.result == golden_trans.golden_result) begin
-            `uvm_info("SCOREBOARD", $sformatf("Compare OK: in=0x%h, result=0x%h", dut_trans.in, dut_trans.result), UVM_LOW)
+        // TODO: (now) Move reporting formatter into specific transaction
+        if (dut_trans.result == golden_trans.result) begin
+            `uvm_info("SCOREBOARD", $sformatf("Compare OK: in=0x%h, result=0x%h", dut_trans.inputs[0], dut_trans.result), UVM_LOW)
         end else begin
             `uvm_error("SCOREBOARD", $sformatf("Compare FAIL:\n  DUT received:   in=0x%h --> result=0x%h\n  MODEL predicted: in=0x%h --> result=0x%h",
-                dut_trans.in, dut_trans.result,
-                golden_trans.in, golden_trans.golden_result))
+                dut_trans.inputs[0], dut_trans.result,
+                golden_trans.inputs[0], golden_trans.result))
         end
     endfunction
 
