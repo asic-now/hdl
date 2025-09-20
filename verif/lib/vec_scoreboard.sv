@@ -1,0 +1,45 @@
+// vec_scoreboard.sv
+// Generic scoreboard for comparing vector transactions.
+
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+import fp_utils_pkg::*;
+
+class vec_scoreboard #(
+    type T_TRANS = uvm_sequence_item,
+    type T_MODEL = uvm_object
+) extends uvm_scoreboard;
+    `uvm_component_utils(vec_scoreboard #(T_TRANS, T_MODEL))
+
+    uvm_analysis_imp #(T_TRANS, vec_scoreboard #(T_TRANS, T_MODEL)) ap;
+    T_MODEL model;
+
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+        ap = new("ap", this);
+    endfunction
+
+    function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+        if(!uvm_config_db#(T_MODEL)::get(this, "*", "model", model))
+            `uvm_fatal("NO_MODEL", "Could not get model handle in scoreboard")
+    endfunction
+
+    // The write task is called when the monitor broadcasts a transaction
+    virtual function void write(T_TRANS dut_trans);
+        T_TRANS golden_trans;
+        logic [15:0] dut_canonical, golden_canonical;
+
+        // Call the model to predict the golden result
+        model.predict(dut_trans, golden_trans);
+
+        if (dut_trans.result == golden_trans.golden_result) begin
+            `uvm_info("SCOREBOARD", $sformatf("Compare OK: in=0x%h, result=0x%h", dut_trans.in, dut_trans.result), UVM_LOW)
+        end else begin
+            `uvm_error("SCOREBOARD", $sformatf("Compare FAIL:\n  DUT received:   in=0x%h --> result=0x%h\n  MODEL predicted: in=0x%h --> result=0x%h",
+                dut_trans.in, dut_trans.result,
+                golden_trans.in, golden_trans.golden_result))
+        end
+    endfunction
+
+endclass

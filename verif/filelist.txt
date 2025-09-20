@@ -9,6 +9,7 @@
 # Beginning of the manifest file
 # List of Design Files
 ../rtl/verilog/fp16/fp16_add.v
+../rtl/verilog/fp16/fp16_classify.v
 
 # List of UVM Lib Files
 ../verif/lib/fp_utils.sv
@@ -35,5 +36,10 @@
 # Only list the package file, the rest will be pulled in by includes.
 ../verif/tests/fp16_add/fp16_add_pkg.sv
 
+
 # Testbench Top
 ../verif/tests/fp16_add/fp16_add_tb_top.sv
+
+../verif/tests/fp16_classify/fp16_classify_if.sv
+../verif/tests/fp16_classify/fp16_classify_pkg.sv
+../verif/tests/fp16_classify/fp16_classify_tb_top.sv
