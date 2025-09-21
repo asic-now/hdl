@@ -14,6 +14,9 @@ virtual class fp_monitor_base #(
 
     T_VIF vif;
     uvm_analysis_port #(T_TRANS) ap;
+    // Port to get the original transaction from the agent's FIFO
+    uvm_get_port #(T_TRANS) get_port;
+
     T_TRANS input_queue[$];
     int pipeline_latency = -1; // Default to invalid
     int unsigned epsilon_delay = 1; // Default to a 1-timeunit delay
@@ -21,6 +24,7 @@ virtual class fp_monitor_base #(
     function new(string name, uvm_component parent);
         super.new(name, parent);
         ap = new("ap", this);
+        get_port = new("get_port", this);
     endfunction
 
     virtual function void build_phase(uvm_phase phase);
@@ -37,12 +41,12 @@ virtual class fp_monitor_base #(
         end
         // Fork the two parallel processes
         fork
-            collect_inputs();
-            collect_outputs_and_send();
+            collect_inputs(phase);
+            collect_outputs(phase);
         join
     endtask
 
-    virtual task collect_inputs();
+    virtual task collect_inputs(uvm_phase phase);
         @(posedge vif.rst_n);
         forever begin
             T_TRANS trans;
@@ -55,8 +59,12 @@ virtual class fp_monitor_base #(
         end
     endtask
 
-    virtual task collect_outputs_and_send();
-        T_TRANS trans_out;
+    virtual task collect_outputs(uvm_phase phase);
+        T_TRANS named_trans, trans_out;
+        bit driver_is_active;
+        bit local_q_has_items;
+        bit started_flag = 0;
+
         @(posedge vif.rst_n);
 
         // +1 cycle seem to be needed in addition to DUT latency. 
@@ -65,11 +73,20 @@ virtual class fp_monitor_base #(
         forever begin
             @(vif.monitor_cb);
             pre_sample(1);
-            if (input_queue.size() > 0) begin
+            driver_is_active = get_port.can_get();
+            local_q_has_items = (input_queue.size() > 0);
+            if (driver_is_active && local_q_has_items) begin
+                started_flag = 1;
+                get_port.get(named_trans);
                 trans_out = input_queue.pop_front();
-                sample_output(trans_out); // DUT-specific
+                named_trans.inputs = trans_out.inputs;
+                sample_output(named_trans); // DUT-specific
                 `uvm_info(get_type_name(), $sformatf("Collected transaction"), UVM_HIGH)
-                ap.write(trans_out);
+                ap.write(named_trans);
+            end else if (driver_is_active != local_q_has_items && !started_flag) begin
+                // This else block helps debug synchronization problems.
+                `uvm_warning("MON_SYNC_WARN", $sformatf("Queue mismatch! Driver FIFO has item: %b, Local input queue has item: %b",
+                    get_port.can_get(), (input_queue.size() > 0) ))
             end
         end
     endtask

@@ -12,10 +12,13 @@ virtual class fp_driver_base #(
 ) extends uvm_driver #(T_TRANS);
 
     T_VIF vif;
+    // This port will broadcast every transaction the driver sends.
+    uvm_analysis_port #(T_TRANS) ap;
     int unsigned epsilon_delay = 1; // Default to a 1-timeunit delay
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
+        ap = new("ap", this);
     endfunction
 
     virtual function void build_phase(uvm_phase phase);
@@ -31,6 +34,7 @@ virtual class fp_driver_base #(
             seq_item_port.get_next_item(req);
             pre_drive();
             drive_transfer(req);
+            ap.write(req); // Broadcast the driven transaction
             seq_item_port.item_done();
         end
     endtask
