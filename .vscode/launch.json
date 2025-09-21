@@ -13,6 +13,40 @@
         },
 
         {
+            "name": "path_comment.py --help",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "scripts/path_comment.py",
+            "args": [
+                "--help",
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "path_comment.py --dryrun",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "scripts/path_comment.py",
+            "args": [
+                "--dryrun",
+                "${workspaceFolder}",
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "path_comment.py --fix",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "scripts/path_comment.py",
+            "args": [
+                // "--debug",
+                "--fix",
+                "${workspaceFolder}",
+            ],
+            "console": "integratedTerminal"
+        },
+
+        {
             "name": "generate_lut.py help",
             "type": "debugpy",
             "request": "launch",
