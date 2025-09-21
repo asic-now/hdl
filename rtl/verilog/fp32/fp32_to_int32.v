@@ -1,4 +1,4 @@
-// fp32_to_int32.v
+// rtl/verilog/fp32/fp32_to_int32.v
 //
 // Verilog RTL to convert a 32-bit float to a 32-bit signed integer.
 //

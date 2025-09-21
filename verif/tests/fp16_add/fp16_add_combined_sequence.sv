@@ -1,4 +1,4 @@
-// fp16_add_combined_sequence.sv
+// verif/tests/fp16_add/fp16_add_combined_sequence.sv
 //
 // A top-level sequence that combines directed and random tests.
 // It first runs the special cases sequence, then the random sequence.

@@ -1,4 +1,4 @@
-// fp16_classify_agent.sv
+// verif/tests/fp16_classify/fp16_classify_agent.sv
 // UVM Agent for the fp16_classify DUT.
 
 `include "uvm_macros.svh"

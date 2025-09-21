@@ -1,4 +1,4 @@
-// fp16_classify_random_test.sv
+// verif/tests/fp16_classify/fp16_classify_random_test.sv
 // A specific test that runs a random sequence.
 
 `include "uvm_macros.svh"

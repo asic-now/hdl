@@ -1,4 +1,4 @@
-// fp_macros.svh
+// verif/lib/fp_macros.svh
 // This file contains custom, project-specific UVM macros to simplify
 // testbench development.
 

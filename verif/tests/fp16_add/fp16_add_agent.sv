@@ -1,4 +1,4 @@
-// fp16_add_agent.sv
+// verif/tests/fp16_add/fp16_add_agent.sv
 // UVM Agent for the fp16_add DUT.
 
 `include "uvm_macros.svh"

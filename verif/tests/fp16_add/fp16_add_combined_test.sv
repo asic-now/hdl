@@ -1,4 +1,4 @@
-// fp16_add_combined_test.sv
+// verif/tests/fp16_add/fp16_add_combined_test.sv
 //
 // A test that runs the combined directed and random sequence.
 

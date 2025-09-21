@@ -3,6 +3,7 @@
 """
 Compares C model to Python model.
 """
+# verif/lib/fp16_models_compare.py
 
 import ctypes
 from ctypes import CDLL, c_uint16

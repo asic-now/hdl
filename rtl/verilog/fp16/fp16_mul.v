@@ -1,4 +1,4 @@
-// fp16_mul.v
+// rtl/verilog/fp16/fp16_mul.v
 //
 // Verilog RTL for a 16-bit (half-precision) floating-point multiplier.
 //

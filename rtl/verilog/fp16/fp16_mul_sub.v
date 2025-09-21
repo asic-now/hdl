@@ -1,4 +1,4 @@
-// fp16_mul_sub.v
+// rtl/verilog/fp16/fp16_mul_sub.v
 //
 // Verilog RTL for a 16-bit (half-precision) floating-point Fused Multiply-Subtract (FMS).
 //

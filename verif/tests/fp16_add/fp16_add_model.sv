@@ -1,4 +1,4 @@
-// fp16_add_model.sv
+// verif/tests/fp16_add/fp16_add_model.sv
 // Reference model for the fp16_add operation.
 // This model uses a "golden" C function via the DPI-C interface,
 // ensuring it is a trusted, independent reference.

@@ -1,4 +1,4 @@
-// fp32_to_fp64.v
+// rtl/verilog/fp32/fp32_to_fp64.v
 //
 // Verilog RTL to convert a 32-bit float to a 64-bit float.
 //

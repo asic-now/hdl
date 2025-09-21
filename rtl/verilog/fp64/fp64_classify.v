@@ -1,4 +1,4 @@
-// fp64_classify.v
+// rtl/verilog/fp64/fp64_classify.v
 //
 // Verilog RTL for a 64-bit (double-precision) floating-point classifier.
 // This module identifies the category of a given FP64 number.

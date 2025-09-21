@@ -1,4 +1,4 @@
-// fp16_classify.v
+// rtl/verilog/fp16/fp16_classify.v
 //
 // Verilog RTL for a 16-bit (half-precision) floating-point classifier.
 // This module identifies the category of a given FP16 number.

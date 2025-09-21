@@ -1,4 +1,4 @@
-// fp16_classify_model.sv
+// verif/tests/fp16_classify/fp16_classify_model.sv
 // Reference model for the fp16_classify operation.
 // This model uses a "golden" C function via the DPI-C interface,
 // ensuring it is a trusted, independent reference.

@@ -1,4 +1,4 @@
-// fp16_to_fp32.v
+// rtl/verilog/fp16/fp16_to_fp32.v
 //
 // Converts a 16-bit half-precision float to a 32-bit single-precision float.
 //

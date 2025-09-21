@@ -1,4 +1,4 @@
-// fp16_classify_if.sv
+// verif/tests/fp16_classify/fp16_classify_if.sv
 // Interface for the fp16_classify DUT.
 
 interface fp16_classify_if (

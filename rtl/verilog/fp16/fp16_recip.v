@@ -1,4 +1,4 @@
-// fp16_recip.v
+// rtl/verilog/fp16/fp16_recip.v
 //
 // Verilog RTL for a 16-bit (half-precision) floating-point reciprocal (1/x).
 //

@@ -1,4 +1,4 @@
-// fp16_add_env.sv
+// verif/tests/fp16_add/fp16_add_env.sv
 // Top-level environment for the fp16_add testbench.
 
 `include "uvm_macros.svh"

@@ -1,4 +1,4 @@
-// fp16_div.v
+// rtl/verilog/fp16/fp16_div.v
 //
 // Verilog RTL for a 16-bit (half-precision) floating-point divider.
 //

@@ -1,4 +1,4 @@
-// fp16_sqrt.v
+// rtl/verilog/fp16/fp16_sqrt.v
 //
 // Verilog RTL for a 16-bit (half-precision) floating-point square root.
 //

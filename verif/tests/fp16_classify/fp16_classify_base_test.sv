@@ -1,4 +1,4 @@
-// fp16_classify_base_test.sv
+// verif/tests/fp16_classify/fp16_classify_base_test.sv
 // Base test class for the fp16_classify verification environment.
 
 `include "uvm_macros.svh"

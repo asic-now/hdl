@@ -1,4 +1,4 @@
-// fp32_classify.v
+// rtl/verilog/fp32/fp32_classify.v
 //
 // Verilog RTL for a 32-bit (single-precision) floating-point classifier.
 // This module identifies the category of a given FP32 number.

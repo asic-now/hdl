@@ -26,6 +26,7 @@ Functions:
 This script is part of a larger hardware description language (HDL) library
 for implementing floating-point arithmetic operations in digital circuits.
 """
+# rtl/verilog/generate_lut.py
 
 import argparse
 import math

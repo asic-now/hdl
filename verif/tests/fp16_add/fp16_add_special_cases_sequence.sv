@@ -1,4 +1,4 @@
-// fp16_add_special_cases_sequence.sv
+// verif/tests/fp16_add/fp16_add_special_cases_sequence.sv
 //
 // A directed sequence that generates transactions to test all known
 // special cases for floating-point addition (NaN, Inf, Zero).

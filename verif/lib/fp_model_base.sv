@@ -1,4 +1,4 @@
-// fp_model_base.sv
+// verif/lib/fp_model_base.sv
 // Generic base class for a reference model.
 
 `include "uvm_macros.svh"

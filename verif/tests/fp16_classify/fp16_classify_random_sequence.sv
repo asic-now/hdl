@@ -1,4 +1,4 @@
-// fp16_classify_random_sequence.sv
+// verif/tests/fp16_classify/fp16_classify_random_sequence.sv
 // Sequence to generate random transactions for the fp16_classify DUT.
 
 `include "uvm_macros.svh"

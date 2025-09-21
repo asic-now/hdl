@@ -1,4 +1,4 @@
-// fp16_classify_tb_top.sv
+// verif/tests/fp16_classify/fp16_classify_tb_top.sv
 // Top-level module for the fp16_classify UVM testbench.
 
 `include "uvm_macros.svh"

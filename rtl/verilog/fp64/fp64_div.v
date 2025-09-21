@@ -1,4 +1,4 @@
-// fp64_div.v
+// rtl/verilog/fp64/fp64_div.v
 //
 // Verilog RTL for a 64-bit (double-precision) floating-point divider.
 //

@@ -1,4 +1,4 @@
-// fp64_invsqrt.v
+// rtl/verilog/fp64/fp64_invsqrt.v
 //
 // Verilog RTL for 64-bit float inverse square root (1/sqrt(x)).
 //

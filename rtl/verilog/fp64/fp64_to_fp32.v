@@ -1,4 +1,4 @@
-// fp64_to_fp32.v
+// rtl/verilog/fp64/fp64_to_fp32.v
 //
 // Converts a 64-bit double-precision float to a 32-bit single-precision float.
 //

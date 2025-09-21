@@ -1,4 +1,4 @@
-// fp32_invsqrt.v
+// rtl/verilog/fp32/fp32_invsqrt.v
 //
 // Verilog RTL for 32-bit float inverse square root (1/sqrt(x)).
 //

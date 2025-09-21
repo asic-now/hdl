@@ -1,4 +1,4 @@
-// fp16_add_tb_top.sv
+// verif/tests/fp16_add/fp16_add_tb_top.sv
 // Top-level module for the fp16_add UVM testbench.
 
 `include "uvm_macros.svh"

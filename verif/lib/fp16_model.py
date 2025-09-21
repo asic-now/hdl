@@ -7,6 +7,7 @@ This script models 16-bit IEEE 754 half-precision operations.
 E.g. "add" command adds two values given as hex (like 0xc540)
 and outputs the result in multiple formats.
 """
+# verif/lib/fp16_model.py
 
 import argparse
 from typing import Dict, List, Tuple

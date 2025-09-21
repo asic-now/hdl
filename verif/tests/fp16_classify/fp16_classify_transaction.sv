@@ -1,4 +1,4 @@
-// fp16_classify_transaction.sv
+// verif/tests/fp16_classify/fp16_classify_transaction.sv
 // Transaction item for the fp16_classify testbench.
 
 `include "uvm_macros.svh"

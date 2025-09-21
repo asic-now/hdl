@@ -1,4 +1,4 @@
-// fp16_add_special_cases_test.sv
+// verif/tests/fp16_add/fp16_add_special_cases_test.sv
 //
 // A directed test that runs the special cases sequence.
 

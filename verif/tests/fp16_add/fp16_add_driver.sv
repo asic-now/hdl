@@ -1,4 +1,4 @@
-// fp16_add_driver.sv
+// verif/tests/fp16_add/fp16_add_driver.sv
 // Implements the pure virtual 'drive_transfer' task for the 2-input adder.
 
 `include "uvm_macros.svh"

@@ -1,4 +1,4 @@
-// fp_transaction_base.sv
+// verif/lib/fp_transaction_base.sv
 // Generic, parameterized base class for all floating-point transactions.
 // It is parameterized by data WIDTH and the number of inputs (NUM_INPUTS).
 

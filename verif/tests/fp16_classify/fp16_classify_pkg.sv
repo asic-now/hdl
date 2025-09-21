@@ -1,4 +1,4 @@
-// fp16_classify_pkg.sv
+// verif/tests/fp16_classify/fp16_classify_pkg.sv
 // This package imports the UVM library and includes all the component
 // files for the fp16_classify testbench, making them available for compilation.
 

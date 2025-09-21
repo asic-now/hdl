@@ -1,4 +1,4 @@
-// fp16_classify_monitor.sv
+// verif/tests/fp16_classify/fp16_classify_monitor.sv
 // Monitors the DUT interface and reports transactions.
 
 `include "uvm_macros.svh"

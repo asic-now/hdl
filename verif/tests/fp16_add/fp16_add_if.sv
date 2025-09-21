@@ -1,4 +1,4 @@
-// fp16_add_if.sv
+// verif/tests/fp16_add/fp16_add_if.sv
 // Interface for the fp16_add DUT.
 
 interface fp16_add_if (

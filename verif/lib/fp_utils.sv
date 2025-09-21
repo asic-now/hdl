@@ -1,4 +1,4 @@
-// fp_utils.sv
+// verif/lib/fp_utils.sv
 //
 // This file contains a package with utility classes and functions for
 // floating-point verification, such as the canonicalizer.

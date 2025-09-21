@@ -1,4 +1,4 @@
-// fp64_recip.v
+// rtl/verilog/fp64/fp64_recip.v
 //
 // Verilog RTL for a 64-bit (double-precision) floating-point reciprocal (1/x).
 //

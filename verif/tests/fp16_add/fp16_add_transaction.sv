@@ -1,4 +1,4 @@
-// fp16_add_transaction.sv
+// verif/tests/fp16_add/fp16_add_transaction.sv
 // Extends the generic transaction base class for the 2-input, 16-bit adder.
 
 `include "uvm_macros.svh"

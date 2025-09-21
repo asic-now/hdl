@@ -1,4 +1,4 @@
-// fp16_invsqrt.v
+// rtl/verilog/fp16/fp16_invsqrt.v
 //
 // Verilog RTL for 16-bit float inverse square root (1/sqrt(x)).
 //

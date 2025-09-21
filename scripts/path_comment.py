@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# scripts/path_comment.py
 
 """
 A command-line tool to traverse a folder and ensure that files have a

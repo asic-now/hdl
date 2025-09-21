@@ -1,4 +1,4 @@
-// fp64_sqrt.v
+// rtl/verilog/fp64/fp64_sqrt.v
 //
 // Verilog RTL for a 64-bit (double-precision) floating-point square root.
 //

@@ -1,4 +1,4 @@
-// int64_to_fp64.v
+// rtl/verilog/fp64/int64_to_fp64.v
 //
 // Verilog RTL to convert a 64-bit signed integer to a 64-bit float.
 //

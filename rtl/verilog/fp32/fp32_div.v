@@ -1,4 +1,4 @@
-// fp32_div.v
+// rtl/verilog/fp32/fp32_div.v
 //
 // Verilog RTL for a 32-bit (single-precision) floating-point divider.
 //

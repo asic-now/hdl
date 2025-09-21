@@ -1,4 +1,4 @@
-// fp_lib_pkg.sv
+// verif/lib/fp_lib_pkg.sv
 //
 // This package contains all the generic, reusable base classes and utilities
 // for the floating-point verification environment. Test-specific packages

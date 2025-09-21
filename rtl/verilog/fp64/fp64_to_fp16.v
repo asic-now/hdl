@@ -1,4 +1,4 @@
-// fp64_to_fp16.v
+// rtl/verilog/fp64/fp64_to_fp16.v
 //
 // Converts a 64-bit double-precision float to a 16-bit half-precision float.
 //

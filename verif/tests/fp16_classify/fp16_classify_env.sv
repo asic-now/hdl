@@ -1,4 +1,4 @@
-// fp16_classify_env.sv
+// verif/tests/fp16_classify/fp16_classify_env.sv
 // Top-level environment for the fp16_classify testbench.
 
 `include "uvm_macros.svh"

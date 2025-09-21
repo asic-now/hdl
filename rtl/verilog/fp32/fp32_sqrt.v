@@ -1,4 +1,4 @@
-// fp32_sqrt.v
+// rtl/verilog/fp32/fp32_sqrt.v
 //
 // Verilog RTL for a 32-bit (single-precision) floating-point square root.
 //

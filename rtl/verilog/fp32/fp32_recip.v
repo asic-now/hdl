@@ -1,4 +1,4 @@
-// fp32_recip.v
+// rtl/verilog/fp32/fp32_recip.v
 //
 // Verilog RTL for a 32-bit (single-precision) floating-point reciprocal (1/x).
 //

@@ -1,4 +1,4 @@
-// fp16_add_pkg.sv
+// verif/tests/fp16_add/fp16_add_pkg.sv
 // This package imports the UVM library and includes all the component
 // files for the fp16_add testbench, making them available for compilation.
 

@@ -1,4 +1,4 @@
-// fp64_mul_sub.v
+// rtl/verilog/fp64/fp64_mul_sub.v
 //
 // Verilog RTL for a 64-bit (double-precision) floating-point Fused Multiply-Subtract (FMS).
 //

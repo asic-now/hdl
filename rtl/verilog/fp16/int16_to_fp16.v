@@ -1,4 +1,4 @@
-// int16_to_fp16.v
+// rtl/verilog/fp16/int16_to_fp16.v
 //
 // Verilog RTL to convert a 16-bit signed integer to a 16-bit float.
 //

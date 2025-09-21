@@ -1,4 +1,4 @@
-// fp_scoreboard.sv
+// verif/lib/fp_scoreboard.sv
 // Generic scoreboard for comparing FP transactions (using canonicalize).
 
 `include "uvm_macros.svh"

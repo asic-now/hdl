@@ -1,4 +1,4 @@
-// vec_scoreboard.sv
+// verif/lib/vec_scoreboard.sv
 // Generic scoreboard for comparing vector transactions.
 
 `include "uvm_macros.svh"
