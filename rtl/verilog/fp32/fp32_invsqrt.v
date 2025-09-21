@@ -82,7 +82,7 @@ module fp32_invsqrt #(
     localparam [31:0] C_0_5 = 32'h3f000000; // 0.5 in FP32
 
     /*
-    // TODO: Connect your FPU modules here for the N-R iteration.
+    // TODO: (when needed) Connect your FPU modules here for the N-R iteration.
     fp32_mul mul_x_div2 (.a(fp_in),   .b(C_0_5),    .result(x_div2)  );
     fp32_mul mul_y0_sq  (.a(y0_fp),   .b(y0_fp),    .result(y0_sq)   );
     fp32_mul mul_term   (.a(x_div2),  .b(y0_sq),    .result(term)    );

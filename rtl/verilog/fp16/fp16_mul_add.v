@@ -14,7 +14,7 @@
 // - Fused operation for higher precision.
 // - Handles normalized and denormalized numbers.
 // - Handles all special cases (NaN, Infinity, Zero).
-// - Truncates the result (no rounding). // TODO: rounding.
+// - Truncates the result (no rounding). // TODO: (when needed) rounding.
 
 module fp16_mul_add (
     input clk,
@@ -120,7 +120,7 @@ module fp16_mul_add (
 
     always @(posedge clk) begin
         if (!rst_n) begin
-            // TODO: reset registers (optional by param)
+            // TODO: (when needed) reset registers (optional by param)
         end else begin
             // Normalize the product
             if (mant_product[21]) begin // Result is 1x.f..., shift right
@@ -159,7 +159,7 @@ module fp16_mul_add (
     reg [47:0] mant_ab_extended, mant_c_extended;
     always @(posedge clk) begin
         if (!rst_n) begin
-            // TODO: reset registers
+            // TODO: (when needed) reset registers
         end else begin
             // Logic to handle special case propagation before alignment
             if (s2_prop_is_nan || s2_is_nan_c) begin

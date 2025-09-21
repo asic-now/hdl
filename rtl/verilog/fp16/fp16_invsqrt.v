@@ -85,7 +85,7 @@ module fp16_invsqrt #(
     localparam [15:0] C_0_5 = 16'h3800; // 0.5 in FP16
 
     /*
-    // TODO: Connect your FPU modules here for the N-R iteration.
+    // TODO: (when needed) Connect your FPU modules here for the N-R iteration.
     // The logic below requires fp16_mul and fp16_add modules from your library.
     
     fp16_mul mul_x_div2 (.a(fp_in),   .b(C_0_5),    .result(x_div2)  );

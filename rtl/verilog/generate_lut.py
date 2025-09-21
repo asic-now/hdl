@@ -45,7 +45,8 @@ GENERATED_MODULE_WARNING = textwrap.dedent("""\
 //======================================================================
 """)
 
-PATH_PREFIX = 'rtl/verilog' # TODO: (now) Handle it better (relative path to the script? to caller dir?)
+PATH_PREFIX = "rtl/verilog"  # TODO: (when needed) Handle it better (relative path to the script? to caller dir?)
+
 
 def generate_invsqrt_lut(precision: str) -> Tuple[str, str, str]:
     """Generates the Verilog RTL for an inverse square root LUT."""

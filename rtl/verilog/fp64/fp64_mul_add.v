@@ -120,7 +120,7 @@ module fp64_mul_add (
 
     always @(posedge clk) begin
         if (!rst_n) begin
-            // TODO: reset registers (optional by param)
+            // TODO: (when needed) reset registers (optional by param)
         end else begin
             // Normalize the product
             if (mant_product[105]) begin // Result is 1x.f..., shift right
@@ -160,7 +160,7 @@ module fp64_mul_add (
     reg        [211:0] mant_ab_extended, mant_c_extended;
     always @(posedge clk) begin
         if (!rst_n) begin
-            // TODO: reset registers
+            // TODO: (when needed) reset registers
         end else begin
             // Logic to handle special case propagation before alignment
             if (s2_prop_is_nan || s2_is_nan_c) begin
