@@ -29,6 +29,7 @@
             "program": "scripts/path_comment.py",
             "args": [
                 "--dryrun",
+                "-r",
                 "${workspaceFolder}",
             ],
             "console": "integratedTerminal"
@@ -41,6 +42,7 @@
             "args": [
                 // "--debug",
                 "--fix",
+                "-r",
                 "${workspaceFolder}",
             ],
             "console": "integratedTerminal"

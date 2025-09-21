@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List
 import fnmatch
+import re
 
 # Default mapping of file extensions to their single-line comment prefix.
 # This can be overridden or extended via command-line arguments.
@@ -80,7 +81,7 @@ def process_file(
         relative_path = file_path.relative_to(base_path).as_posix()
         comment_prefix = comment_map[ext]
         expected_line = f"{comment_prefix} {relative_path}"
-        filename = Path(relative_path).name
+        filename_stem = file_path.stem
 
         with file_path.open("r", encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
@@ -93,15 +94,19 @@ def process_file(
         if lines and lines[0].startswith("#!"):
             insertion_point = 1
 
-        # 2. Skip Python docstrings and find the real insertion point
+        # 2. Skip Python module-level docstrings and find the real insertion point
         if ext == ".py":
             docstring_start_idx = -1
-            # Find start of docstring (after shebang, if any)
+            # Find start of module docstring (must have no indent)
             for i in range(insertion_point, len(lines)):
-                if lines[i].strip():  # Find first non-empty line
-                    if lines[i].strip().startswith(('"""', "'''")):
+                line_strip = lines[i].strip()
+                if line_strip:  # Find first non-empty line
+                    # A module docstring cannot be indented.
+                    if not lines[i].startswith((" ", "\t")) and line_strip.startswith(
+                        ('"""', "'''")
+                    ):
                         docstring_start_idx = i
-                    break
+                    break  # Stop after the first non-empty line regardless
 
             if docstring_start_idx != -1:
                 quote_type = lines[docstring_start_idx].strip()[:3]
@@ -121,27 +126,35 @@ def process_file(
                 insertion_point = docstring_end_line + 1
 
         # 3. Check for compliance or find a line to replace
+        # Pattern to find a path-like string containing the filename stem.
+        # This is more robust than a simple `filename in line` check.
+        path_like_pattern = re.compile(
+            rf"([a-zA-Z0-9/._-]*{re.escape(filename_stem)}[a-zA-Z0-9._-]*)"
+        )
+
         for i, line in enumerate(lines):
             line_strip = line.strip()
             if line_strip == expected_line:
                 return  # File is already compliant
 
-            # A line is a candidate for replacement if it's a comment, contains the filename,
-            # and is not part of a docstring.
+            # A line is a candidate for replacement if it's a comment, not part of a docstring,
+            # and contains a path-like reference to the current file.
             is_after_docstring = (
                 ext != ".py" or docstring_end_line == -1 or i > docstring_end_line
             )
-            if (
-                is_after_docstring
-                and line_strip.startswith(comment_prefix)
-                and filename in line
-                and line_to_replace_idx == -1  # Found first potential match
-            ):
-                line_to_replace_idx = i
+            if is_after_docstring and line_strip.startswith(comment_prefix):
+                comment_content = line_strip[len(comment_prefix) :].strip()
+                if (
+                    path_like_pattern.search(comment_content)
+                    and line_to_replace_idx == -1
+                ):  # Found first potential match
+                    line_to_replace_idx = i
 
-        # 4. Decide what action to take
+        # 4. Decide what action to take, considering if the file was modified
+        needs_action = False
         if line_to_replace_idx != -1:
             # Found a partial match to replace
+            needs_action = True
             relative_path_str = file_path.relative_to(base_path).as_posix()
             if fix:
                 print(
@@ -152,18 +165,18 @@ def process_file(
                 print(
                     f"[NEEDS FIX] {relative_path_str} (would replace line {line_to_replace_idx + 1})"
                 )
-
-        else:
-            # No match found, need to insert a new line
+        elif any(line.strip() for line in lines):  # Don't add header to empty files
+            # No suitable match found, need to insert a new line
+            needs_action = True
             relative_path_str = file_path.relative_to(base_path).as_posix()
             if fix:
                 print(f"[FIXING] {relative_path_str} (inserting header)")
                 lines.insert(insertion_point, f"{expected_line}\n")
-            else:  # Dry run
+            else:
                 print(f"[NEEDS FIX] {relative_path_str} (would insert header)")
 
-        # 5. Write changes if in fix mode
-        if fix:
+        # 5. Write changes if in fix mode and an action was identified
+        if fix and needs_action:
             with file_path.open("w", encoding="utf-8") as f:
                 f.writelines(lines)
 
