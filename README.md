@@ -31,8 +31,6 @@ Verification in testbenches is simplified:
 * Results precision fitting is done by truncation, not rounding.
 * -0 may be used instead of +0.
 
-
-
 ## Tooling
 
 For simulator setup and other tools see [TOOLING.md](TOOLING.md)
