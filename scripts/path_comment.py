@@ -15,7 +15,7 @@ The script uses a configurable mapping of file extensions to comment styles.
 import argparse
 import sys
 from pathlib import Path
-from typing import Dict, List, NamedTuple
+from typing import Dict, List
 import fnmatch
 
 # Default mapping of file extensions to their single-line comment prefix.
@@ -25,18 +25,6 @@ DEFAULT_COMMENT_MAP_CONFIG = [
     ".h,.c,.cpp,.hpp,.java,.js,.ts,.go,.rs://",
     ".v,.vh,.sv,.svh://",
 ]
-
-
-class ParsedArgs(NamedTuple):
-    """A structure to hold the parsed command-line arguments."""
-
-    folder: Path
-    dry_run: bool
-    fix: bool
-    map_config: List[str]
-    recursive: bool
-    no_gitignore: bool
-    exclude: List[str]
 
 
 def parse_comment_map(map_config: List[str]) -> Dict[str, str]:
@@ -74,6 +62,10 @@ def process_file(
     """
     Processes a single file to check for or add the path comment.
 
+    This function handles shebangs and Python docstrings, searching for a partial
+    filename match in comments to replace, or inserting a new comment if no
+    suitable one is found.
+
     Args:
       file_path: The absolute path to the file to process.
       base_path: The absolute path of the root directory for traversal.
@@ -88,29 +80,92 @@ def process_file(
         relative_path = file_path.relative_to(base_path).as_posix()
         comment_prefix = comment_map[ext]
         expected_line = f"{comment_prefix} {relative_path}"
+        filename = Path(relative_path).name
 
         with file_path.open("r", encoding="utf-8", errors="ignore") as f:
-            first_line = f.readline().strip()
+            lines = f.readlines()
 
-        if first_line == expected_line:
-            return  # File is already compliant
+        line_to_replace_idx = -1
+        insertion_point = 0
+        docstring_end_line = -1
 
-        # File is not compliant, decide action based on mode
-        if fix:
-            print(f"[FIXING] {relative_path}")
-            with file_path.open("r", encoding="utf-8", errors="ignore") as f:
-                lines = f.readlines()
+        # 1. Handle shebang to adjust potential insertion point
+        if lines and lines[0].startswith("#!"):
+            insertion_point = 1
 
-            # If the first line is an old, incorrect comment, replace it. Otherwise, insert.
-            if lines and lines[0].strip().startswith(comment_prefix):
-                lines[0] = f"{expected_line}\n"
+        # 2. Skip Python docstrings and find the real insertion point
+        if ext == ".py":
+            docstring_start_idx = -1
+            # Find start of docstring (after shebang, if any)
+            for i in range(insertion_point, len(lines)):
+                if lines[i].strip():  # Find first non-empty line
+                    if lines[i].strip().startswith(('"""', "'''")):
+                        docstring_start_idx = i
+                    break
+
+            if docstring_start_idx != -1:
+                quote_type = lines[docstring_start_idx].strip()[:3]
+                # Check for single-line docstring
+                if (
+                    lines[docstring_start_idx].strip().endswith(quote_type)
+                    and len(lines[docstring_start_idx].strip()) > 3
+                ):
+                    docstring_end_line = docstring_start_idx
+                else:  # Search for end of multi-line docstring
+                    for i in range(docstring_start_idx + 1, len(lines)):
+                        if lines[i].strip().endswith(quote_type):
+                            docstring_end_line = i
+                            break
+
+            if docstring_end_line != -1:
+                insertion_point = docstring_end_line + 1
+
+        # 3. Check for compliance or find a line to replace
+        for i, line in enumerate(lines):
+            line_strip = line.strip()
+            if line_strip == expected_line:
+                return  # File is already compliant
+
+            # A line is a candidate for replacement if it's a comment, contains the filename,
+            # and is not part of a docstring.
+            is_after_docstring = (
+                ext != ".py" or docstring_end_line == -1 or i > docstring_end_line
+            )
+            if (
+                is_after_docstring
+                and line_strip.startswith(comment_prefix)
+                and filename in line
+                and line_to_replace_idx == -1  # Found first potential match
+            ):
+                line_to_replace_idx = i
+
+        # 4. Decide what action to take
+        if line_to_replace_idx != -1:
+            # Found a partial match to replace
+            relative_path_str = file_path.relative_to(base_path).as_posix()
+            if fix:
+                print(
+                    f"[FIXING] {relative_path_str} (replacing line {line_to_replace_idx + 1})"
+                )
+                lines[line_to_replace_idx] = f"{expected_line}\n"
             else:
-                lines.insert(0, f"{expected_line}\n")
+                print(
+                    f"[NEEDS FIX] {relative_path_str} (would replace line {line_to_replace_idx + 1})"
+                )
 
+        else:
+            # No match found, need to insert a new line
+            relative_path_str = file_path.relative_to(base_path).as_posix()
+            if fix:
+                print(f"[FIXING] {relative_path_str} (inserting header)")
+                lines.insert(insertion_point, f"{expected_line}\n")
+            else:  # Dry run
+                print(f"[NEEDS FIX] {relative_path_str} (would insert header)")
+
+        # 5. Write changes if in fix mode
+        if fix:
             with file_path.open("w", encoding="utf-8") as f:
                 f.writelines(lines)
-        else:  # Dry run
-            print(f"[NEEDS FIX] {relative_path}")
 
     except (IOError, OSError) as e:
         print(f"Error processing file {file_path}: {e}", file=sys.stderr)
@@ -198,12 +253,12 @@ def is_path_ignored(path: Path, base_path: Path, ignore_patterns: List[str]) -> 
     return False
 
 
-def parse_args() -> ParsedArgs:
+def parse_args() -> argparse.Namespace:
     """
     Parses command-line arguments.
 
     Returns:
-      A NamedTuple containing the parsed arguments.
+      A Namespace object containing the parsed arguments.
     """
     parser = argparse.ArgumentParser(
         description="Check and fix files to ensure they have a relative path comment.",
@@ -259,15 +314,10 @@ def parse_args() -> ParsedArgs:
     )
 
     args = parser.parse_args()
-    return ParsedArgs(
-        folder=args.folder,
-        dry_run=args.dry_run,
-        fix=args.fix,
-        map_config=args.map_config or DEFAULT_COMMENT_MAP_CONFIG,
-        recursive=args.recursive,
-        no_gitignore=args.no_gitignore,
-        exclude=args.exclude,
-    )
+    # Set default for map_config if it wasn't provided
+    if not args.map_config:
+        args.map_config = DEFAULT_COMMENT_MAP_CONFIG
+    return args
 
 
 def main() -> int:
