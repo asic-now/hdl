@@ -40,7 +40,7 @@ class fp_scoreboard #(
         // TODO: (now) Move reporting formatter into specific transaction
         if (dut_canonical == golden_canonical) begin
             `uvm_info("SCOREBOARD", $sformatf("PASS [%s]: a=0x%h, b=0x%h -> result=0x%h",
-                dut_trans.get_name(), dut_trans.inputs[0], dut_trans.inputs[1], dut_trans.result), UVM_HIGH)
+                dut_trans.get_name(), dut_trans.inputs[0], dut_trans.inputs[1], dut_trans.result), UVM_LOW)
         end else begin
             `uvm_error("SCOREBOARD", $sformatf("FAIL [%s]: a=0x%h, b=0x%h -> DUT=0x%h, MODEL=0x%h | Canonical: DUT=0x%h, MODEL=0x%h",
                 dut_trans.get_name(), dut_trans.inputs[0], dut_trans.inputs[1], dut_trans.result, golden_trans.result, dut_canonical, golden_canonical))

@@ -35,11 +35,11 @@ class vec_scoreboard #(
 
         // TODO: (now) Move reporting formatter into specific transaction
         if (dut_trans.result == golden_trans.result) begin
-            `uvm_info("SCOREBOARD", $sformatf("Compare OK: in=0x%h, result=0x%h", dut_trans.inputs[0], dut_trans.result), UVM_LOW)
+            `uvm_info("SCOREBOARD", $sformatf("PASS [%s]: in=0x%h -> result=0x%h",
+                dut_trans.get_name(), dut_trans.inputs[0], dut_trans.result), UVM_LOW)
         end else begin
-            `uvm_error("SCOREBOARD", $sformatf("Compare FAIL:\n  DUT received:   in=0x%h --> result=0x%h\n  MODEL predicted: in=0x%h --> result=0x%h",
-                dut_trans.inputs[0], dut_trans.result,
-                golden_trans.inputs[0], golden_trans.result))
+            `uvm_error("SCOREBOARD", $sformatf("FAIL [%s]: in=0x%h -> DUT=0x%h, MODEL=0x%h",
+                dut_trans.get_name(), dut_trans.inputs[0], dut_trans.result, golden_trans.result))
         end
     endfunction
 
