@@ -10,11 +10,11 @@ package fp_lib_pkg;
     // Include reusable library components
     import fp_utils_pkg::*;
     // `include "fp_utils.sv"
-    `include "fp_transaction_base.sv"
+    `include "base_scoreboard.sv"
+    `include "base_transaction.sv"
+    `include "fp_transaction.sv"
     `include "fp_driver_base.sv"
     `include "fp_monitor_base.sv"
     `include "fp_model_base.sv"
-    `include "fp_scoreboard.sv"
-    `include "vec_scoreboard.sv"
 
 endpackage

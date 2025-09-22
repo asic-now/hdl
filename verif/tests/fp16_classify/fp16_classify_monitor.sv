@@ -4,7 +4,6 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-// class fp16_classify_monitor extends uvm_monitor;
 class fp16_classify_monitor extends fp_monitor_base #(fp16_classify_transaction, virtual fp16_classify_if);
     `uvm_component_utils(fp16_classify_monitor)
 

@@ -4,7 +4,7 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-class fp16_add_transaction extends fp_transaction_base #(16, 2);
+class fp16_add_transaction extends fp_transaction #(2, 16, 16);
 
     // Defines the categories of numbers to generate
     typedef enum { NORMAL, ZERO, INF, QNAN } fp_category_e;
@@ -67,4 +67,5 @@ class fp16_add_transaction extends fp_transaction_base #(16, 2);
             inputs[1][9:0]   != 0;
         }
     }
+
 endclass

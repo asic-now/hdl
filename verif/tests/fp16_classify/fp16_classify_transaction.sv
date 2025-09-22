@@ -18,10 +18,10 @@ typedef struct packed {
 } fp16_classify_outputs_s;
 
 
-class fp16_classify_transaction extends fp_transaction_base #(16, 1);
+class fp16_classify_transaction extends base_transaction #(1, 16, 10);
 
     // Override:
-    fp16_classify_outputs_s result; // dut_outputs
+    fp16_classify_outputs_s result;
 
     // Defines the categories of numbers to generate
     typedef enum { NORMAL, ZERO, INF, QNAN } fp_category_e;
@@ -67,11 +67,33 @@ class fp16_classify_transaction extends fp_transaction_base #(16, 1);
 
     // Convert transaction to a string for printing
     virtual function string convert2string();
-         string s;
-         s = $sformatf("in: 0x%04h", inputs[0]);
-         // Check if result has been set by the monitor to avoid printing empty structs
-         if (|result) s = {s, $sformatf(", result: %p", result)};
-         return s;
+        string s;
+        s = $sformatf("[%s]: in=0x%h", get_name(), inputs[0]);
+        // Check if result has been set by the monitor to avoid printing empty structs
+        if (|result) s = {s, $sformatf(" -> result: %p", result)};
+        return s;
+    endfunction
+
+    // Override compare for the struct-based result
+    virtual function string compare(input uvm_sequence_item golden_trans_item, output bit is_match);
+        fp16_classify_transaction golden_trans;
+        if (!$cast(golden_trans, golden_trans_item)) begin
+            `uvm_fatal("CAST_FAIL", "Failed to cast golden transaction in compare function")
+            is_match = 0;
+            return "FATAL: Cast failed in compare()";
+        end
+
+        // The 'result' member in the base class is not used here.
+        // We compare the struct fields directly.
+        is_match = (result == golden_trans.result);
+        if (is_match) begin
+            return convert2string();
+        end else begin
+            string s;
+            s = $sformatf("[%s]: in=0x%h", get_name(), inputs[0]);
+            s = {s, $sformatf(" -> DUT=0x%h, MODEL=0x%h", result, golden_trans.result)};
+            return s;
+        end
     endfunction
 
 endclass
