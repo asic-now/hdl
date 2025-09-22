@@ -9,8 +9,9 @@ package fp16_classify_pkg;
     // Reusable library components
     import fp_lib_pkg::*; // Import the reusable library
 
+    // ATTENTION: DO NOT INCLUDE ANY files with `module` or `interface` here. Include them in filelist.txt.
+
     // Include DUT-specific components
-    // `include "fp16_classify_if.sv" // TODO: (when needed) Does not work in the package.
     `include "fp16_classify_transaction.sv"
     `include "fp16_classify_driver.sv"
     `include "fp16_classify_monitor.sv"

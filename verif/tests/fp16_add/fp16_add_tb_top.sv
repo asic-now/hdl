@@ -21,6 +21,7 @@ module fp16_add_tb_top;
         .b(dut_if.b),
         .result(dut_if.result)
     );
+    `VERIF_GET_DUT_PIPELINE(dut)
 
     // Clock generator
     initial begin
@@ -37,7 +38,7 @@ module fp16_add_tb_top;
 
     // Set the interface in the config DB for the test
     initial begin
-        // Use "uvm_test_top.*" to make the interface visible to all components
+        // Use "uvm_test_top.*" to make the interface visible to all TB components
         uvm_config_db#(virtual fp16_add_if)::set(null, "uvm_test_top.*", "dut_vif", dut_if);
         run_test(); // run_test() with no args uses +UVM_TESTNAME
     end

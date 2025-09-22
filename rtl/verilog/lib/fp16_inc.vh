@@ -1,6 +1,10 @@
 // rtl/verilog/lib/fp16_inc.vh
+// Common macros and includes for all FP16 modules.
+
 `ifndef _FP16_INC_VH
 `define _FP16_INC_VH
+
+`include "common_inc.vh"
 
 `define FP16_QNAN               16'h7E01 // 16'h7E00 also ok.
 `define FP16_SNAN               16'h7C01

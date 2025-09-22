@@ -9,8 +9,9 @@ package fp16_add_pkg;
     // Reusable library components
     import fp_lib_pkg::*; // Import the reusable library
 
+    // ATTENTION: DO NOT INCLUDE ANY files with `module` or `interface` here. Include them in filelist.txt.
+
     // Include DUT-specific components
-    // `include "fp16_add_if.sv" // TODO: (when needed) Does not work in the package.
     `include "fp16_add_transaction.sv"
     `include "fp16_add_driver.sv"
     `include "fp16_add_monitor.sv"

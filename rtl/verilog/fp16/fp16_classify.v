@@ -5,6 +5,8 @@
 //
 // Outputs are mutually exclusive flags.
 
+`include "fp16_inc.vh"
+
 module fp16_classify (
     input  [15:0] in,
 
@@ -19,6 +21,7 @@ module fp16_classify (
     output is_pos_normal,    // Positive Normal Number
     output is_pos_inf        // Positive Infinity
 );
+    `VERIF_DECLARE_PIPELINE(0)  // Verification Support
 
     // Unpack the input floating-point number
     wire       sign = in[15];

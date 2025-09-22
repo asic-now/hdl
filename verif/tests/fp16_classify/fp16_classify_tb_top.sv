@@ -30,6 +30,7 @@ module fp16_classify_tb_top;
         .is_pos_normal    (dut_if.is_pos_normal    ),    // Positive Normal Number
         .is_pos_inf       (dut_if.is_pos_inf       )// Positive Infinity
     );
+    `VERIF_GET_DUT_PIPELINE(dut)
 
     // Clock generator
     initial begin
@@ -46,7 +47,7 @@ module fp16_classify_tb_top;
 
     // Set the interface in the config DB for the test
     initial begin
-        // Use "uvm_test_top.*" to make the interface visible to all components
+        // Use "uvm_test_top.*" to make the interface visible to all TB components
         uvm_config_db#(virtual fp16_classify_if)::set(null, "uvm_test_top.*", "dut_vif", dut_if);
         run_test(); // run_test() with no args uses +UVM_TESTNAME
     end

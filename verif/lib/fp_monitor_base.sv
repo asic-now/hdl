@@ -32,12 +32,12 @@ virtual class fp_monitor_base #(
         if(!uvm_config_db#(T_VIF)::get(this, "", "dut_vif", vif))
             `uvm_fatal("NOVIF", "Could not get virtual interface handle")
         if(!uvm_config_db#(int)::get(this, "", "pipeline_latency", pipeline_latency))
-            `uvm_fatal("NOPARAM", "Pipeline latency not set for monitor")
+            `uvm_fatal(get_type_name(), "Pipeline latency not found in uvm_config_db. Was it set in tb_top?")
     endfunction
 
     virtual task run_phase(uvm_phase phase);
         if (pipeline_latency < 0) begin
-            `uvm_fatal("BAD_LATENCY", $sformatf("Invalid pipeline_latency: %0d (was it set in command line?)", pipeline_latency))
+            `uvm_fatal("BAD_PARAM", $sformatf("Invalid pipeline_latency: %0d", pipeline_latency))
         end
         // Fork the two parallel processes
         fork

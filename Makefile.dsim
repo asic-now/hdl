@@ -6,14 +6,13 @@
 # Default test: fp16_add
 #
 # To run a different test (e.g., fp32_mul):
-#   make run DUT_NAME=fp32_mul PIPELINE_LATENCY=3 TESTNAME=fp32_mul_random_test
+#   make run DUT_NAME=fp32_mul TESTNAME=fp32_mul_random_test
 #
 
 #==============================================================================
 # Configurable Variables (can be overridden from the command line)
 #==============================================================================
 DUT_NAME         ?= fp16_add
-PIPELINE_LATENCY ?= 3
 TESTNAME         ?= fp16_add_combined_test
 C_MODEL_FILES    ?= verif/lib/fp16_model.c
 
@@ -48,7 +47,7 @@ DSIM_FLAGS = \
 	$(C_MODEL_FILES)
 
 # Runtime Plusargs
-RUN_PLUSARGS = +UVM_TESTNAME=$(TESTNAME) +pipeline_latency=$(PIPELINE_LATENCY)
+RUN_PLUSARGS = +UVM_TESTNAME=$(TESTNAME)
 
 #==============================================================================
 # Targets

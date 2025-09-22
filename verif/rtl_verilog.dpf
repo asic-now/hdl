@@ -10,7 +10,6 @@ simulations:
       -top work.fp16_classify_tb_top
       -uvm 1.2
       +UVM_TESTNAME=fp16_classify_random_test
-      +pipeline_latency=0
       +acc+b ../verif/lib/fp16_model.c
       -c-opts "-shared"
       -cc-verbose
@@ -20,7 +19,6 @@ simulations:
       -top work.fp16_classify_tb_top
       -uvm 1.2
       +UVM_TESTNAME=fp16_classify_special_cases_test
-      +pipeline_latency=0
       +acc+b ../verif/lib/fp16_model.c
       -c-opts "-shared"
       -cc-verbose
@@ -30,7 +28,6 @@ simulations:
       -top work.fp16_classify_tb_top
       -uvm 1.2
       +UVM_TESTNAME=fp16_classify_combined_test
-      +pipeline_latency=0
       +acc+b ../verif/lib/fp16_model.c
       -c-opts "-shared"
       -cc-verbose
@@ -40,7 +37,6 @@ simulations:
       -top work.fp16_add_tb_top
       -uvm 1.2
       +UVM_TESTNAME=fp16_add_random_test
-      +pipeline_latency=2
       +acc+b ../verif/lib/fp16_model.c
       -c-opts "-shared"
       -cc-verbose
@@ -50,7 +46,6 @@ simulations:
       -top work.fp16_add_tb_top
       -uvm 1.2
       +UVM_TESTNAME=fp16_add_special_cases_test
-      +pipeline_latency=2
       +acc+b ../verif/lib/fp16_model.c
       -c-opts "-shared"
       -cc-verbose
@@ -60,7 +55,6 @@ simulations:
       -top work.fp16_add_tb_top
       -uvm 1.2
       +UVM_TESTNAME=fp16_add_combined_test
-      +pipeline_latency=2
       +acc+b ../verif/lib/fp16_model.c
       -c-opts "-shared"
       -cc-verbose
@@ -76,8 +70,5 @@ source_files:
       +incdir+../verif/tests/fp16_add
       +incdir+../verif/tests/fp16_classify
     file_list: relative-to-file
-  - language: verilog
-    path: tests\fp16_add\fp16_add_tb_top.sv
-    options: '-uvm 1.2'
 library_search_paths:
   - $STD_LIBS\ieee93

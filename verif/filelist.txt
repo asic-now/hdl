@@ -7,36 +7,29 @@
 # Compilation passes regardless of the order, but elaboration fails if order is reversed.
 
 # Beginning of the manifest file
-# List of Design Files
+
+# List all RTL Design Files here.
 ../rtl/verilog/fp16/fp16_add.v
 ../rtl/verilog/fp16/fp16_classify.v
 
-# Lib
+# Verification Lib
 ../verif/lib/fp_lib_pkg.sv
 
-# List of Testbench Files
+# Testbenches
+# - For each testbench:
+#   1. List interface file(s) here.
+#   2. List the package file here.
+#      Make sure all UVM testbench .sv source files 
+#      are included into the package file,
+#      except files with `module`, like Testbench Top.
+#   3. List module (Testbench Top) file(s) here.
+
+# - tests/fp16_add
 ../verif/tests/fp16_add/fp16_add_if.sv
-# ../verif/tests/fp16_add/fp16_add_transaction.sv
-# ../verif/tests/fp16_add/fp16_add_driver.sv
-# ../verif/tests/fp16_add/fp16_add_monitor.sv
-# ../verif/tests/fp16_add/fp16_add_agent.sv
-# ../verif/tests/fp16_add/fp16_add_model.sv
-# ../verif/tests/fp16_add/fp16_add_env.sv
-# ../verif/tests/fp16_add/fp16_add_base_test.sv
-# ../verif/tests/fp16_add/fp16_add_random_sequence.sv
-# ../verif/tests/fp16_add/fp16_add_random_test.sv
-# ../verif/tests/fp16_add/fp16_add_special_cases_sequence.sv
-# ../verif/tests/fp16_add/fp16_add_special_cases_test.sv
-# ../verif/tests/fp16_add/fp16_add_combined_sequence.sv
-# ../verif/tests/fp16_add/fp16_add_combined_test.sv
-
-# Only list the package file, the rest will be pulled in by includes.
 ../verif/tests/fp16_add/fp16_add_pkg.sv
-
-
-# Testbench Top
 ../verif/tests/fp16_add/fp16_add_tb_top.sv
 
+# - tests/fp16_classify
 ../verif/tests/fp16_classify/fp16_classify_if.sv
 ../verif/tests/fp16_classify/fp16_classify_pkg.sv
 ../verif/tests/fp16_classify/fp16_classify_tb_top.sv

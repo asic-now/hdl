@@ -24,6 +24,7 @@ module fp16_add (
 
     output [15:0] result
 );
+    `VERIF_DECLARE_PIPELINE(2)  // Verification Support
 
     //----------------------------------------------------------------
     // Wires and Registers
