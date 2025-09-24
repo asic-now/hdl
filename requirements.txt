@@ -1,0 +1,5 @@
+# TerosHDL (VSCode extension) Prerequisites
+vunit-hdl==4.7.0
+edalize==0.6.2
+yowasp-yosys==0.57.0.0.post986
+cocotb==2.0.0

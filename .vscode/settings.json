@@ -38,7 +38,10 @@
         "source.convertImportFormat",
         "source.unusedImports",
     ],
-    "python.analysis.typeCheckingMode":"standard",
-        "digital-ide.lib.custom.path": "${workspaceFolder}/_import/UVM/1800.2-2020.3.1/src"
+    "python.analysis.typeCheckingMode": "standard",
+    "workbench.view.showQuietly": {
+        // Mitigate TerosHDL activating Output pane on every message
+        "workbench.panel.output": true
+    },
 
 }

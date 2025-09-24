@@ -18,7 +18,7 @@ The Vivado Design Suite from AMD/Xilinx includes a UVM-compliant simulator (xsim
 
 ### Altair DSim
 
-This section was written with Altair DSim v2025.1.
+This section was written for Altair DSim v2025.1.
 
 <https://learn.altair.com/learn/course/getting-started-with-dsim-elearning/table-of-contents/getting-started-with-dsim?page=1>
 
@@ -72,3 +72,27 @@ Icarus Verilog is an excellent open-source Verilog simulator. However, it **does
 
 * Installation (Windows):  
   Pre-compiled binaries are available for download from the official Icarus website: <http://iverilog.icarus.com/>
+
+## VSCode Integration
+
+### DSim Studio
+
+See [Altair DSim](#altair-dsim) section.
+
+### TerosHDL
+
+1. Python3 should be installed.
+2. Install required python packages `pip install -r requirements.txt`.
+3. `make` should be installed. It is part of git bash on Windows and comes standard on Linux and macOS.
+4. Install [Xilinx Vivado](#xilinx-vivado-recommended-for-uvm).  
+   Make sure `vivado` is added to the PATH, run `which vivado` in bash or `where vivado.bat` in Windows CMD to check.  
+   If vivado is not found, add Vivado installation to PATH environment variable.
+5. Install [TerosHDL extension](https://marketplace.visualstudio.com/items?itemName=teros-technology.teroshdl)
+6. Configure TerosHDL
+   1. Open VSCode and select the TerosHDL icon on the sidebar.
+   2. Go to "Configuration" section and choose "Open Global Settings Menu".
+   3. Under "Linter settings", select "Vivado" to enable Vivado as code checker.
+   4. Under "Tools," set the default synthesis/simulation tool to Vivado.
+   5. Under "Tools" > "Vivado", enter path to `vivado` executable (`vivado.exe` on Windows). (Even if it is added to PATH environemtn variable, TerosHDL might be unable to find it.)
+7. Use the "Verify Setup" command in the TerosHDL sidebar to check configuration and tool detection. Review Output > TerosHDL: Global log and correct any missing tools.  
+Note: "Verify Setup" can be tricky to troubleshoot - make sure project setup does not inadvertently override global Vivado path setting (see [vscode-terosHDL#778](https://github.com/TerosTechnology/vscode-terosHDL/issues/778)).
