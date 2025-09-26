@@ -14,7 +14,7 @@ class fp16_add_combined_sequence extends uvm_sequence #(fp16_transaction2);
 
     // Child sequences to be executed
     fp16_add_special_cases_sequence special_seq;
-    fp16_add_random_sequence random_seq;
+    fp16_sequence2_random random_seq;
 
     virtual task body();
         `uvm_info("SEQ", "Starting combined sequence...", UVM_LOW)
@@ -26,7 +26,7 @@ class fp16_add_combined_sequence extends uvm_sequence #(fp16_transaction2);
 
         // 2. Then, run the random sequence
         `uvm_info("SEQ", "Executing random sub-sequence...", UVM_LOW)
-        random_seq = fp16_add_random_sequence::type_id::create("random_seq");
+        random_seq = fp16_sequence2_random::type_id::create("random_seq");
         // We can optionally override the number of random transactions here
         // random_seq.num_transactions = 50; 
         random_seq.start(m_sequencer);

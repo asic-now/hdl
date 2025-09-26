@@ -107,6 +107,14 @@ files:
     logical_name: verif/lib
     is_manual: true
     source_type: none
+  - name: verif\lib\fp16_sequence2_random.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/lib
+    is_manual: true
+    source_type: none
   - name: verif\tests\fp16_add\fp16_add_agent.sv
     file_type: systemVerilogSource
     file_version: !<tag:yaml.org,2002:js/undefined> ''
@@ -180,14 +188,6 @@ files:
     is_manual: true
     source_type: none
   - name: verif\tests\fp16_add\fp16_add_pkg.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_add
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_add\fp16_add_random_sequence.sv
     file_type: systemVerilogSource
     file_version: !<tag:yaml.org,2002:js/undefined> ''
     is_include_file: false

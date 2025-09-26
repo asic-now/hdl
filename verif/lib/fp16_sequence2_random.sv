@@ -1,13 +1,13 @@
-// verif/tests/fp16_add/fp16_add_random_sequence.sv
-// Sequence to generate random transactions for the fp16_add DUT.
+// verif/lib/fp16_sequence2_random.sv
+// Generic sequence to generate random transactions for 2-input DUTs.
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-class fp16_add_random_sequence extends uvm_sequence #(fp16_transaction2);
-    `uvm_object_utils(fp16_add_random_sequence)
+class fp16_sequence2_random extends uvm_sequence #(fp16_transaction2);
+    `uvm_object_utils(fp16_sequence2_random)
 
-    function new(string name="fp16_add_random_sequence");
+    function new(string name="fp16_sequence2_random");
         super.new(name);
     endfunction
 

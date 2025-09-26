@@ -1,8 +1,5 @@
 // verif/lib/fp_lib_pkg.sv
-//
-// This package contains all the generic, reusable base classes and utilities
-// for the floating-point verification environment. Test-specific packages
-// should 'import' this package to use the framework.
+// This package contains reusable floating-point verification components.
 
 package fp_lib_pkg;
     import uvm_pkg::*;
@@ -19,5 +16,5 @@ package fp_lib_pkg;
     `include "fp_monitor_base.sv"
     `include "fp_model_base.sv"
     `include "fp16_transaction2.sv"
-
+    `include "fp16_sequence2_random.sv"
 endpackage

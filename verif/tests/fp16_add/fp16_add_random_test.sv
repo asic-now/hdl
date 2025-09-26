@@ -1,5 +1,5 @@
 // verif/tests/fp16_add/fp16_add_random_test.sv
-// A specific test that runs a random sequence.
+// Test to run random stimulus for the fp16_add DUT.
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
@@ -12,9 +12,9 @@ class fp16_add_random_test extends fp16_add_base_test;
     endfunction
 
     virtual task run_phase(uvm_phase phase);
-        fp16_add_random_sequence seq;
+        fp16_sequence2_random seq;
         phase.raise_objection(this);
-        seq = fp16_add_random_sequence::type_id::create("seq");
+        seq = fp16_sequence2_random::type_id::create("seq");
         seq.start(env.agent.seqr);
         #100ns;
         phase.drop_objection(this);

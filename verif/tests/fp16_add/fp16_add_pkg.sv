@@ -20,7 +20,6 @@ package fp16_add_pkg;
 
     // Sequences & Tests
     `include "fp16_add_base_test.sv"
-    `include "fp16_add_random_sequence.sv"
     `include "fp16_add_random_test.sv"
     `include "fp16_add_special_cases_sequence.sv"
     `include "fp16_add_special_cases_test.sv"
