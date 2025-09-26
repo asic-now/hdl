@@ -9,15 +9,15 @@ log.*
 *.env
 *.db
 dfx_runtime.txt
-.teroshdl*
 
 # Python files and folders
 *.py[cod]
-**/__pycache__/
+__pycache__/
 *.egg-info/
 *.egg
 
 # Compiled libs and binaries
+*.o
 *.dll
 *.so
 
@@ -27,3 +27,18 @@ Thumbs.db
 
 # Secret and Key files
 .pypirc
+
+# DSim
+*.mxd
+
+# TerosHDL
+.teroshdl*
+.teroshdl/
+
+# Vivado
+vivado*.log
+vivado*.jou
+webtalk*.log
+webtalk*.jou
+*.wdb
+xsim.dir/
