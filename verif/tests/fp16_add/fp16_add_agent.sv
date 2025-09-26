@@ -9,10 +9,10 @@ class fp16_add_agent extends uvm_agent;
 
     fp16_add_driver driver;
     fp16_add_monitor monitor;
-    uvm_sequencer #(fp16_add_transaction) seqr;
+    uvm_sequencer #(fp16_transaction2) seqr;
 
     // The analysis FIFO that synchronizes the driver and monitor
-    uvm_tlm_analysis_fifo #(fp16_add_transaction) fifo;
+    uvm_tlm_analysis_fifo #(fp16_transaction2) fifo;
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -24,7 +24,7 @@ class fp16_add_agent extends uvm_agent;
         monitor = fp16_add_monitor::type_id::create("monitor", this);
         if(get_is_active() == UVM_ACTIVE) begin
             driver = fp16_add_driver::type_id::create("driver", this);
-            seqr = uvm_sequencer #(fp16_add_transaction)::type_id::create("seqr", this);
+            seqr = uvm_sequencer #(fp16_transaction2)::type_id::create("seqr", this);
         end
     endfunction
 

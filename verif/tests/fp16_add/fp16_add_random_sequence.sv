@@ -4,7 +4,7 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-class fp16_add_random_sequence extends uvm_sequence #(fp16_add_transaction);
+class fp16_add_random_sequence extends uvm_sequence #(fp16_transaction2);
     `uvm_object_utils(fp16_add_random_sequence)
 
     function new(string name="fp16_add_random_sequence");
@@ -12,9 +12,9 @@ class fp16_add_random_sequence extends uvm_sequence #(fp16_add_transaction);
     endfunction
 
     virtual task body();
-        fp16_add_transaction req;
+        fp16_transaction2 req;
         repeat (100) begin
-            req = fp16_add_transaction::type_id::create("req");
+            req = fp16_transaction2::type_id::create("req");
             start_item(req);
             assert(req.randomize());
             finish_item(req);

@@ -8,7 +8,7 @@
 `include "fp16_inc.vh"
 `include "fp_macros.svh"
 
-class fp16_add_special_cases_sequence extends uvm_sequence #(fp16_add_transaction);
+class fp16_add_special_cases_sequence extends uvm_sequence #(fp16_transaction2);
     `uvm_object_utils(fp16_add_special_cases_sequence)
 
     function new(string name="fp16_add_special_cases_sequence");
@@ -16,7 +16,7 @@ class fp16_add_special_cases_sequence extends uvm_sequence #(fp16_add_transactio
     endfunction
 
     virtual task body();
-        fp16_add_transaction req;
+        fp16_transaction2 req;
         
         `uvm_info(get_type_name(), "Starting special cases sequence", UVM_LOW)
 

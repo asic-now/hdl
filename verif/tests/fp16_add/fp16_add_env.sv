@@ -9,7 +9,7 @@ class fp16_add_env extends uvm_env;
 
     fp16_add_agent agent;
     fp16_add_model model;
-    base_scoreboard #(fp16_add_transaction, fp16_add_model) scoreboard; // Using the generic scoreboard
+    base_scoreboard #(fp16_transaction2, fp16_add_model) scoreboard; // Using the generic scoreboard
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -19,7 +19,7 @@ class fp16_add_env extends uvm_env;
         super.build_phase(phase);
         agent = fp16_add_agent::type_id::create("agent", this);
         model = fp16_add_model::type_id::create("model"); // model has no parent
-        scoreboard = base_scoreboard #(fp16_add_transaction, fp16_add_model)::type_id::create("scoreboard", this);
+        scoreboard = base_scoreboard #(fp16_transaction2, fp16_add_model)::type_id::create("scoreboard", this);
 
         // Pass the model handle to all children of this component
         uvm_config_db#(fp16_add_model)::set(this, "*", "model", model);

@@ -5,7 +5,7 @@
 
 `include "uvm_macros.svh"
 
-class fp16_add_combined_sequence extends uvm_sequence #(fp16_add_transaction);
+class fp16_add_combined_sequence extends uvm_sequence #(fp16_transaction2);
     `uvm_object_utils(fp16_add_combined_sequence)
 
     function new(string name="fp16_add_combined_sequence");

@@ -18,5 +18,6 @@ package fp_lib_pkg;
     `include "fp_driver_base.sv"
     `include "fp_monitor_base.sv"
     `include "fp_model_base.sv"
+    `include "fp16_transaction2.sv"
 
 endpackage

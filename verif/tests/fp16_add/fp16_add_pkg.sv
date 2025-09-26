@@ -12,7 +12,6 @@ package fp16_add_pkg;
     // ATTENTION: DO NOT INCLUDE ANY files with `module` or `interface` here. Include them in filelist.txt.
 
     // Include DUT-specific components
-    `include "fp16_add_transaction.sv"
     `include "fp16_add_driver.sv"
     `include "fp16_add_monitor.sv"
     `include "fp16_add_agent.sv"

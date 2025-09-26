@@ -4,7 +4,7 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-class fp16_add_monitor extends fp_monitor_base #(fp16_add_transaction, virtual fp16_add_if);
+class fp16_add_monitor extends fp_monitor_base #(fp16_transaction2, virtual fp16_add_if);
     `uvm_component_utils(fp16_add_monitor)
 
     function new(string name, uvm_component parent);
@@ -13,9 +13,9 @@ class fp16_add_monitor extends fp_monitor_base #(fp16_add_transaction, virtual f
 
     // Implementation of the DUT-specific sample task
     // It only creates and returns a transaction if inputs are valid.
-    virtual task sample_inputs(output fp16_add_transaction trans);
+    virtual task sample_inputs(output fp16_transaction2 trans);
         if (! (^vif.monitor_cb.a === 1'bx) && ! (^vif.monitor_cb.b === 1'bx)) begin
-            trans = fp16_add_transaction::type_id::create("trans_input");
+            trans = fp16_transaction2::type_id::create("trans_input");
             trans.inputs[0] = vif.monitor_cb.a;
             trans.inputs[1] = vif.monitor_cb.b;
         end else begin
@@ -24,7 +24,7 @@ class fp16_add_monitor extends fp_monitor_base #(fp16_add_transaction, virtual f
     endtask
 
     // Implementation of the DUT-specific output sampling task
-    virtual task sample_output(fp16_add_transaction trans);
+    virtual task sample_output(fp16_transaction2 trans);
         trans.result = vif.monitor_cb.result;
     endtask
 

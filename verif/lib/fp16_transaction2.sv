@@ -1,10 +1,10 @@
-// verif/tests/fp16_add/fp16_add_transaction.sv
-// Extends the generic transaction base class for the 2-input, 16-bit adder.
+// verif/lib/fp16_transaction2.sv
+// Extends the generic transaction base class for 2-input, 16-bit floating-point operations.
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-class fp16_add_transaction extends fp_transaction #(2, 16, 16);
+class fp16_transaction2 extends fp_transaction #(2, 16, 16);
 
     // Defines the categories of numbers to generate
     typedef enum { NORMAL, ZERO, INF, QNAN } fp_category_e;
@@ -13,14 +13,14 @@ class fp16_add_transaction extends fp_transaction #(2, 16, 16);
     rand fp_category_e category_a;
     rand fp_category_e category_b;
 
-    `uvm_object_utils_begin(fp16_add_transaction)
+    `uvm_object_utils_begin(fp16_transaction2)
         `uvm_field_array_int(inputs, UVM_ALL_ON)
         `uvm_field_int(result, UVM_ALL_ON)
         `uvm_field_enum(fp_category_e, category_a, UVM_ALL_ON)
         `uvm_field_enum(fp_category_e, category_b, UVM_ALL_ON)
     `uvm_object_utils_end
 
-    function new(string name="fp16_add_transaction");
+    function new(string name="fp16_transaction2");
         super.new(name);
     endfunction
 
