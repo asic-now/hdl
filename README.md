@@ -22,6 +22,30 @@ The repository is organized into two main directories: rtl/ and verif/.
   * lib/: Contains generic, reusable UVM base classes and components designed to be shared across different testbenches.  
   * tests/: Contains DUT-specific testbenches. Each subdirectory (e.g., fp16\_add/) is a complete testbench for a single RTL module.
 
+## Design Conventions
+
+To ensure consistency and synthesizability, all RTL modules in this project must adhere to the following conventions.
+
+### Reset Strategy
+
+The project employs an **asynchronous, active-low reset**.
+
+* **Signal Name**: The reset signal must be named `rst_n`.
+* **Implementation**: All sequential elements (flip-flops) must be sensitive to the low level of `rst_n` and reset to a known, stable state.
+* **Synchronization**: Synchronization of reset rising edge to the clock is delegated to the users of this library.
+
+Example of a resettable register:
+
+```verilog
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        my_register <= 'd0;
+    end else begin
+        my_register <= next_value;
+    end
+end
+```
+
 ## Implementation Specifics
 
 Verification in testbenches is simplified:

@@ -99,7 +99,7 @@ module fp32_mul (
     reg               s2_special_case;
     reg        [31:0] s2_special_result;
 
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s2_exp <= 9'b0;
             s2_sign <= 1'b0;
@@ -124,7 +124,7 @@ module fp32_mul (
     reg        [47:0] norm_mant;
     reg        [22:0] out_mant;
     reg        [ 7:0] out_exp;
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             result_reg <= 32'b0;
         end else begin

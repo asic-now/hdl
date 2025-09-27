@@ -1,6 +1,5 @@
 # Todo's
 
-- [ ] TODO: (now) Define and document a clear project-wide reset (and clocking?) strategy - use async reset
 - [ ] TODO: Define and enforce a coding style guide (consider a linter like Verilator)
 - [ ] TODO: Command-line DSim compile, elaborate, simulate all testbenches
 - [ ] TODO: Parameterize cells

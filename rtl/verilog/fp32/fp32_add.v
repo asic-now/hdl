@@ -126,7 +126,7 @@ module fp32_add (
     reg         s2_special_case;
     reg  [31:0] s2_special_result;
 
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s2_exp <= 8'b0;
             s2_sign <= 1'b0;
@@ -155,7 +155,7 @@ module fp32_add (
     reg         [ 7:0] out_exp;
     reg  signed [ 8:0] final_exp;
     reg         [48:0] final_mant;
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             result_reg <= 32'b0;
         end else begin

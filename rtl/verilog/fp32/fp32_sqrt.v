@@ -48,7 +48,7 @@ module fp32_sqrt (
     reg  signed [8:0] s1_exp_res;
     reg  [24:0] s1_radicand;
 
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s1_special_case <= 1'b0;
             s1_special_result <= 32'b0;
@@ -89,7 +89,7 @@ module fp32_sqrt (
     reg  [25:0] rem_pipe [0:SQRT_LATENCY];
     reg  [23:0] root_pipe [0:SQRT_LATENCY];
 
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             rem_pipe[0] <= 12'b0;
             root_pipe[0] <= 11'b0;
@@ -107,8 +107,8 @@ module fp32_sqrt (
                 ? {rem_pipe[i][23:0], 2'b00} + {2'b0, trial_root}
                 : {rem_pipe[i][23:0], 2'b00} - {2'b0, trial_root};
 
-            always @(posedge clk) begin
-                if(!rst_n) begin
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
                     rem_pipe[i+1] <= 12'b0;
                     root_pipe[i+1] <= 11'b0;
                 end else begin
@@ -124,18 +124,30 @@ module fp32_sqrt (
     reg [31:0] special_result_pipe [TOTAL_LATENCY:0];
     reg signed [8:0] exp_res_pipe [TOTAL_LATENCY:0];
 
-    always @(posedge clk) begin
-        special_case_pipe[0] <= s1_special_case;
-        special_result_pipe[0] <= s1_special_result;
-        exp_res_pipe[0] <= s1_exp_res;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            special_case_pipe[0] <= 'b0;
+            special_result_pipe[0] <= 'b0;
+            exp_res_pipe[0] <= 'b0;
+        end else begin
+            special_case_pipe[0] <= s1_special_case;
+            special_result_pipe[0] <= s1_special_result;
+            exp_res_pipe[0] <= s1_exp_res;
+        end
     end
     
     generate
         for(i=0; i<TOTAL_LATENCY; i=i+1) begin : prop_pipe
-            always @(posedge clk) begin
-                special_case_pipe[i+1] <= special_case_pipe[i];
-                special_result_pipe[i+1] <= special_result_pipe[i];
-                exp_res_pipe[i+1] <= exp_res_pipe[i];
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    special_case_pipe[i+1] <= 'b0;
+                    special_result_pipe[i+1] <= 'b0;
+                    exp_res_pipe[i+1] <= 'b0;
+                end else begin
+                    special_case_pipe[i+1] <= special_case_pipe[i];
+                    special_result_pipe[i+1] <= special_result_pipe[i];
+                    exp_res_pipe[i+1] <= exp_res_pipe[i];
+                end
             end
         end
     endgenerate
@@ -164,7 +176,7 @@ module fp32_sqrt (
     end
     
     reg [31:0] result_reg;
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             result_reg <= 32'b0;
         end else begin

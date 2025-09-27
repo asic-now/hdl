@@ -63,7 +63,7 @@ module fp64_div (
     reg          s1_sign_res;
     reg  [104:0] s1_dividend; // For (mant_a << 52)
     reg  [ 52:0] s1_divisor;
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s1_special_case <= 1'b0;
             s1_special_result <= 64'b0;
@@ -103,7 +103,7 @@ module fp64_div (
     reg  [ 52:0] divisor_pipe  [0:DIV_LATENCY];
     reg  [ 52:0] quotient_pipe [0:DIV_LATENCY];
 
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             rem_pipe[0] <= 54'b0;
             dividend_pipe[0] <= 105'b0;
@@ -127,8 +127,8 @@ module fp64_div (
             wire q_bit = ~sub_res[53];
 
             // Register the results for the next stage
-            always @(posedge clk) begin
-                if(!rst_n) begin
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
                     rem_pipe[i+1] <= 54'b0;
                     dividend_pipe[i+1] <= 105'b0;
                     divisor_pipe[i+1] <= 53'b0;
@@ -149,8 +149,8 @@ module fp64_div (
     reg signed [11:0] exp_res_pipe [TOTAL_LATENCY:0];
     reg sign_res_pipe [TOTAL_LATENCY:0];
 
-    always @(posedge clk) begin
-        if(!rst_n) begin
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
             special_case_pipe[0] <= 1'b0;
             special_result_pipe[0] <= 64'b0;
             exp_res_pipe[0] <= 12'b0;
@@ -165,8 +165,8 @@ module fp64_div (
     
     generate
         for(i=0; i<TOTAL_LATENCY; i=i+1) begin : prop_pipe
-            always @(posedge clk) begin
-                if(!rst_n) begin
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
                     special_case_pipe[i+1] <= 1'b0;
                     special_result_pipe[i+1] <= 64'b0;
                     exp_res_pipe[i+1] <= 12'b0;
@@ -221,7 +221,7 @@ module fp64_div (
     
     // Final registered output
     reg  [63:0] result_reg;
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             result_reg <= 64'b0;
         end else begin

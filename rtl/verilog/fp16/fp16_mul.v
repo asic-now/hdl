@@ -103,7 +103,7 @@ module fp16_mul (
     reg               s2_special_case;
     reg        [15:0] s2_special_result;
 
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s2_exp <= 6'b0;
             s2_sign <= 1'b0;
@@ -128,7 +128,7 @@ module fp16_mul (
     reg        [21:0] norm_mant;
     reg        [ 9:0] out_mant;
     reg        [ 4:0] out_exp;
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             result_reg <= `FP16_ZERO;
         end else begin

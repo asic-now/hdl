@@ -99,7 +99,7 @@ module fp64_mul (
     reg                s2_special_case;
     reg        [ 63:0] s2_special_result;
 
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s2_exp <= 12'b0;
             s2_sign <= 1'b0;
@@ -123,7 +123,7 @@ module fp64_mul (
     reg        [105:0] norm_mant;
     reg        [ 51:0] out_mant;
     reg        [ 10:0] out_exp;
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             result_reg <= 64'b0;
         end else begin

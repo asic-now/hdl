@@ -127,7 +127,7 @@ module fp16_add (
     reg         [25:0] s2_mant; // 26 bits to include carry
     reg                s2_special_case;
     reg         [15:0] s2_special_result;
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s2_exp          <= 5'b0;
             s2_sign         <= 1'b0;
@@ -165,7 +165,7 @@ module fp16_add (
     reg         [ 9:0] out_mant;
     reg         [ 4:0] out_exp;
     reg         [15:0] result_reg;
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             result_reg <= `FP16_ZERO;
         end else begin

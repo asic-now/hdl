@@ -64,7 +64,7 @@ module fp32_div (
     reg  [46:0] s1_dividend; // For (mant_a << 23)
     reg  [23:0] s1_divisor;
 
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s1_special_case <= 1'b0;
             s1_special_result <= 32'b0;
@@ -106,7 +106,7 @@ module fp32_div (
     reg  [23:0] quotient_pipe [0:DIV_LATENCY];
 
     // Initialize first stage of the divider pipeline
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             rem_pipe[0] <= 25'b0;
             dividend_pipe[0] <= 47'b0;
@@ -130,8 +130,8 @@ module fp32_div (
             wire q_bit = ~sub_res[24];
 
             // Register the results for the next stage
-            always @(posedge clk) begin
-                if(!rst_n) begin
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
                     rem_pipe[i+1] <= 25'b0;
                     dividend_pipe[i+1] <= 47'b0;
                     divisor_pipe[i+1] <= 24'b0;
@@ -152,8 +152,8 @@ module fp32_div (
     reg signed [8:0] exp_res_pipe [TOTAL_LATENCY:0];
     reg sign_res_pipe [TOTAL_LATENCY:0];
 
-    always @(posedge clk) begin
-        if(!rst_n) begin
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
             special_case_pipe[0] <= 1'b0;
             special_result_pipe[0] <= 32'b0;
             exp_res_pipe[0] <= 9'b0;
@@ -168,8 +168,8 @@ module fp32_div (
     
     generate
         for(i=0; i<TOTAL_LATENCY; i=i+1) begin : prop_pipe
-            always @(posedge clk) begin
-                if(!rst_n) begin
+            always @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
                     special_case_pipe[i+1] <= 1'b0;
                     special_result_pipe[i+1] <= 32'b0;
                     exp_res_pipe[i+1] <= 9'b0;
@@ -227,7 +227,7 @@ module fp32_div (
     
     // Final registered output
     reg  [31:0] result_reg;
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             result_reg <= 32'b0;
         end else begin

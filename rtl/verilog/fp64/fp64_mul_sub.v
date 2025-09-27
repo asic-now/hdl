@@ -67,7 +67,7 @@ module fp64_mul_sub (
     reg s1_is_nan_b, s1_is_inf_b, s1_is_zero_b;
     reg s1_is_nan_c, s1_is_inf_c, s1_is_zero_c;
 
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s1_product_exp_sum <= 0;
             s1_product_sign <= 0;
@@ -116,9 +116,21 @@ module fp64_mul_sub (
     reg s2_ab_is_zero;
     reg s2_is_nan_c, s2_is_inf_c, s2_is_zero_c;
 
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            // TODO: (when needed) reset registers (optional by param)
+            s2_norm_exp_ab   <= 0;
+            s2_norm_mant_ab  <= 0;
+            s2_sign_ab       <= 0;
+            s2_sign_c        <= 0;
+            s2_exp_c         <= 0;
+            s2_mant_c        <= 0;
+            s2_prop_is_nan   <= 0;
+            s2_prop_is_inf   <= 0;
+            s2_prop_inf_sign <= 0;
+            s2_ab_is_zero    <= 0;
+            s2_is_nan_c      <= 0;
+            s2_is_inf_c      <= 0;
+            s2_is_zero_c     <= 0;
         end else begin
             // Normalize the product
             if (mant_product[105]) begin // Result is 1x.f..., shift right
@@ -155,9 +167,16 @@ module fp64_mul_sub (
 
     reg signed [ 11:0] exp_diff;
     reg        [211:0] mant_ab_extended, mant_c_extended;
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            // TODO: (when needed) reset registers
+            s3_res_exp        <= 0;
+            s3_res_sign       <= 0;
+            s3_mant_sum       <= 0;
+            s3_special_case   <= 0;
+            s3_special_result <= 64'b0;
+            exp_diff          <= 0;
+            mant_ab_extended  <= 0;
+            mant_c_extended   <= 0;
         end else begin
             // FMS Special Case: inf - inf = NaN
             if (s2_prop_is_nan || s2_is_nan_c) begin
@@ -214,7 +233,7 @@ module fp64_mul_sub (
     reg        [211:0] final_mant;
     reg        [ 51:0] out_mant;
     reg        [ 10:0] out_exp;
-    always @(posedge clk) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             result_reg <= 64'b0;
         end else begin
