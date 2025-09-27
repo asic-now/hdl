@@ -34,3 +34,25 @@ Verification in testbenches is simplified:
 ## Tooling
 
 For simulator setup and other tools see [TOOLING.md](TOOLING.md)
+
+## Readiness Status
+
+The table below shows the implementation and verification status of the floating-point modules.
+
+| Operation     | fp16          | fp32       | fp64       |
+|---------------|---------------|------------|------------|
+| `add`         | [x]  Verified | RTL only   | RTL only   |
+| `classify`    | [x]  Verified | RTL only   | RTL only   |
+| `cmp`         | RTL only      | RTL only   | RTL only   |
+| `div`         | RTL only      | RTL only   | RTL only   |
+| `invsqrt`     | RTL only      | RTL only   | RTL only   |
+| `mul`         | RTL only      | RTL only   | RTL only   |
+| `mul_add`     | RTL only      | RTL only   | RTL only   |
+| `mul_sub`     | RTL only      | RTL only   | RTL only   |
+| `recip`       | RTL only      | RTL only   | RTL only   |
+| `sqrt`        | RTL only      | RTL only   | RTL only   |
+| `to_int`      | RTL only      | RTL only   | RTL only   |
+| `from_int`    | RTL only      | RTL only   | RTL only   |
+| `to_fp16`     | -             | RTL only   | RTL only   |
+| `to_fp32`     | RTL only      | -          | RTL only   |
+| `to_fp64`     | -             | RTL only   | -          |
