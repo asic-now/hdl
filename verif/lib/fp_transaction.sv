@@ -12,7 +12,7 @@ class fp_transaction #(
     int OUTPUT_WIDTH = 16
 ) extends base_transaction #(NUM_INPUTS, INPUT_WIDTH, OUTPUT_WIDTH);
 
-    `uvm_object_param_utils(fp_transaction #(INPUT_WIDTH, NUM_INPUTS))
+    `uvm_object_param_utils(fp_transaction #(NUM_INPUTS, INPUT_WIDTH, OUTPUT_WIDTH))
 
     function new(string name = "fp_transaction");
         super.new(name);
