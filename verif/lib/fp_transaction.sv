@@ -4,7 +4,6 @@
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
-import fp_utils_pkg::*;
 
 class fp_transaction #(
     int NUM_INPUTS = 2,
@@ -31,8 +30,11 @@ class fp_transaction #(
             return "FATAL: Cast failed in fp_transaction::compare()";
         end
 
-        dut_canonical    = fp_utils::fp16_canonicalize(result); // TODO: (when needed) Convert to generic with OUTPUT_WIDTH param.
-        golden_canonical = fp_utils::fp16_canonicalize(golden_trans.result);
+        // Use parameterized canonicalize function.
+        // This is type-safe and automatically adapts to the OUTPUT_WIDTH.
+        dut_canonical    = fp_utils_t#(OUTPUT_WIDTH)::canonicalize(result);
+        golden_canonical = fp_utils_t#(OUTPUT_WIDTH)::canonicalize(golden_trans.result);
+
         is_match = (dut_canonical == golden_canonical);
 
         // Format inputs

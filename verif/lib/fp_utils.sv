@@ -4,47 +4,51 @@
 // floating-point verification, such as the canonicalizer.
 
 `include "uvm_macros.svh"
+import uvm_pkg::*;
 
 `include "fp16_inc.vh"
 
-package fp_utils_pkg;
-    import uvm_pkg::*;
+// A parameterized utility class containing static helper functions for FP verification.
+// This allows for type-safe, width-generic operations.
+class fp_utils_t #(
+    int WIDTH = 16,
+    int EXP_W  = (WIDTH == 16) ?  5 : (WIDTH == 32) ?  8 : 11,
+    int MANT_W = (WIDTH == 16) ? 10 : (WIDTH == 32) ? 23 : 52
+);
 
-    // A utility class containing static helper functions for FP verification.
-    class fp_utils;
+    // Converts a floating point number to a single, standard representation
+    // for its class (e.g., all qNaNs become one pattern).
+    static function logic [WIDTH-1:0] canonicalize(logic [WIDTH-1:0] val);
+        logic [EXP_W-1 :0] exp_max = '1; // in SystemVerilog sets all bits to 1
+        logic [MANT_W-1:0] mant_zero = '0;
 
-        // Converts a 16-bit floating point number to a single, standard
-        // representation for its class (e.g., all qNaNs become one pattern).
-        static function logic [15:0] fp16_canonicalize(logic [15:0] val);
-            logic       sign = val[15];
-            logic [4:0] exp  = val[14:10];
-            logic [9:0] mant = val[ 9: 0];
+        logic              sign = val[WIDTH-1];
+        logic [EXP_W-1 :0] exp  = val[WIDTH-2 : MANT_W];
+        logic [MANT_W-1:0] mant = val[MANT_W-1 : 0];
 
-            logic is_nan      = (exp == 5'h1F) && (mant != 0);
-            logic is_snan     = is_nan && (mant[9] == 0); // Signaling NaN
-            // logic is_qnan     = is_nan && (mant[9] == 1); // Quiet NaN
-            logic is_neg_zero = (val == `FP16_N_ZERO);
-            
-            // This commented out block keeps sNaN intact
-            // if (is_snan) begin
-            //     // Return a single, standard signaling NaN representation.
-            //     // The sign bit is preserved.
-            //     return {sign, 5'h1F, 10'b0000000001};
-            // end else 
-            if (is_nan) begin
-                // Return a single, standard quiet NaN representation.
-                // return {sign, 5'h1F, 10'b1000000001}; // The sign bit is preserved.
-                return {1'b0, 5'h1F, 10'b1000000001}; // Clear the sign bit.
-            end else if (is_neg_zero) begin
-                // Canonical zero is +0.
-                return `FP16_P_ZERO;
-            end else begin
-                // All other values (Inf, Normals, Denormals, +Zero) are
-                // already in their canonical form.
-                return val;
-            end
-        endfunction
+        logic is_nan = (exp == exp_max) && (mant != mant_zero);
 
-    endclass
+        // A negative zero has the sign bit set and all other bits clear.
+        logic is_neg_zero = (val == {1'b1, {(WIDTH-1){1'b0}}});
 
-endpackage
+        if (is_nan) begin
+            // Return a single, standard quiet NaN representation.
+            // The standard is to clear the sign bit and set the MSB of the mantissa.
+            logic [MANT_W-1:0] qnan_mant = 1'b1 << (MANT_W - 1);
+            return {1'b0, exp_max, qnan_mant};
+        end else if (is_neg_zero) begin
+            // Canonical zero is +0.
+            return {WIDTH{1'b0}};
+        end else begin
+            // All other values (Inf, Normals, Denormals, +Zero) are
+            // already in their canonical form.
+            return val;
+        end
+    endfunction
+
+endclass
+
+// For convenience, provide a non-parameterized handles for the common types.
+typedef fp_utils_t#(16) fp16_utils;
+typedef fp_utils_t#(32) fp32_utils;
+typedef fp_utils_t#(64) fp64_utils;
