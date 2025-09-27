@@ -155,20 +155,20 @@ def main():
         ("3c00", "7c01", "7e01", "7e00"),  #   1.0 +  sNaN -> qNaN, py!=C, DUT=7c01=sNaN
         ("fc01", "4000", "fe01", "fe00"),  # -sNaN +   2.0 ->-qNaN, py!=C, DUT=7c01=sNaN
         ("4000", "fc01", "fe01", "fe00"),  #   2.0 + -sNaN ->-qNaN, py!=C, DUT=7c01=sNaN
-        ("7c01", "fc01", "", ""),  #  sNaN + -sNaN -> qNaN, py!=C, DUT=7c01=sNaN
-        ("fc01", "7c01", "", ""),  # -sNaN +  sNaN -> qNaN, py!=C, DUT=7c01=sNaN
+        ("7c01", "fc01", "fe01", "7e00"),  #  sNaN + -sNaN -> qNaN, py!=C, DUT=7c01=sNaN
+        ("fc01", "7c01", "7e01", "7e00"),  # -sNaN +  sNaN -> qNaN, py!=C, DUT=7c01=sNaN
         #
         # quiet NaN -> quiet NaN
         ("7e01", "3c00", "7e01", "7e00"),  #  qNaN +   1.0 -> qNaN, py!=C, DUT=7c01=qNaN
         ("3c00", "7e01", "7e01", "7e00"),  #   1.0 +  qNaN -> qNaN, py!=C, DUT=7c01=qNaN
         ("fe01", "4000", "fe01", "fe00"),  # -qNaN +   2.0 ->-qNaN, py!=C, DUT=fc01=qNaN
         ("4000", "fe01", "fe01", "fe00"),  #   2.0 + -qNaN ->-qNaN, py!=C, DUT=fc01=qNaN
-        ("7e01", "fe01", "", ""),  #  qNaN + -qNaN ->-qNaN, py!=C, DUT=fc01=qNaN
-        ("fe01", "7e01", "", ""),  # -qNaN +  qNaN -> qNaN, py!=C, DUT=fc01=qNaN
+        ("7e01", "fe01", "fe01", "7e00"),  #  qNaN + -qNaN ->-qNaN, py!=C, DUT=fc01=qNaN
+        ("fe01", "7e01", "7e01", "fe00"),  # -qNaN +  qNaN -> qNaN, py!=C, DUT=fc01=qNaN
         #
         # mixed NaN -> quiet NaN
-        ("7e01", "7c01", "", ""),  #  qNaN +  sNaN -> qNaN, py!=C, DUT=7c01=qNaN
-        ("7c01", "7e01", "", ""),  #  sNaN +  qNaN -> qNaN, py!=C, DUT=7c01=qNaN
+        ("7e01", "7c01", "7e01", "7e00"),  #  qNaN +  sNaN -> qNaN, py!=C, DUT=7c01=qNaN
+        ("7c01", "7e01", "7e01", "7e00"),  #  sNaN +  qNaN -> qNaN, py!=C, DUT=7c01=qNaN
         #
         # Infinities:
         ("7c00", "7c00", "7c00", "7c00"),  #  +Inf +  +Inf -> +Inf

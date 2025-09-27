@@ -73,7 +73,10 @@ static uint16_t float_to_fp16(float f) {
     uint16_t half_mant = mant >> 13;
 
     if (exp == 255 && mant != 0) { // NaN
-        return (sign << 15) | (half_exp << 10) | 0x200; // Return qNaN
+        // Propagate mantissa to create a qNaN.
+        // The MSB of the mantissa is set to 1 to indicate a qNaN.
+        half_mant |= 0x200;
+        return (sign << 15) | (half_exp << 10) | half_mant;
     }
 
     return (sign << 15) | (half_exp << 10) | half_mant;
