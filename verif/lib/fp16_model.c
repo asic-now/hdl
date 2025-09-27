@@ -18,15 +18,8 @@ typedef union {
     uint32_t u;
 } float_conv;
 
-// #define float_to_fp16 float_to_fp16_1
-#define float_to_fp16 float_to_fp16_1a
-#define fp16_to_float fp16_to_float_1
-
-// #define float_to_fp16 float_to_fp16_2
-// #define fp16_to_float fp16_to_float_2
-
 // Converts a 16-bit half-precision float to a 32-bit single-precision float
-static float fp16_to_float_1(uint16_t h) {
+static float fp16_to_float(uint16_t h) {
     uint16_t sign = (h >> 15) & 0x0001;
     uint16_t exp  = (h >> 10) & 0x001f;
     uint16_t mant =  h        & 0x03ff;
@@ -57,35 +50,7 @@ static float fp16_to_float_1(uint16_t h) {
 }
 
 // Converts a 32-bit single-precision float to a 16-bit half-precision float
-static uint16_t float_to_fp16_1(float f) {
-    float_conv fc;
-    fc.f = f;
-    uint32_t x = fc.u;
-
-    uint16_t sign = (x >> 16) & 0x8000;
-    int32_t exp   = (x >> 23) & 0xff;
-    int32_t mant  = x & 0x7fffff;
-
-    if (exp == 255) { // Inf or NaN
-        return sign | 0x7c00 | (mant ? 0x0200 : 0); // Propagate NaN
-    }
-    
-    exp = exp - 127 + 15;
-
-    if (exp >= 31) { // Overflow
-        return sign | 0x7c00;
-    }
-    if (exp <= 0) { // Underflow
-        // Handle denormalization
-        if (exp < -10) {
-            return sign;
-        }
-        mant = (mant | 0x800000) >> (1 - exp);
-        return sign | (mant >> 13);
-    }
-    return sign | (exp << 10) | (mant >> 13);
-}
-static uint16_t float_to_fp16_1a(float f) {
+static uint16_t float_to_fp16(float f) {
     float_conv conv;
     conv.f = f;
     uint32_t x = conv.u;
@@ -112,115 +77,6 @@ static uint16_t float_to_fp16_1a(float f) {
     }
 
     return (sign << 15) | (half_exp << 10) | half_mant;
-}
-// Converts a 32-bit single-precision float to a 16-bit half-precision float
-// (Based on a public domain implementation by Fabian Giesen, with corrections)
-static uint16_t float_to_fp16_1b(float f) {
-    float_conv conv;
-    conv.f = f;
-    uint32_t x = conv.u;
-
-    uint32_t sign = (x >> 31) & 1;
-    int32_t  exp  = (x >> 23) & 0xff;
-    uint32_t mant = x & 0x7fffff;
-
-    // Handle Inf or NaN
-    if (exp == 255) {
-        return (sign << 15) | 0x7c00 | (mant ? 0x200 : 0); // NaN or Inf
-    }
-    
-    // Re-bias the exponent from float32 to float16
-    exp = exp - 127 + 15;
-
-    // Handle overflow, underflow, and denormalized cases
-    if (exp >= 31) { // Overflow
-        return (sign << 15) | 0x7c00;
-    }
-    
-    if (exp <= 0) { // Underflow or becomes denormalized
-        if (exp < -10) { // Underflows completely to zero
-            return sign << 15;
-        }
-        // The number is denormalized. Re-insert the implicit 1 bit and shift.
-        mant = (mant | 0x800000) >> (1 - exp);
-        // Truncate and return
-        return (sign << 15) | (mant >> 13);
-    }
-
-    // Normal number
-    return (sign << 15) | (exp << 10) | (mant >> 13);
-}
-
-// Function to convert fp16 binary to float
-float fp16_to_float_2(uint16_t h) {
-    uint16_t sign = (h >> 15) & 0x0001;
-    uint16_t exp = (h >> 10) & 0x001F;
-    uint16_t frac = h & 0x03FF;
-
-    if (exp == 0) {
-        // Subnormal or zero
-        if (frac == 0) {
-            // Zero
-            return sign ? -0.0f : 0.0f;
-        } else {
-            // Subnormal
-            float mantissa = frac / 1024.0f;
-            float val = ldexpf(mantissa, -14);
-            return sign ? -val : val;
-        }
-    } else if (exp == 31) {
-        // Inf or NaN
-        if (frac == 0) {
-            return sign ? -INFINITY : INFINITY;
-        } else {
-            return NAN;
-        }
-    } else {
-        // Normalized
-        float mantissa = 1.0f + frac / 1024.0f;
-        int e = exp - 15;
-        float val = ldexpf(mantissa, e);
-        return sign ? -val : val;
-    }
-}
-
-// Function to convert float to fp16 binary
-uint16_t float_to_fp16_2(float f) {
-    if (isnan(f)) return 0x7E00; // qNaN
-    if (isinf(f)) return (signbit(f) ? 0xFC00 : 0x7C00);
-    if (f == 0.0f) return (signbit(f) ? 0x8000 : 0x0000);
-
-    int sign = 0;
-    if (f < 0) {
-        sign = 0x8000;
-        f = -f;
-    }
-
-    int exp;
-    float mantissa = frexpf(f, &exp);
-
-    // Normalize mantissa to [1, 2)
-    mantissa *= 2.0f;
-    exp -= 1;
-
-    int16_t exp_half = exp + 15;
-
-    if (exp_half >= 31) {
-        // Overflow to infinity
-        return sign | 0x7C00;
-    } else if (exp_half <= 0) {
-        // Subnormal number or zero
-        if (exp_half < -10) {
-            // Too small becomes zero
-            return sign;
-        }
-        mantissa = ldexpf(mantissa, exp_half - 1);
-        uint16_t frac = (uint16_t)(mantissa * 1024.0f + 0.5f);
-        return sign | frac;
-    } else {
-        uint16_t frac = (uint16_t)((mantissa - 1.0f) * 1024.0f + 0.5f);
-        return sign | (exp_half << 10) | frac;
-    }
 }
 
 // Define the output struct using C bit-fields to ensure a memory layout
