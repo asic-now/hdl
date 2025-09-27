@@ -15,3 +15,13 @@ This directory contains synthesizable Verilog RTL for 64-bit (double-precision) 
 * fp64_to_fp32.v
 * fp64_to_int64.v
 * int64_to_fp64.v
+
+## Format (IEEE 754 double-precision)
+
+```text
+  [   63]: Sign bit (1 for negative, 0 for positive)
+  [62:52]: 11-bit exponent (bias of 1023)
+  [51: 0]: 52-bit mantissa (fraction/significand)
+```
+
+<https://numeral-systems.com/ieee-754-converter/>
