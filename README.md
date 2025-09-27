@@ -8,7 +8,7 @@ It is WIP (Work In Progress), and not everything has been verified.
 
 ## Floating Point Numbers - IEEE 754
 
-<https://numeral-systems.com/ieee-754-converter/>
+[IEEE-754 floating point numbers converter](https://numeral-systems.com/ieee-754-converter/)
 
 ## Project Structure
 

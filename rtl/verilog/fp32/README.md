@@ -24,5 +24,3 @@ This directory contains synthesizable Verilog RTL for 32-bit (single-precision) 
   [30:23]: 8-bit exponent (bias of 127)
   [22: 0]: 23-bit mantissa (fraction/significand)
 ```
-
-<https://numeral-systems.com/ieee-754-converter/>

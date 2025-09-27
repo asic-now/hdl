@@ -24,8 +24,6 @@ This directory contains synthesizable Verilog RTL for 16-bit (half-precision) fl
   [ 9: 0]: 10-bit mantissa (fraction/significand)
 ```
 
-<https://numeral-systems.com/ieee-754-converter/>
-
 $f = (-1)^{\text{val}[15]} \cdot 2^{(\text{val}[14:10] - 15)} \cdot \frac{(2^{10} + \text{val}[9:0])}{2^{10}}$
 
 `f = (-1) ^ val[15] * 2 ^ (val[14:10] - 15) * ((1<<10) + val[9:0]) / (1<<10)`

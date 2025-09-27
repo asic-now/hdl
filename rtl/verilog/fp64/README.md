@@ -23,5 +23,3 @@ This directory contains synthesizable Verilog RTL for 64-bit (double-precision) 
   [62:52]: 11-bit exponent (bias of 1023)
   [51: 0]: 52-bit mantissa (fraction/significand)
 ```
-
-<https://numeral-systems.com/ieee-754-converter/>
