@@ -820,9 +820,9 @@ configuration:
       aditional_arguments: ''
   linter:
     general:
-      linter_vhdl: vivado
-      linter_verilog: vivado
-      lstyle_verilog: disabled
+      linter_vhdl: vivado # Keep Vivado for VHDL if you add any
+      linter_verilog: verilator
+      lstyle_verilog: verible
       lstyle_vhdl: disabled
     vhdlls:
       standard: v2008
@@ -838,7 +838,11 @@ configuration:
     verible:
       arguments: ''
     verilator:
-      arguments: ''
+      arguments: >-
+        -Irtl/verilog/lib
+        -Iverif/lib
+        -Iverif/tests/fp16_add
+        -Iverif/tests/fp16_classify
     vivado:
       vhdl_arguments: ''
       verilog_arguments: >-

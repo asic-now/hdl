@@ -73,6 +73,112 @@ Icarus Verilog is an excellent open-source Verilog simulator. However, it **does
 * Installation (Windows):  
   Pre-compiled binaries are available for download from the official Icarus website: <http://iverilog.icarus.com/>
 
+### Verible (for Style Linting and Formatting)
+
+[Verible](https://github.com/google/verible) is a suite of open-source SystemVerilog developer tools, including a style linter and code formatter. In this project, it is used as a style linter to enforce coding conventions.
+
+* **Installation (Linux - via pre-compiled binary)**:  
+  Download the latest static binary for Ubuntu from the [releases page](https://github.com/google/verible/releases) and place it in your `PATH`.
+
+* **Installation (macOS via Homebrew)**:  
+
+```bash
+brew install verible
+```
+
+* **Installation (Windows)**:  
+
+Download release zip file (you may want to check the latest version):
+
+```bash
+curl -L -o verible-win.zip https://github.com/chipsalliance/verible/releases/download/v0.0-4023-gc1271a00/verible-v0.0-4023-gc1271a00-win64.zip
+```
+
+Then unzip `verible-win.zip` file, and copy contents of the unzipped folder `verible-v0.0-4023-gc1271a00-win64` (a group of .exe files) to `C:/Program Files/verible`.
+
+Add `C:/Program Files/verible` to your system's PATH environment variable, then restart VSCode.
+
+The style rules are configured in the `.rules.verible_lint` file in the project root.
+
+### Verilator (for Linting)
+
+Note: [TerosHDL#815](https://github.com/TerosTechnology/vscode-terosHDL/issues/815) - Verilator linter does not work under TerosHDL. Use Vivado instead.
+
+[Verilator](https://verilator.org) is a high-performance, open-source Verilog/SystemVerilog simulator and linter. In this project, it is primarily used as a linter to perform static code analysis, as configured in the TerosHDL settings.
+
+* **Installation (Linux - Debian/Ubuntu)**:  
+
+```bash
+sudo apt-get update
+sudo apt-get install verilator
+```
+
+* **Installation (Linux - RedHat/CentOS)**:  
+
+```bash
+sudo yum install verilator
+```
+
+* **Installation (macOS via Homebrew)**:  
+
+```bash
+brew install verilator
+```
+
+* **Installation (Windows)**:  
+  Verilator can be installed on Windows by:
+  * **Using WSL**: Install your preferred Linux distribution from the Microsoft Store and then follow the Linux installation instructions above within the WSL environment.
+  * **Using MSYS2 package**: After installing MSYS2, run `pacman -S mingw-w64-x86_64-verilator` in the MSYS2 terminal. Note: As of 2025-0925 it gets pretty old version, and has trouble loading its own shared libs.
+  * **Building from Source under MSYS2**: It gets the latest version, and can be patched to fix some issues. After installing MSYS2, run in MSYS2 or git bash terminal:
+
+```bash
+# Install some prerequisites:
+pacman -S help2man
+
+# Clone repo:
+cd ~
+git clone https://github.com/verilator/verilator.git
+cd verilator
+git checkout origin/stable # or any release tag
+
+# Configure:
+unset VERILATOR_ROOT
+# export VERILATOR_ROOT=/usr
+autoconf
+./configure  --prefix=/usr
+
+# Patch:
+cp /usr/include/FlexLexer.h ./src  # Fix missing header file
+# Any other patches
+
+# Build:
+make -j$(nproc)
+
+# Install:
+make install
+
+# Check:
+verilator --version
+
+```
+
+Under Windows MSYS2, for allowing VSCode extensions to find verilator, it is recommended to add `C:\msys64\usr\bin` to PATH environment variable.
+
+#### Additional Patches
+
+As of 2025-0927, origin/stable branch of verilator source builds `Verilator 5.040 2025-08-30 rev v5.040-50-g0a9d9db5a`. It has trouble finding its own .vlt and .sv files due to using $VERILATOR_ROOT/include/, instead of $VERILATOR_ROOT/share/verilator/include/ (where it actually installs these files). The issue can be patched in src/V3Options.cpp prior to `make`:
+
+```c
+  string V3Options::getStdPackagePath() {
+-     return V3Os::filenameJoin(getenvVERILATOR_ROOT(), "include", "verilated_std.sv");
++     return V3Os::filenameJoin(getenvVERILATOR_ROOT(), "share", "verilator", "include", "verilated_std.sv");
+  }
+  string V3Options::getStdWaiverPath() {
+-     return V3Os::filenameJoin(getenvVERILATOR_ROOT(), "include", "verilated_std_waiver.vlt");
++     return V3Os::filenameJoin(getenvVERILATOR_ROOT(), "share", "verilator", "include", "verilated_std_waiver.vlt");
+  }
+```
+
 ## VSCode Integration
 
 ### DSim Studio

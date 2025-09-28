@@ -1,6 +1,5 @@
 # Todo's
 
-- [ ] TODO: Define and enforce a coding style guide (consider a linter like Verilator)
 - [ ] TODO: Command-line DSim compile, elaborate, simulate all testbenches
 - [ ] TODO: Parameterize cells
 - [ ] TODO: Implement UVM testbenches for each fpXX and each operation

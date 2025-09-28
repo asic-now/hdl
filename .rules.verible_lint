@@ -1,0 +1,12 @@
+# Verible Style Linter Configuration file
+# For a full list of rules, run: `verible-verilog-lint --help_rules all``
+# This file can be automatically loaded by verible if `--rules_config_search` option is given.
+# Option `--rules_config .rules.verible-lint` would also work, however, in TerosHDL pwd seems to be not ${workspaceFolder}
+
+# Rules format is same as for `--rules` option, just instead of commas use LF.
+
+parameter-name-style=localparam_style:ALL_CAPS
+-always-comb
+line-length=length:200
+-explicit-parameter-storage-type
+-unpacked-dimensions-range-ordering
