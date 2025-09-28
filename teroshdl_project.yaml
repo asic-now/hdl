@@ -842,10 +842,10 @@ configuration:
     vivado:
       vhdl_arguments: ''
       verilog_arguments: >-
-        -Irtl/verilog/lib
-        -Iverif/lib
-        -Iverif/tests/fp16_add
-        -Iverif/tests/fp16_classify
+        -i rtl/verilog/lib
+        -i verif/lib
+        -i verif/tests/fp16_add
+        -i verif/tests/fp16_classify
     vsg:
       arguments: ''
   schematic:

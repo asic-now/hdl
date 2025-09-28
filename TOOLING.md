@@ -102,7 +102,7 @@ The style rules are configured in the `.rules.verible_lint` file in the project 
 
 ### Verilator (for Linting)
 
-Note: [TerosHDL#815](https://github.com/TerosTechnology/vscode-terosHDL/issues/815) - Verilator linter does not work under TerosHDL. Use Vivado instead.
+Note: [vscode-terosHDL#815](https://github.com/TerosTechnology/vscode-terosHDL/issues/815) - Verilator linter does not work under TerosHDL. Use Vivado instead.
 
 [Verilator](https://verilator.org) is a high-performance, open-source Verilog/SystemVerilog simulator and linter. In this project, it is primarily used as a linter to perform static code analysis, as configured in the TerosHDL settings.
 
@@ -197,8 +197,9 @@ See [Altair DSim](#altair-dsim) section.
 6. Configure TerosHDL
    1. Open VSCode and select the TerosHDL icon on the sidebar.
    2. Go to "Configuration" section and choose "Open Global Settings Menu".
-   3. Under "Linter settings", select "Vivado" to enable Vivado as code checker.
-   4. Under "Tools," set the default synthesis/simulation tool to Vivado.
-   5. Under "Tools" > "Vivado", enter path to `vivado` executable (`vivado.exe` on Windows). (Even if it is added to PATH environemtn variable, TerosHDL might be unable to find it.)
+   3. Under "Linter settings", select "Vivado" to enable Vivado as code linter.
+   4. Under "Linter settings" > "Vivado linter", enter "-i <include_path>" for each include path into "Verilog/SV linter arguments".  
+   Note: [vscode-terosHDL#816](https://github.com/TerosTechnology/vscode-terosHDL/issues/816) Include paths don't work as expected. Use absolute paths in Vivado arguments until the issue is resolved.
+   5. Under "Tools," set the default synthesis/simulation tool to Vivado.
 7. Use the "Verify Setup" command in the TerosHDL sidebar to check configuration and tool detection. Review Output > TerosHDL: Global log and correct any missing tools.  
 Note: "Verify Setup" can be tricky to troubleshoot - make sure project setup does not inadvertently override global Vivado path setting (see [vscode-terosHDL#778](https://github.com/TerosTechnology/vscode-terosHDL/issues/778)).
