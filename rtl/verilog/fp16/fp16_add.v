@@ -40,8 +40,8 @@ module fp16_add (
     wire [ 9:0] mant_b = b[9:0];
 
     // Detect special values
-    wire is_denorm_a = (exp_a == 5'h00) && (mant_a != 10'b0);
-    wire is_denorm_b = (exp_b == 5'h00) && (mant_b != 10'b0);
+    // wire is_denorm_a = (exp_a == 5'h00) && (mant_a != 10'b0);
+    // wire is_denorm_b = (exp_b == 5'h00) && (mant_b != 10'b0);
     wire is_zero_a   = (exp_a == 5'h00) && (mant_a == 10'b0);
     wire is_zero_b   = (exp_b == 5'h00) && (mant_b == 10'b0);
     wire is_inf_a    = (exp_a == 5'h1F) && (mant_a == 10'b0);
@@ -58,7 +58,8 @@ module fp16_add (
     // Stage 1: Unpack, Compare, and Align (Combinational Logic)
     //----------------------------------------------------------------
     reg  signed [ 5:0] exp_diff; // Widened for carry
-    reg                larger_sign, smaller_sign;
+    reg                larger_sign;
+    // reg                smaller_sign;
     reg         [10:0] larger_mant_in, smaller_mant_in;
     reg         [ 4:0] larger_exp_in;
 
@@ -78,14 +79,14 @@ module fp16_add (
             larger_mant_in = full_mant_a;
             smaller_mant_in= full_mant_b;
             larger_sign    = sign_a;
-            smaller_sign   = sign_b;
+            // smaller_sign   = sign_b;
         end else begin
             larger_exp_in  = exp_b;
             exp_diff       = {1'b0, exp_b} - {1'b0, exp_a};
             larger_mant_in = full_mant_b;
             smaller_mant_in= full_mant_a;
             larger_sign    = sign_b;
-            smaller_sign   = sign_a;
+            // smaller_sign   = sign_a;
         end
 
         // Align the mantissa of the smaller number by shifting it right
@@ -138,7 +139,7 @@ module fp16_add (
             s2_exp          <= s1_larger_exp;
             s2_special_case <= s1_special_case;
             s2_special_result <= s1_special_result;
-            
+
             if (s1_op_is_sub) begin
                 if (s1_mant_a >= s1_mant_b) begin
                     s2_mant <= {1'b0, s1_mant_a} - {1'b0, s1_mant_b};
@@ -173,7 +174,7 @@ module fp16_add (
                 result_reg <= s2_special_result;
             end else begin
                 // Default normalization results
-                final_exp = s2_exp;
+                final_exp = { 1'b0, s2_exp};
                 final_mant = s2_mant[24:0]; // Start with mantissa, without the carry bit
 
                 // Find MSB for normalization shift
@@ -184,7 +185,7 @@ module fp16_add (
                         i = -1; // Verilog equivalent to break
                     end
                 end
-                
+
                 // The implicit '1' for a normalized number should be at bit 24 of the 25-bit mantissa.
                 // The denormalized implicit '0' is also at this position (for denorm to norm)
                 shift_val = 24 - msb_pos;
@@ -217,7 +218,7 @@ module fp16_add (
                         out_exp = final_exp[4:0];
                     end
                 end
-                
+
                 // Correctly handle the sign of zero
                 if (out_exp == 0 && out_mant == 0) begin
                     result_reg <= (is_zero_a && is_zero_b && sign_a && sign_b) ? `FP16_N_ZERO : `FP16_P_ZERO;
