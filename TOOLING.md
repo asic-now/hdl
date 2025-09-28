@@ -54,7 +54,7 @@ Most verification models are implemented with C reference functions. C functions
 VCS is a high-performance commercial simulator.
 
 * **Installation**: VCS is a licensed product from Synopsys. It is typically installed in a corporate or academic environment. Please follow the installation and environment setup guides provided by your organization or university.
-* **Usage**: The included Makefile.vcs is configured for VCS. You can run make commands using Makefile.vcs to compile and run the tests using VCS.
+* **Usage**: The included vcs.mk is configured for VCS. You can run make commands using vcs.mk to compile and run the tests using VCS.
 
 ### Icarus Verilog (for non-UVM designs)
 
