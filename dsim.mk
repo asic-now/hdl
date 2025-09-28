@@ -17,14 +17,10 @@ SHELL := /bin/bash
 # Configurable Variables (can be overridden from the command line)
 #==============================================================================
 
+DUTS  ?= fp16_add fp16_classify
 
-#DUT          ?= fp16_add
-DUT          ?= fp16_classify
-
-#TEST         ?= random_test
-#TEST         ?= special_cases_test
-#TEST         ?= combined_test
-TEST         ?= combined_test
+TEST  ?= combined_test
+TESTS ?= random_test special_cases_test combined_test
 
 SRC_FILES_LIST   ?= verif/filelist.txt
 C_MODEL_FILES    ?= verif/lib/fp16_model.c
@@ -76,11 +72,12 @@ RUN_PLUSARGS = +UVM_TESTNAME=$(DUT)_$(TEST)
 
 .PHONY: all compile run clean
 
-all: run
+all:
+	@$(foreach dut,$(DUTS),$(MAKE) -f $(firstword $(MAKEFILE_LIST)) run DUT=$(dut) TEST=$(TEST);)
 
 compile:
 	@echo "--- Compiling DUT: $(DUT) ---"
-	$(COMPILER) $(COMPILER_FLAGS) -F '$(SRC_FILES_LIST)'
+	$(COMPILER) $(COMPILER_FLAGS) -F "$(SRC_FILES_LIST)"
 
 run: compile
 	@echo "--- Running Test: $(TEST) on $(DUT) ---"
