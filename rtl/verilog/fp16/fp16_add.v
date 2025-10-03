@@ -2,10 +2,9 @@
 //
 // Verilog RTL for a parameterized floating-point adder.
 //
-// Format (IEEE 754 half-precision):
-// [   15]: Sign bit (1 for negative, 0 for positive)
-// [14:10]: 5-bit exponent (bias of 15)
-// [ 9: 0]: 10-bit mantissa (fraction/significand)
+// This module is a 3-stage pipelined adder for IEEE 754 floating-point numbers.
+// It can be configured for different precisions (e.g., fp16, fp32, fp64) by
+// setting the WIDTH parameter.
 //
 // Features:
 // - Parameterized for various precisions.
@@ -199,56 +198,53 @@ module fp16_add #(
 
     // Stage 3 Combinational Logic
     always @(*) begin
-            if (s2_special_case_q) begin
-            end else begin
-                // Default normalization results
-                final_exp = { 1'b0, s2_exp_q};
-                final_mant = s2_mant_q[ALIGN_MANT_W-1:0]; // Start with mantissa, without the carry bit
+        // Default normalization results
+        final_exp = { 1'b0, s2_exp_q};
+        final_mant = s2_mant_q[ALIGN_MANT_W-1:0]; // Start with mantissa, without the carry bit
 
-                // Find MSB for normalization shift
-                msb_pos = 0;
-                // Parallel priority encoder - this loop is synthesizable.
-                for (i = ALIGN_MANT_W; i >= 0; i = i - 1) begin
-                    if (s2_mant_q[i]) begin
-                        msb_pos = i;
-                        i = -1; // Verilog equivalent to break
-                    end
-                end
-
-                // The implicit '1' for a normalized number should be at bit ALIGN_MANT_W-1.
-                // The denormalized implicit '0' is also at this position (for denorm to norm)
-                shift_val = (ALIGN_MANT_W-1) - msb_pos;
-
-                if (s2_mant_q == 0) begin
-                    // Result is zero, no normalization needed
-                    out_exp = EXP_ALL_ZEROS;
-                    out_mant = MANT_ALL_ZEROS;
-                end else begin
-                    // Apply the shift and update the exponent
-                    if (shift_val > 0) begin
-                        final_mant = s2_mant_q << shift_val;
-                    end else begin
-                        final_mant = s2_mant_q >> (-shift_val);
-                    end
-                    final_exp = {1'b0, s2_exp_q} - shift_val;
-
-                    // Extract final mantissa, dropping the implicit bit at ALIGN_MANT_W-1
-                    out_mant = final_mant[ALIGN_MANT_W-2:ALIGN_MANT_W-2+1-MANT_W];
-
-                    // Check for overflow/underflow on final exponent
-                    if (final_exp >= EXP_ALL_ONES) begin // Overflow -> Infinity
-                        out_exp = EXP_ALL_ONES;
-                        out_mant = MANT_ALL_ZEROS;
-                    end else if (final_exp <= 0) begin // Underflow -> Denormalized or Zero
-                        // Note: This implementation flushes to zero on underflow,
-                        // a simplified approach to avoid complex denormalization.
-                        out_exp = EXP_ALL_ZEROS;
-                        out_mant = MANT_ALL_ZEROS;
-                    end else begin
-                        out_exp = final_exp[EXP_W-1:0];
-                    end
-                end
+        // Find MSB for normalization shift
+        msb_pos = 0;
+        // Parallel priority encoder - this loop is synthesizable.
+        for (i = ALIGN_MANT_W; i >= 0; i = i - 1) begin
+            if (s2_mant_q[i]) begin
+                msb_pos = i;
+                i = -1; // Verilog equivalent to break
             end
+        end
+
+        // The implicit '1' for a normalized number should be at bit ALIGN_MANT_W-1.
+        // The denormalized implicit '0' is also at this position (for denorm to norm)
+        shift_val = (ALIGN_MANT_W-1) - msb_pos;
+
+        if (s2_mant_q == 0) begin
+            // Result is zero, no normalization needed
+            out_exp = EXP_ALL_ZEROS;
+            out_mant = MANT_ALL_ZEROS;
+        end else begin
+            // Apply the shift and update the exponent
+            if (shift_val > 0) begin
+                final_mant = s2_mant_q << shift_val;
+            end else begin
+                final_mant = s2_mant_q >> (-shift_val);
+            end
+            final_exp = {1'b0, s2_exp_q} - shift_val;
+
+            // Extract final mantissa, dropping the implicit bit at ALIGN_MANT_W-1
+            out_mant = final_mant[ALIGN_MANT_W-2:ALIGN_MANT_W-2+1-MANT_W];
+
+            // Check for overflow/underflow on final exponent
+            if (final_exp >= EXP_ALL_ONES) begin // Overflow -> Infinity
+                out_exp = EXP_ALL_ONES;
+                out_mant = MANT_ALL_ZEROS;
+            end else if (final_exp <= 0) begin // Underflow -> Denormalized or Zero
+                // Note: This implementation flushes to zero on underflow,
+                // a simplified approach to avoid complex denormalization.
+                out_exp = EXP_ALL_ZEROS;
+                out_mant = MANT_ALL_ZEROS;
+            end else begin
+                out_exp = final_exp[EXP_W-1:0];
+            end
+        end
 
     end
 
