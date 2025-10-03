@@ -26,7 +26,7 @@ module fp16_add #(
 
     output [WIDTH-1:0] result
 );
-    `VERIF_DECLARE_PIPELINE(2)  // Verification support
+    `VERIF_DECLARE_PIPELINE(3)  // Verification support
 
     // Derived parameters for convenience
     localparam EXP_W   = (WIDTH == 16) ?  5 : (WIDTH == 32) ?  8 : 11;
@@ -111,38 +111,49 @@ module fp16_add #(
         end
     end
 
-    // Stage 1 Pseudo-pipeline
-    always @(*) begin
+    // Stage 1 Pipeline
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            s1_larger_exp_q     <= 1'b0;
+            s1_result_sign_q    <= 1'b0;
+            s1_op_is_sub_q      <= 1'b0;
+            s1_neg_zero_q       <= 1'b0;
+            s1_mant_a_q         <= 0;
+            s1_mant_b_q         <= 0;
+            s1_special_case_q   <= 1'b0;
+            s1_special_result_q <= P_ZERO;
+        end else begin
             // Align the mantissa of the smaller number by shifting it right
-            s1_mant_a_q = ({larger_mant_in_d , {PRECISION_BITS{1'b0}}});
-            s1_mant_b_q = ({smaller_mant_in_d, {PRECISION_BITS{1'b0}}}) >> exp_diff_d; // 2^5-1 = 31 max shift, 31-14=17
+            s1_mant_a_q <= ({larger_mant_in_d , {PRECISION_BITS{1'b0}}});
+            s1_mant_b_q <= ({smaller_mant_in_d, {PRECISION_BITS{1'b0}}}) >> exp_diff_d;
 
             // Set up for stage 2
-            s1_larger_exp_q  = larger_exp_in_d;
-            s1_result_sign_q = larger_sign_d;
-            s1_op_is_sub_q   = (sign_a != sign_b);
-            s1_neg_zero_q    = (is_zero_a && is_zero_b && sign_a && sign_b);
+            s1_larger_exp_q  <= larger_exp_in_d;
+            s1_result_sign_q <= larger_sign_d;
+            s1_op_is_sub_q   <= (sign_a != sign_b);
+            s1_neg_zero_q    <= (is_zero_a && is_zero_b && sign_a && sign_b);
 
             // Handle special cases - bypass the main logic
-            s1_special_case_q = 1'b0;
-            s1_special_result_q = QNAN; // Default to a quiet NaN
+            s1_special_case_q <= 1'b0;
+            s1_special_result_q <= QNAN; // Default to a quiet NaN
 
             if (is_nan_a || is_nan_b || (is_inf_a && is_inf_b && (sign_a != sign_b))) begin
-                s1_special_case_q = 1'b1;
-                s1_special_result_q = QNAN; // Return quiet NaN for any NaN or Inf-Inf
+                s1_special_case_q <= 1'b1;
+                s1_special_result_q <= QNAN; // Return quiet NaN for any NaN or Inf-Inf
             end else if (is_inf_a) begin
-                s1_special_case_q = 1'b1;
-                s1_special_result_q = a;
+                s1_special_case_q <= 1'b1;
+                s1_special_result_q <= a;
             end else if (is_inf_b) begin
-                s1_special_case_q = 1'b1;
-                s1_special_result_q = b;
+                s1_special_case_q <= 1'b1;
+                s1_special_result_q <= b;
             end else if (is_zero_a) begin
-                s1_special_case_q = 1'b1;
-                s1_special_result_q = b;
+                s1_special_case_q <= 1'b1;
+                s1_special_result_q <= b;
             end else if (is_zero_b) begin
-                s1_special_case_q = 1'b1;
-                s1_special_result_q = a;
+                s1_special_case_q <= 1'b1;
+                s1_special_result_q <= a;
             end
+        end
     end
 
     //----------------------------------------------------------------
