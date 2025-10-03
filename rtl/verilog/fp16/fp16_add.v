@@ -1,6 +1,6 @@
 // rtl/verilog/fp16/fp16_add.v
 //
-// Verilog RTL for a 16-bit (half-precision) floating-point adder.
+// Verilog RTL for a parameterized floating-point adder.
 //
 // Format (IEEE 754 half-precision):
 // [   15]: Sign bit (1 for negative, 0 for positive)
@@ -8,6 +8,7 @@
 // [ 9: 0]: 10-bit mantissa (fraction/significand)
 //
 // Features:
+// - Parameterized for various precisions.
 // - 3-stage pipelined architecture for improved clock frequency.
 // - Handles normalized and denormalized numbers.
 // - Handles special cases: NaN, Infinity, and Zero.
@@ -15,215 +16,249 @@
 
 `include "fp16_inc.vh"
 
-module fp16_add (
+module fp16_add #(
+    parameter WIDTH = 16
+) (
     input clk,
     input rst_n,
 
-    input  [15:0] a,
-    input  [15:0] b,
+    input  [WIDTH-1:0] a,
+    input  [WIDTH-1:0] b,
 
-    output [15:0] result
+    output [WIDTH-1:0] result
 );
-    `VERIF_DECLARE_PIPELINE(2)  // Verification Support
+    `VERIF_DECLARE_PIPELINE(2)  // Verification support
+
+    // Derived parameters for convenience
+    localparam EXP_W   = (WIDTH == 16) ?  5 : (WIDTH == 32) ?  8 : 11;
+    localparam MANT_W  = (WIDTH == 16) ? 10 : (WIDTH == 32) ? 23 : 52;
+    localparam EXP_BIAS= (WIDTH == 16) ? 15 : (WIDTH == 32) ?  127 : 1023;
+
+    localparam PRECISION_BITS = 14; // Select mantissa precision for accurate rounding
+
+    localparam SIGN_POS     = EXP_W + MANT_W;
+    localparam EXP_POS      = MANT_W;
+    localparam ALIGN_MANT_W = MANT_W + 1 + PRECISION_BITS; // For alignment shift
+
+    // Constants for special values
+    localparam [EXP_W-1:0] EXP_ALL_ONES    = { EXP_W{1'b1}};
+    localparam [EXP_W-1:0] EXP_ALL_ZEROS   = { EXP_W{1'b0}};
+    localparam [MANT_W-1:0] MANT_ALL_ZEROS = {MANT_W{1'b0}};
+
+    localparam [WIDTH-1:0] QNAN = {1'b0, EXP_ALL_ONES, {1'b1, {(MANT_W-1){1'b0}}}};
+    localparam [WIDTH-1:0] P_ZERO = {WIDTH{1'b0}};
+    localparam [WIDTH-1:0] N_ZERO = {1'b1, {(WIDTH-1){1'b0}}};
+
 
     //----------------------------------------------------------------
-    // Wires and Registers
+    // Input Unpacking
     //----------------------------------------------------------------
 
-    // Unpack inputs a and b
-    wire        sign_a = a[15];
-    wire [ 4:0] exp_a  = a[14:10];
-    wire [ 9:0] mant_a = a[9:0];
+    // Input value parts
+    wire              sign_a = a[SIGN_POS];
+    wire [ EXP_W-1:0] exp_a  = a[SIGN_POS-1:EXP_POS];
+    wire [MANT_W-1:0] mant_a = a[MANT_W-1:0];
 
-    wire        sign_b = b[15];
-    wire [ 4:0] exp_b  = b[14:10];
-    wire [ 9:0] mant_b = b[9:0];
+    wire              sign_b = b[SIGN_POS];
+    wire [ EXP_W-1:0] exp_b  = b[SIGN_POS-1:EXP_POS];
+    wire [MANT_W-1:0] mant_b = b[MANT_W-1:0];
 
     // Detect special values
-    // wire is_denorm_a = (exp_a == 5'h00) && (mant_a != 10'b0);
-    // wire is_denorm_b = (exp_b == 5'h00) && (mant_b != 10'b0);
-    wire is_zero_a   = (exp_a == 5'h00) && (mant_a == 10'b0);
-    wire is_zero_b   = (exp_b == 5'h00) && (mant_b == 10'b0);
-    wire is_inf_a    = (exp_a == 5'h1F) && (mant_a == 10'b0);
-    wire is_inf_b    = (exp_b == 5'h1F) && (mant_b == 10'b0);
-    wire is_nan_a    = (exp_a == 5'h1F) && (mant_a != 10'b0);
-    wire is_nan_b    = (exp_b == 5'h1F) && (mant_b != 10'b0);
+    // wire is_denorm_a = (exp_a == EXP_ALL_ZEROS) && (mant_a != MANT_ALL_ZEROS);
+    // wire is_denorm_b = (exp_b == EXP_ALL_ZEROS) && (mant_b != MANT_ALL_ZEROS);
+    wire is_zero_a   = (exp_a == EXP_ALL_ZEROS) && (mant_a == MANT_ALL_ZEROS);
+    wire is_zero_b   = (exp_b == EXP_ALL_ZEROS) && (mant_b == MANT_ALL_ZEROS);
+    wire is_inf_a    = (exp_a == EXP_ALL_ONES ) && (mant_a == MANT_ALL_ZEROS);
+    wire is_inf_b    = (exp_b == EXP_ALL_ONES ) && (mant_b == MANT_ALL_ZEROS);
+    wire is_nan_a    = (exp_a == EXP_ALL_ONES ) && (mant_a != MANT_ALL_ZEROS);
+    wire is_nan_b    = (exp_b == EXP_ALL_ONES ) && (mant_b != MANT_ALL_ZEROS);
 
-    // Add the implicit leading bit for normalized numbers (1.fraction)
-    // For denormalized numbers (exp=0), the implicit bit is 0 (0.fraction)
-    wire [10:0] full_mant_a = {(exp_a != 0), mant_a};
-    wire [10:0] full_mant_b = {(exp_b != 0), mant_b};
+    // Add implicit leading bit (1 for normal, 0 for denormal/zero)
+    wire [1+MANT_W-1:0] full_mant_a = {(exp_a != EXP_ALL_ZEROS), mant_a};
+    wire [1+MANT_W-1:0] full_mant_b = {(exp_b != EXP_ALL_ZEROS), mant_b};
 
     //----------------------------------------------------------------
-    // Stage 1: Unpack, Compare, and Align (Combinational Logic)
+    // Stage 1: Unpack, Compare, and Align
     //----------------------------------------------------------------
-    reg  signed [ 5:0] exp_diff; // Widened for carry
-    reg                larger_sign;
-    // reg                smaller_sign;
-    reg         [10:0] larger_mant_in, smaller_mant_in;
-    reg         [ 4:0] larger_exp_in;
+    reg  signed [EXP_W:0]       exp_diff_d;  // +1 bit carry
+    reg                         larger_sign_d;
+    reg         [1+MANT_W-1:0]  larger_mant_in_d, smaller_mant_in_d;
+    reg         [EXP_W-1:0]     larger_exp_in_d;
 
-    reg         [ 4:0] s1_larger_exp;
-    reg                s1_result_sign;
-    reg                s1_op_is_sub;
-    reg         [24:0] s1_mant_a; // Extended mantissa for alignment
-    reg         [24:0] s1_mant_b;
-    reg                s1_special_case;
-    reg         [15:0] s1_special_result;
+    reg         [EXP_W-1:0]     s1_larger_exp_q;
+    reg                         s1_result_sign_q;
+    reg                         s1_op_is_sub_q;
+    reg         [ALIGN_MANT_W-1:0] s1_mant_a_q;  // Extended mantissa for alignment
+    reg         [ALIGN_MANT_W-1:0] s1_mant_b_q;
+    reg                         s1_special_case_q;
+    reg         [WIDTH-1:0]     s1_special_result_q;
 
+    // Stage 1 Combinational Logic
     always @(*) begin
         // Magnitude comparison to determine alignment and result sign
         if (exp_a > exp_b || (exp_a == exp_b && mant_a >= mant_b)) begin
-            larger_exp_in  = exp_a;
-            exp_diff       = {1'b0, exp_a} - {1'b0, exp_b};
-            larger_mant_in = full_mant_a;
-            smaller_mant_in= full_mant_b;
-            larger_sign    = sign_a;
-            // smaller_sign   = sign_b;
+            larger_exp_in_d   = exp_a;
+            exp_diff_d        = {1'b0, exp_a} - {1'b0, exp_b};
+            larger_mant_in_d  = full_mant_a;
+            smaller_mant_in_d = full_mant_b;
+            larger_sign_d     = sign_a;
         end else begin
-            larger_exp_in  = exp_b;
-            exp_diff       = {1'b0, exp_b} - {1'b0, exp_a};
-            larger_mant_in = full_mant_b;
-            smaller_mant_in= full_mant_a;
-            larger_sign    = sign_b;
-            // smaller_sign   = sign_a;
-        end
-
-        // Align the mantissa of the smaller number by shifting it right
-        s1_mant_a = {larger_mant_in, 14'b0};
-        s1_mant_b = {smaller_mant_in, 14'b0} >> exp_diff;
-
-        // Set up for stage 2
-        s1_larger_exp  = larger_exp_in;
-        s1_result_sign = larger_sign;
-        s1_op_is_sub   = (sign_a != sign_b);
-
-        // Handle special cases - bypass the main logic
-        s1_special_case = 1'b0;
-        s1_special_result = `FP16_QNAN; // Default to a quiet NaN
-
-        if (is_nan_a || is_nan_b || (is_inf_a && is_inf_b && (sign_a != sign_b))) begin
-            s1_special_case = 1'b1;
-            s1_special_result = `FP16_QNAN; // Return quiet NaN for any NaN or Inf-Inf
-        end else if (is_inf_a) begin
-            s1_special_case = 1'b1;
-            s1_special_result = a;
-        end else if (is_inf_b) begin
-            s1_special_case = 1'b1;
-            s1_special_result = b;
-        end else if (is_zero_a) begin
-            s1_special_case = 1'b1;
-            s1_special_result = b;
-        end else if (is_zero_b) begin
-            s1_special_case = 1'b1;
-            s1_special_result = a;
+            larger_exp_in_d   = exp_b;
+            exp_diff_d        = {1'b0, exp_b} - {1'b0, exp_a};
+            larger_mant_in_d  = full_mant_b;
+            smaller_mant_in_d = full_mant_a;
+            larger_sign_d     = sign_b;
         end
     end
 
+    // Stage 1 Pseudo-pipeline
+    always @(*) begin
+            // Align the mantissa of the smaller number by shifting it right
+            s1_mant_a_q = ({larger_mant_in_d , {PRECISION_BITS{1'b0}}});
+            s1_mant_b_q = ({smaller_mant_in_d, {PRECISION_BITS{1'b0}}}) >> exp_diff_d; // 2^5-1 = 31 max shift, 31-14=17
+
+            // Set up for stage 2
+            s1_larger_exp_q  = larger_exp_in_d;
+            s1_result_sign_q = larger_sign_d;
+            s1_op_is_sub_q   = (sign_a != sign_b);
+
+            // Handle special cases - bypass the main logic
+            s1_special_case_q = 1'b0;
+            s1_special_result_q = QNAN; // Default to a quiet NaN
+
+            if (is_nan_a || is_nan_b || (is_inf_a && is_inf_b && (sign_a != sign_b))) begin
+                s1_special_case_q = 1'b1;
+                s1_special_result_q = QNAN; // Return quiet NaN for any NaN or Inf-Inf
+            end else if (is_inf_a) begin
+                s1_special_case_q = 1'b1;
+                s1_special_result_q = a;
+            end else if (is_inf_b) begin
+                s1_special_case_q = 1'b1;
+                s1_special_result_q = b;
+            end else if (is_zero_a) begin
+                s1_special_case_q = 1'b1;
+                s1_special_result_q = b;
+            end else if (is_zero_b) begin
+                s1_special_case_q = 1'b1;
+                s1_special_result_q = a;
+            end
+    end
+
     //----------------------------------------------------------------
-    // Stage 2: Add or Subtract (Pipelined Logic)
+    // Stage 2: Add or Subtract
     //----------------------------------------------------------------
-    reg         [ 4:0] s2_exp;
-    reg                s2_sign;
-    reg         [25:0] s2_mant; // 26 bits to include carry
-    reg                s2_special_case;
-    reg         [15:0] s2_special_result;
+    reg  [EXP_W-1:0]          s2_exp_q;
+    reg                       s2_sign_q;
+    reg  [1+ALIGN_MANT_W-1:0] s2_mant_q;  // 1 bit for carry
+    reg                       s2_special_case_q;
+    reg  [WIDTH-1:0]          s2_special_result_q;
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            s2_exp          <= 5'b0;
-            s2_sign         <= 1'b0;
-            s2_mant         <= 26'b0;
-            s2_special_case <= 1'b0;
-            s2_special_result <= `FP16_ZERO;
+            s2_exp_q            <= EXP_ALL_ZEROS;
+            s2_sign_q           <= 1'b0;
+            s2_mant_q           <= '0;
+            s2_special_case_q   <= 1'b0;
+            s2_special_result_q <= P_ZERO;
         end else begin
-            s2_exp          <= s1_larger_exp;
-            s2_special_case <= s1_special_case;
-            s2_special_result <= s1_special_result;
+            s2_exp_q            <= s1_larger_exp_q;
+            s2_special_case_q   <= s1_special_case_q;
+            s2_special_result_q <= s1_special_result_q;
 
-            if (s1_op_is_sub) begin
-                if (s1_mant_a >= s1_mant_b) begin
-                    s2_mant <= {1'b0, s1_mant_a} - {1'b0, s1_mant_b};
-                    s2_sign <= s1_result_sign;
+            if (s1_op_is_sub_q) begin
+                if (s1_mant_a_q >= s1_mant_b_q) begin
+                    s2_mant_q <= {1'b0, s1_mant_a_q} - {1'b0, s1_mant_b_q};
+                    s2_sign_q <= s1_result_sign_q;
                 end else begin
-                    s2_mant <= {1'b0, s1_mant_b} - {1'b0, s1_mant_a};
-                    s2_sign <= ~s1_result_sign;
+                    s2_mant_q <= {1'b0, s1_mant_b_q} - {1'b0, s1_mant_a_q};
+                    s2_sign_q <= ~s1_result_sign_q;
                 end
             end else begin
-                s2_mant <= {1'b0, s1_mant_a} + {1'b0, s1_mant_b};
-                s2_sign <= s1_result_sign;
+                s2_mant_q <= {1'b0, s1_mant_a_q} + {1'b0, s1_mant_b_q};
+                s2_sign_q <= s1_result_sign_q;
             end
         end
     end
 
     //----------------------------------------------------------------
-    // Stage 3: Normalize and Pack (Pipelined Logic)
+    // Stage 3: Normalize and Pack
     //----------------------------------------------------------------
-    reg         [24:0] final_mant; // 25 bits for normalization
-    reg  signed [ 5:0] final_exp;
-    integer            msb_pos;
-    integer            i;
-    reg  signed [ 5:0] shift_val;
-    reg         [ 9:0] out_mant;
-    reg         [ 4:0] out_exp;
-    reg         [15:0] result_reg;
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            result_reg <= `FP16_ZERO;
-        end else begin
-            if (s2_special_case) begin
-                result_reg <= s2_special_result;
+    reg         [ALIGN_MANT_W-1:0]   final_mant;
+    reg  signed [EXP_W:0]            final_exp;
+    integer                          msb_pos;
+    integer                          i;
+    reg  signed [EXP_W:0]            shift_val;
+    reg         [MANT_W-1:0]         out_mant;
+    reg         [EXP_W-1:0]          out_exp;
+    reg         [WIDTH-1:0]          result_reg;
+
+    // Stage 3 Combinational Logic
+    always @(*) begin
+            if (s2_special_case_q) begin
             end else begin
                 // Default normalization results
-                final_exp = { 1'b0, s2_exp};
-                final_mant = s2_mant[24:0]; // Start with mantissa, without the carry bit
+                final_exp = { 1'b0, s2_exp_q};
+                final_mant = s2_mant_q[ALIGN_MANT_W-1:0]; // Start with mantissa, without the carry bit
 
                 // Find MSB for normalization shift
                 msb_pos = 0;
-                for (i = 25; i >= 0; i = i - 1) begin
-                    if (s2_mant[i]) begin
+                // Parallel priority encoder - this loop is synthesizable.
+                for (i = ALIGN_MANT_W; i >= 0; i = i - 1) begin
+                    if (s2_mant_q[i]) begin
                         msb_pos = i;
                         i = -1; // Verilog equivalent to break
                     end
                 end
 
-                // The implicit '1' for a normalized number should be at bit 24 of the 25-bit mantissa.
+                // The implicit '1' for a normalized number should be at bit ALIGN_MANT_W-1.
                 // The denormalized implicit '0' is also at this position (for denorm to norm)
-                shift_val = 24 - msb_pos;
+                shift_val = (ALIGN_MANT_W-1) - msb_pos;
 
-                if (s2_mant == 0) begin
+                if (s2_mant_q == 0) begin
                     // Result is zero, no normalization needed
-                    out_exp = 5'b0;
-                    out_mant = 10'b0;
+                    out_exp = EXP_ALL_ZEROS;
+                    out_mant = MANT_ALL_ZEROS;
                 end else begin
                     // Apply the shift and update the exponent
                     if (shift_val > 0) begin
-                        final_mant = s2_mant << shift_val;
+                        final_mant = s2_mant_q << shift_val;
                     end else begin
-                        final_mant = s2_mant >> (-shift_val);
+                        final_mant = s2_mant_q >> (-shift_val);
                     end
-                    final_exp = s2_exp - shift_val;
+                    final_exp = s2_exp_q - shift_val;
 
-                    out_mant = final_mant[23:14];
+                    // Extract final mantissa, dropping the implicit bit at ALIGN_MANT_W-1
+                    out_mant = final_mant[ALIGN_MANT_W-2:ALIGN_MANT_W-2+1-MANT_W];
 
                     // Check for overflow/underflow on final exponent
-                    if (final_exp >= 31) begin // Overflow -> Infinity
-                        out_exp = 5'h1F;
-                        out_mant = 10'b0;
+                    if (final_exp >= EXP_ALL_ONES) begin // Overflow -> Infinity
+                        out_exp = EXP_ALL_ONES;
+                        out_mant = MANT_ALL_ZEROS;
                     end else if (final_exp <= 0) begin // Underflow -> Denormalized or Zero
                         // Note: This implementation flushes to zero on underflow,
                         // a simplified approach to avoid complex denormalization.
-                        out_exp = 5'b0;
-                        out_mant = 10'b0;
+                        out_exp = EXP_ALL_ZEROS;
+                        out_mant = MANT_ALL_ZEROS;
                     end else begin
-                        out_exp = final_exp[4:0];
+                        out_exp = final_exp[EXP_W-1:0];
                     end
                 end
+            end
 
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            result_reg <= P_ZERO;
+        end else begin
+            if (s2_special_case_q) begin
+                result_reg <= s2_special_result_q;
+            end else begin
                 // Correctly handle the sign of zero
-                if (out_exp == 0 && out_mant == 0) begin
-                    result_reg <= (is_zero_a && is_zero_b && sign_a && sign_b) ? `FP16_N_ZERO : `FP16_P_ZERO;
+                if (out_exp == EXP_ALL_ZEROS && out_mant == MANT_ALL_ZEROS) begin
+                    result_reg <= (is_zero_a && is_zero_b && sign_a && sign_b) ? N_ZERO : P_ZERO;
                 end else begin
-                    result_reg <= {s2_sign, out_exp, out_mant};
+                    result_reg <= {s2_sign_q, out_exp, out_mant};
                 end
             end
         end
