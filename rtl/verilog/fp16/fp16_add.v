@@ -13,10 +13,10 @@
 // - Handles special cases: NaN, Infinity, and Zero.
 // - Truncates the result (no rounding implemented).
 
-`include "fp16_inc.vh"
+`include "common_inc.vh"
 
 module fp16_add #(
-    parameter WIDTH = 16
+    parameter WIDTH = 16 // Only 16,32,64 supported
 ) (
     input clk,
     input rst_n,
@@ -29,23 +29,22 @@ module fp16_add #(
     `VERIF_DECLARE_PIPELINE(3)  // Verification support
 
     // Derived parameters for convenience
-    localparam EXP_W   = (WIDTH == 16) ?  5 : (WIDTH == 32) ?  8 : 11;
-    localparam MANT_W  = (WIDTH == 16) ? 10 : (WIDTH == 32) ? 23 : 52;
-    localparam EXP_BIAS= (WIDTH == 16) ? 15 : (WIDTH == 32) ?  127 : 1023;
+    localparam EXP_W          = (WIDTH == 64) ?   11 : (WIDTH == 32) ?   8 : (WIDTH == 16) ?  5 : 0; // IEEE-754
+    localparam EXP_BIAS       = (WIDTH == 64) ? 1023 : (WIDTH == 32) ? 127 : (WIDTH == 16) ? 15 : 0; // IEEE-754
+    localparam PRECISION_BITS = (WIDTH == 64) ?   52 : (WIDTH == 32) ?  23 : (WIDTH == 16) ? 14 : 0; // Select mantissa precision for accurate rounding // TODO: (when needed) Correct values for WIDTH 64 and 32
 
-    localparam PRECISION_BITS = 14; // Select mantissa precision for accurate rounding
-
-    localparam SIGN_POS     = EXP_W + MANT_W;
+    localparam MANT_W       = WIDTH - 1 - EXP_W;
+    localparam SIGN_POS     = WIDTH - 1;
     localparam EXP_POS      = MANT_W;
     localparam ALIGN_MANT_W = MANT_W + 1 + PRECISION_BITS; // For alignment shift
 
     // Constants for special values
-    localparam [EXP_W-1:0] EXP_ALL_ONES    = { EXP_W{1'b1}};
-    localparam [EXP_W-1:0] EXP_ALL_ZEROS   = { EXP_W{1'b0}};
+    localparam [ EXP_W-1:0] EXP_ALL_ONES   = { EXP_W{1'b1}};
+    localparam [ EXP_W-1:0] EXP_ALL_ZEROS  = { EXP_W{1'b0}};
     localparam [MANT_W-1:0] MANT_ALL_ZEROS = {MANT_W{1'b0}};
 
     localparam [WIDTH-1:0] QNAN = {1'b0, EXP_ALL_ONES, {1'b1, {(MANT_W-1){1'b0}}}};
-    localparam [WIDTH-1:0] P_ZERO = {WIDTH{1'b0}};
+    localparam [WIDTH-1:0] P_ZERO = {1'b0, {(WIDTH-1){1'b0}}};
     localparam [WIDTH-1:0] N_ZERO = {1'b1, {(WIDTH-1){1'b0}}};
 
 
@@ -79,21 +78,12 @@ module fp16_add #(
     //----------------------------------------------------------------
     // Stage 1: Unpack, Compare, and Align
     //----------------------------------------------------------------
+
+    // Stage 1 Combinational Logic
     reg  signed [EXP_W:0]       exp_diff_d;  // +1 bit carry
     reg                         larger_sign_d;
     reg         [1+MANT_W-1:0]  larger_mant_in_d, smaller_mant_in_d;
     reg         [EXP_W-1:0]     larger_exp_in_d;
-
-    reg         [EXP_W-1:0]     s1_larger_exp_q;
-    reg                         s1_result_sign_q;
-    reg                         s1_op_is_sub_q;
-    reg                         s1_neg_zero_q;
-    reg         [ALIGN_MANT_W-1:0] s1_mant_a_q;  // Extended mantissa for alignment
-    reg         [ALIGN_MANT_W-1:0] s1_mant_b_q;
-    reg                         s1_special_case_q;
-    reg         [WIDTH-1:0]     s1_special_result_q;
-
-    // Stage 1 Combinational Logic
     always @(*) begin
         // Magnitude comparison to determine alignment and result sign
         if (exp_a > exp_b || (exp_a == exp_b && mant_a >= mant_b)) begin
@@ -112,6 +102,14 @@ module fp16_add #(
     end
 
     // Stage 1 Pipeline
+    reg         [EXP_W-1:0]     s1_larger_exp_q;
+    reg                         s1_result_sign_q;
+    reg                         s1_op_is_sub_q;
+    reg                         s1_neg_zero_q;
+    reg         [ALIGN_MANT_W-1:0] s1_mant_a_q;  // Extended mantissa for alignment
+    reg         [ALIGN_MANT_W-1:0] s1_mant_b_q;
+    reg                         s1_special_case_q;
+    reg         [WIDTH-1:0]     s1_special_result_q;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s1_larger_exp_q     <= 1'b0;
@@ -165,7 +163,6 @@ module fp16_add #(
     reg                       s2_neg_zero_q;
     reg                       s2_special_case_q;
     reg  [WIDTH-1:0]          s2_special_result_q;
-
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s2_exp_q            <= EXP_ALL_ZEROS;
@@ -198,6 +195,8 @@ module fp16_add #(
     //----------------------------------------------------------------
     // Stage 3: Normalize and Pack
     //----------------------------------------------------------------
+
+    // Stage 3 Combinational Logic
     reg         [ALIGN_MANT_W-1:0]   final_mant;
     reg  signed [EXP_W:0]            final_exp;
     integer                          msb_pos;
@@ -205,9 +204,6 @@ module fp16_add #(
     reg  signed [EXP_W:0]            shift_val;
     reg         [MANT_W-1:0]         out_mant;
     reg         [EXP_W-1:0]          out_exp;
-    reg         [WIDTH-1:0]          result_reg;
-
-    // Stage 3 Combinational Logic
     always @(*) begin
         // Default normalization results
         final_exp = { 1'b0, s2_exp_q};
@@ -259,25 +255,27 @@ module fp16_add #(
 
     end
 
+    // Stage 3 Pipeline
+    reg         [WIDTH-1:0]          result_q;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            result_reg <= P_ZERO;
+            result_q <= P_ZERO;
         end else begin
             if (s2_special_case_q) begin
-                result_reg <= s2_special_result_q;
+                result_q <= s2_special_result_q;
             end else begin
                 // Handle the sign of zero
                 if (out_exp == EXP_ALL_ZEROS && out_mant == MANT_ALL_ZEROS) begin
                     // Per IEEE 754-2008, +0 + -0 = +0 and -0 + -0 = -0
-                    result_reg <= s2_neg_zero_q ? N_ZERO : P_ZERO;
+                    result_q <= s2_neg_zero_q ? N_ZERO : P_ZERO;
                 end else begin
-                    result_reg <= {s2_sign_q, out_exp, out_mant};
+                    result_q <= {s2_sign_q, out_exp, out_mant};
                 end
             end
         end
     end
 
     // Assign final registered output
-    assign result = result_reg;
+    assign result = result_q;
 
 endmodule
