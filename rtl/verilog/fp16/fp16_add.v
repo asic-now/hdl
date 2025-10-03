@@ -88,6 +88,7 @@ module fp16_add #(
     reg         [EXP_W-1:0]     s1_larger_exp_q;
     reg                         s1_result_sign_q;
     reg                         s1_op_is_sub_q;
+    reg                         s1_neg_zero_q;
     reg         [ALIGN_MANT_W-1:0] s1_mant_a_q;  // Extended mantissa for alignment
     reg         [ALIGN_MANT_W-1:0] s1_mant_b_q;
     reg                         s1_special_case_q;
@@ -121,6 +122,7 @@ module fp16_add #(
             s1_larger_exp_q  = larger_exp_in_d;
             s1_result_sign_q = larger_sign_d;
             s1_op_is_sub_q   = (sign_a != sign_b);
+            s1_neg_zero_q    = (is_zero_a && is_zero_b && sign_a && sign_b);
 
             // Handle special cases - bypass the main logic
             s1_special_case_q = 1'b0;
@@ -150,6 +152,7 @@ module fp16_add #(
     reg  [EXP_W-1:0]          s2_exp_q;
     reg                       s2_sign_q;
     reg  [1+ALIGN_MANT_W-1:0] s2_mant_q;  // 1 bit for carry
+    reg                       s2_neg_zero_q;
     reg                       s2_special_case_q;
     reg  [WIDTH-1:0]          s2_special_result_q;
 
@@ -158,10 +161,12 @@ module fp16_add #(
             s2_exp_q            <= EXP_ALL_ZEROS;
             s2_sign_q           <= 1'b0;
             s2_mant_q           <= '0;
+            s2_neg_zero_q       <= 1'b0;
             s2_special_case_q   <= 1'b0;
             s2_special_result_q <= P_ZERO;
         end else begin
             s2_exp_q            <= s1_larger_exp_q;
+            s2_neg_zero_q       <= s1_neg_zero_q;
             s2_special_case_q   <= s1_special_case_q;
             s2_special_result_q <= s1_special_result_q;
 
@@ -225,7 +230,7 @@ module fp16_add #(
                     end else begin
                         final_mant = s2_mant_q >> (-shift_val);
                     end
-                    final_exp = s2_exp_q - shift_val;
+                    final_exp = {1'b0, s2_exp_q} - shift_val;
 
                     // Extract final mantissa, dropping the implicit bit at ALIGN_MANT_W-1
                     out_mant = final_mant[ALIGN_MANT_W-2:ALIGN_MANT_W-2+1-MANT_W];
@@ -254,9 +259,10 @@ module fp16_add #(
             if (s2_special_case_q) begin
                 result_reg <= s2_special_result_q;
             end else begin
-                // Correctly handle the sign of zero
+                // Handle the sign of zero
                 if (out_exp == EXP_ALL_ZEROS && out_mant == MANT_ALL_ZEROS) begin
-                    result_reg <= (is_zero_a && is_zero_b && sign_a && sign_b) ? N_ZERO : P_ZERO;
+                    // Per IEEE 754-2008, +0 + -0 = +0 and -0 + -0 = -0
+                    result_reg <= s2_neg_zero_q ? N_ZERO : P_ZERO;
                 end else begin
                     result_reg <= {s2_sign_q, out_exp, out_mant};
                 end
