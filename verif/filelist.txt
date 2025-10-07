@@ -9,10 +9,13 @@
 # Beginning of the manifest file
 
 # List all RTL Design Files here.
+../rtl/verilog/fp/fp_add.v
+
 ../rtl/verilog/fp16/fp16_add.v
 ../rtl/verilog/fp16/fp16_classify.v
 
 # Verification Lib
+../verif/lib/fp_dpi_pkg.sv
 ../verif/lib/fp_lib_pkg.sv
 
 # Testbenches
@@ -24,10 +27,15 @@
 #      except files with `module`, like Testbench Top.
 #   3. List module (Testbench Top) file(s) here.
 
+# - tests/fp_add
+../verif/tests/fp_add/fp_add_if.sv
+../verif/tests/fp_add/fp_add_pkg.sv
+../verif/tests/fp_add/fp_add_tb_top.sv
+
 # - tests/fp16_add
-../verif/tests/fp16_add/fp16_add_if.sv
-../verif/tests/fp16_add/fp16_add_pkg.sv
-../verif/tests/fp16_add/fp16_add_tb_top.sv
+#../verif/tests/fp16_add/fp16_add_if.sv
+#../verif/tests/fp16_add/fp16_add_pkg.sv
+#../verif/tests/fp16_add/fp16_add_tb_top.sv
 
 # - tests/fp16_classify
 ../verif/tests/fp16_classify/fp16_classify_if.sv

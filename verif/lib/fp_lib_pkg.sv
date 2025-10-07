@@ -6,6 +6,7 @@ package fp_lib_pkg;
 
     // Include reusable library components
     `include "fp_utils.sv"
+    `include "fp_pkg_utils.sv"
     `include "common_inc.svh"
     `include "base_scoreboard.sv"
     `include "base_test.sv"
@@ -14,6 +15,8 @@ package fp_lib_pkg;
     `include "fp_driver_base.sv"
     `include "fp_monitor_base.sv"
     `include "fp_model_base.sv"
+    `include "fp_transaction2.sv"
     `include "fp16_transaction2.sv"
+    `include "fp_sequence2_random.sv"
     `include "fp16_sequence2_random.sv"
 endpackage

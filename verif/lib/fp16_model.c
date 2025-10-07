@@ -1,16 +1,16 @@
 // verif/lib/fp16_model.c
-#include <stdint.h>
-#include <math.h>
-
-// Standard DPI-C inclusion for simulator integration
-#include "svdpi.h"
-
 //
 // This C code provides a "golden" reference model for 16-bit floating-point
 // operations. It works by converting the 16-bit half-precision format to the
 // standard 32-bit C 'float' type, performing the operation using the CPU's
 // trusted IEEE 754 hardware, and converting the result back.
 //
+
+#include <stdint.h>
+#include <math.h>
+
+// Standard DPI-C inclusion for simulator integration
+#include "svdpi.h"
 
 // Helper union for type-punning between float and its bit representation
 typedef union {

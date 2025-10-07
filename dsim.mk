@@ -3,7 +3,8 @@
 # This Makefile is designed to be reusable for different DUTs by
 # overriding variables on the command line.
 #
-# Default test: fp16_add
+# Default DUT: fp_add
+# Default Test: combined_test
 #
 # To run a different test (e.g., fp32_mul):
 #   make run DUT=fp32_mul TEST=random_test
@@ -12,18 +13,25 @@
 # - Windows 11 (64-bit): DSim Studio terminal
 
 SHELL := /bin/bash
+MAKEFLAGS += --no-builtin-rules
 
 #==============================================================================
 # Configurable Variables (can be overridden from the command line)
 #==============================================================================
 
-DUTS  ?= fp16_add fp16_classify
+# Default DUT is the parameterized adder, configured for fp16
+DUT       ?= fp_add
+PRECISION ?= fp16
+
+PRECISIONS ?= fp16 fp32 fp64
+
+DUTS  ?= fp_add fp16_classify
 
 TEST  ?= combined_test
 TESTS ?= random_test special_cases_test combined_test
 
 SRC_FILES_LIST   ?= verif/filelist.txt
-C_MODEL_FILES    ?= verif/lib/fp16_model.c
+C_MODEL_FILES    ?= verif/lib/fp16_model.c verif/lib/fp32_model.c verif/lib/fp64_model.c verif/lib/fp_dpi_utils.c
 
 #==============================================================================
 # Static Variables (derived from the above)
@@ -41,6 +49,15 @@ RTL_LIB_DIR      = rtl/verilog/lib
 VERIF_LIB_DIR    = verif/lib
 # TEST_DIR         = verif/tests/$(DUT)
 
+# Set parameters based on precision
+ifeq ($(PRECISION),fp16)
+	WIDTH=16
+else ifeq ($(PRECISION),fp32)
+	WIDTH=32
+else ifeq ($(PRECISION),fp64)
+	WIDTH=64
+endif
+
 # Source Files
 # DUT_FILE         = $(RTL_DIR)/$(DUT).v
 # TB_PKG_FILE      = $(TEST_DIR)/$(DUT)_pkg.sv
@@ -50,6 +67,8 @@ VERIF_LIB_DIR    = verif/lib
 COMPILER_FLAGS = \
 	-lib 'work' \
 	-uvm 1.2 \
+	-g WIDTH=$(WIDTH) \
+	+incdir+rtl/verilog/fp \
 	+incdir+$(RTL_LIB_DIR) \
 	+incdir+$(VERIF_LIB_DIR) \
 	+incdir+verif/tests/fp16_add \
@@ -64,7 +83,7 @@ SIMULATOR_FLAGS = \
 	-suppress IneffectiveDynamicCast:UninstVif
 
 # Runtime Plusargs
-RUN_PLUSARGS = +UVM_TESTNAME=$(DUT)_$(TEST)
+RUN_PLUSARGS = +UVM_TESTNAME=$(PRECISION)_add_$(TEST)
 
 #==============================================================================
 # Targets
@@ -73,7 +92,7 @@ RUN_PLUSARGS = +UVM_TESTNAME=$(DUT)_$(TEST)
 .PHONY: all compile run clean
 
 all:
-	@$(foreach dut,$(DUTS),$(MAKE) -f $(firstword $(MAKEFILE_LIST)) run DUT=$(dut) TEST=$(TEST);)
+	@$(foreach p,$(PRECISIONS),$(MAKE) -f $(firstword $(MAKEFILE_LIST)) run PRECISION=$(p) TEST=$(TEST);)
 
 compile:
 	@echo "--- Compiling DUT: $(DUT) ---"

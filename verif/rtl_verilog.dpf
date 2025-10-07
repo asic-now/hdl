@@ -59,6 +59,63 @@ simulations:
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
+
+  - name: fp_add_random 16
+    options: |-
+      -top work.fp_add_tb_top
+      -uvm 1.2
+      +UVM_TESTNAME=fp16_add_random_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_add_special 16
+    options: |-
+      -top work.fp_add_tb_top
+      -uvm 1.2
+      +UVM_TESTNAME=fp16_add_special_cases_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_add_all 16
+    options: |-
+      -top work.fp_add_tb_top
+      -uvm 1.2
+      +UVM_TESTNAME=fp16_add_combined_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+
+  - name: fp_add_random 32
+    options: |-
+      -top work.fp_add_tb_top
+      -uvm 1.2
+      +UVM_TESTNAME=fp32_add_random_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_add_special 32
+    options: |-
+      -top work.fp_add_tb_top
+      -uvm 1.2
+      +UVM_TESTNAME=fp32_add_special_cases_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_add_all 32
+    options: |-
+      -top work.fp_add_tb_top
+      -uvm 1.2
+      +UVM_TESTNAME=fp32_add_combined_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+
 source_files:
   - language: verilog
     path: filelist.txt
@@ -67,6 +124,7 @@ source_files:
       -uvm 1.2
       +incdir+../rtl/verilog/lib
       +incdir+../verif/lib
+      +incdir+../verif/tests/fp_add
       +incdir+../verif/tests/fp16_add
       +incdir+../verif/tests/fp16_classify
     file_list: relative-to-file

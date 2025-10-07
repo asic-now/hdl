@@ -68,7 +68,7 @@ class fp16_add_special_cases_sequence extends uvm_sequence #(fp16_transaction2);
         // Case 16: Normal + +0 -> Normal
         `uvm_do_special_case("req_zero_2", req, { req.inputs[0] == 16'hC200 /* -4.0 */; req.inputs[1] == `FP16_P_ZERO;})
 
-        `uvm_info("SEQ", "Finished special cases sequence", UVM_LOW)
+        `uvm_info(get_type_name(), "Finished special cases sequence", UVM_LOW)
 
     endtask
 

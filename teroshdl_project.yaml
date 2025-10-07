@@ -115,6 +115,120 @@ files:
     logical_name: verif/lib
     is_manual: true
     source_type: none
+
+  - name: verif\tests\fp_add\fp_add_agent.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+  - name: verif\tests\fp_add\fp_add_base_test.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+  - name: verif\tests\fp_add\fp_add_combined_sequence.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+  - name: verif\tests\fp_add\fp_add_combined_test.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+  - name: verif\tests\fp_add\fp_add_driver.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+  - name: verif\tests\fp_add\fp_add_env.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+  - name: verif\tests\fp_add\fp_add_if.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+  - name: verif\tests\fp_add\fp_add_model.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+  - name: verif\tests\fp_add\fp_add_monitor.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+  - name: verif\tests\fp_add\fp_add_pkg.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+  - name: verif\tests\fp_add\fp_add_random_test.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+  - name: verif\tests\fp_add\fp_add_special_cases_sequence.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+  - name: verif\tests\fp_add\fp_add_special_cases_test.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+  - name: verif\tests\fp_add\fp_add_tb_top.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/fp_add
+    is_manual: true
+    source_type: none
+
   - name: verif\tests\fp16_add\fp16_add_agent.sv
     file_type: systemVerilogSource
     file_version: !<tag:yaml.org,2002:js/undefined> ''
@@ -227,6 +341,7 @@ files:
     logical_name: verif/tests/fp16_add
     is_manual: true
     source_type: none
+
   - name: verif\tests\fp16_classify\fp16_classify_agent.sv
     file_type: systemVerilogSource
     file_version: !<tag:yaml.org,2002:js/undefined> ''
@@ -353,6 +468,14 @@ files:
     is_include_file: false
     include_path: ''
     logical_name: verif/tests/fp16_classify
+    is_manual: true
+    source_type: none
+  - name: rtl\verilog\fp\fp_add.v
+    file_type: verilogSource
+    file_version: '2000'
+    is_include_file: false
+    include_path: ''
+    logical_name: rtl/verilog/fp
     is_manual: true
     source_type: none
   - name: rtl\verilog\fp32\fp32_add.v
@@ -844,6 +967,7 @@ configuration:
       verilog_arguments: >-
         -i rtl/verilog/lib
         -i verif/lib
+        -i verif/tests/fp_add
         -i verif/tests/fp16_add
         -i verif/tests/fp16_classify
     vsg:
