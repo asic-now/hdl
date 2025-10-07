@@ -31,7 +31,7 @@ module fp_add #(
     // Derived parameters for convenience
     localparam EXP_W          = (WIDTH == 64) ?   11 : (WIDTH == 32) ?   8 : (WIDTH == 16) ?  5 : 0; // IEEE-754
     localparam EXP_BIAS       = (WIDTH == 64) ? 1023 : (WIDTH == 32) ? 127 : (WIDTH == 16) ? 15 : 0; // IEEE-754
-    localparam PRECISION_BITS = (WIDTH == 64) ?   52 : (WIDTH == 32) ?  23 : (WIDTH == 16) ? 14 : 0; // Select mantissa precision for accurate rounding // TODO: (when needed) Correct values for WIDTH 64 and 32
+    localparam PRECISION_BITS = (WIDTH == 64) ?   52 : (WIDTH == 32) ? 127 : (WIDTH == 16) ? 14 : 0; // Select mantissa precision for accurate rounding // TODO: (when needed) Correct values for WIDTH 64 and 32
 
     localparam MANT_W       = WIDTH - 1 - EXP_W;
     localparam SIGN_POS     = WIDTH - 1;

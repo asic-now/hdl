@@ -16,7 +16,8 @@ package fp_lib_pkg;
     `include "fp_monitor_base.sv"
     `include "fp_model_base.sv"
     `include "fp_transaction2.sv"
-    `include "fp16_transaction2.sv"
     `include "fp_sequence2_random.sv"
+
+    `include "fp16_transaction2.sv"
     `include "fp16_sequence2_random.sv"
 endpackage

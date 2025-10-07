@@ -12,9 +12,9 @@ import uvm_pkg::*;
 // This allows for type-safe, width-generic operations.
 class fp_utils_t #(
     int WIDTH = 16,
-    int EXP_W  = (WIDTH == 16) ?  5 : (WIDTH == 32) ?  8 : 11,
-    int MANT_W = (WIDTH == 16) ? 10 : (WIDTH == 32) ? 23 : 52
+    int EXP_W  = (WIDTH == 64) ? 11 : (WIDTH == 32) ?  8 : (WIDTH == 16) ?  5 : 0,
 );
+    localparam MANT_W       = WIDTH - 1 - EXP_W;
 
     // Converts a floating point number to a single, standard representation
     // for its class (e.g., all qNaNs become one pattern).

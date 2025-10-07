@@ -17,7 +17,6 @@
 //
 `define uvm_do_special_case(NAME, ITEM, CONSTRAINTS) \
   begin \
-    // ITEM = fp16_transaction2::type_id::create(NAME); \
     ITEM = REQ::type_id::create(NAME); \
     // Disable the constraints before setting directed values \
     ITEM.category_dist_c.constraint_mode(0); \
