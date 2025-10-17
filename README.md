@@ -15,6 +15,7 @@ It is WIP (Work In Progress), and not everything has been verified.
 The repository is organized into two main directories: rtl/ and verif/.
 
 * rtl/verilog/: Contains all synthesizable Verilog source code.  
+  * fp/: Parameterized modules for 16/32/64-bitfloating-point numbers.  
   * fp16/: Modules for 16-bit (half-precision) floating-point numbers.  
   * fp32/: Modules for 32-bit (single-precision) floating-point numbers.  
   * fp64/: Modules for 64-bit (double-precision) floating-point numbers.  
@@ -103,7 +104,7 @@ These are not strict requirements.
 
 Modules should be made as generic as possible by using `parameter` for configurable values like data widths, vector sizes, or counter limits.
 
-#### **Example:**
+#### **SystemVerilog Example:**
 
 ```systemverilog
 module my_module #(
@@ -120,13 +121,29 @@ module my_module #(
 endmodule
 ```
 
+#### **Verilog Example:**
+
+```verilog
+module my_module #(
+    parameter DATA_WIDTH = 32
+) (
+    input  wire                  clk,
+    input  wire                  rst_n,
+    input  wire [DATA_WIDTH-1:0] data_i,
+    output wire [DATA_WIDTH-1:0] data_o
+);
+
+// ... module logic ...
+
+endmodule
+```
+
 ## Implementation Specifics
 
 Verification in testbenches is simplified:
 
 * Sign of NaN is not preserved.
 * sNaN and qNaN, -NaN and +NaN differences are ignored.
-* Results precision fitting is done by truncation, not rounding.
 * -0 may be used instead of +0.
 
 ## Tooling
@@ -137,20 +154,20 @@ For simulator setup and other tools see [TOOLING.md](TOOLING.md)
 
 The table below shows the implementation and verification status of the floating-point modules.
 
-| Operation     | fp16          | fp32       | fp64       |
-|---------------|---------------|------------|------------|
-| `add`         | [x]  Verified | RTL only   | RTL only   |
-| `classify`    | [x]  Verified | RTL only   | RTL only   |
-| `cmp`         | RTL only      | RTL only   | RTL only   |
-| `div`         | RTL only      | RTL only   | RTL only   |
-| `invsqrt`     | RTL only      | RTL only   | RTL only   |
-| `mul`         | RTL only      | RTL only   | RTL only   |
-| `mul_add`     | RTL only      | RTL only   | RTL only   |
-| `mul_sub`     | RTL only      | RTL only   | RTL only   |
-| `recip`       | RTL only      | RTL only   | RTL only   |
-| `sqrt`        | RTL only      | RTL only   | RTL only   |
-| `to_int`      | RTL only      | RTL only   | RTL only   |
-| `from_int`    | RTL only      | RTL only   | RTL only   |
-| `to_fp16`     | -             | RTL only   | RTL only   |
-| `to_fp32`     | RTL only      | -          | RTL only   |
-| `to_fp64`     | -             | RTL only   | -          |
+| Operation     | fp16          | fp32          | fp64          |
+|---------------|---------------|---------------|---------------|
+| `add`         | [x]  Verified | [x]  Verified | [x]  Verified |
+| `classify`    | [x]  Verified | RTL only      | RTL only      |
+| `cmp`         | RTL only      | RTL only      | RTL only      |
+| `div`         | RTL only      | RTL only      | RTL only      |
+| `invsqrt`     | RTL only      | RTL only      | RTL only      |
+| `mul`         | RTL only      | RTL only      | RTL only      |
+| `mul_add`     | RTL only      | RTL only      | RTL only      |
+| `mul_sub`     | RTL only      | RTL only      | RTL only      |
+| `recip`       | RTL only      | RTL only      | RTL only      |
+| `sqrt`        | RTL only      | RTL only      | RTL only      |
+| `to_int`      | RTL only      | RTL only      | RTL only      |
+| `from_int`    | RTL only      | RTL only      | RTL only      |
+| `to_fp16`     | -             | RTL only      | RTL only      |
+| `to_fp32`     | RTL only      | -             | RTL only      |
+| `to_fp64`     | -             | RTL only      | -             |
