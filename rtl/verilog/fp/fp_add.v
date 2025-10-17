@@ -11,7 +11,7 @@
 // - 3-stage pipelined architecture for improved clock frequency.
 // - Handles normalized and denormalized numbers.
 // - Handles special cases: NaN, Infinity, and Zero.
-// - Truncates the result (no rounding implemented).
+// - Implements GRS rounding for improved accuracy.
 
 `include "common_inc.vh"
 
@@ -23,10 +23,11 @@ module fp_add #(
 
     input  [WIDTH-1:0] a,
     input  [WIDTH-1:0] b,
+    // input  [2:0]       rounding_mode, // See grs_rounder.v for modes // TODO: (when needed) Implement dynamic port (caller can tie it to a constant if desired)
 
     output [WIDTH-1:0] result
 );
-    `VERIF_DECLARE_PIPELINE(3)  // Verification support
+    `VERIF_DECLARE_PIPELINE(4)  // Verification support
 
     // Derived parameters for convenience
     localparam EXP_W          = (WIDTH == 64) ?   11 : (WIDTH == 32) ?   8 : (WIDTH == 16) ?  5 : 0; // IEEE-754
@@ -47,6 +48,7 @@ module fp_add #(
     localparam [WIDTH-1:0] P_ZERO = {1'b0, {(WIDTH-1){1'b0}}};
     localparam [WIDTH-1:0] N_ZERO = {1'b1, {(WIDTH-1){1'b0}}};
 
+    localparam [2:0]       rounding_mode = 3'b000;  // = RNE (see grs_rounder.v for modes)
 
     //----------------------------------------------------------------
     // Input Unpacking
@@ -193,7 +195,7 @@ module fp_add #(
     end
 
     //----------------------------------------------------------------
-    // Stage 3: Normalize and Pack
+    // Stage 3: Normalize
     //----------------------------------------------------------------
 
     // Stage 3 Combinational Logic
@@ -202,8 +204,6 @@ module fp_add #(
     integer                          msb_pos;
     integer                          i;
     reg  signed [EXP_W:0]            shift_val;
-    reg         [MANT_W-1:0]         out_mant;
-    reg         [EXP_W-1:0]          out_exp;
     always @(*) begin
         // Default normalization results
         final_exp = { 1'b0, s2_exp_q};
@@ -222,12 +222,7 @@ module fp_add #(
         // The implicit '1' for a normalized number should be at bit ALIGN_MANT_W-1.
         // The denormalized implicit '0' is also at this position (for denorm to norm)
         shift_val = (ALIGN_MANT_W-1) - msb_pos;
-
-        if (s2_mant_q == 0) begin
-            // Result is zero, no normalization needed
-            out_exp = EXP_ALL_ZEROS;
-            out_mant = MANT_ALL_ZEROS;
-        end else begin
+        if (s2_mant_q != 0) begin
             // Apply the shift and update the exponent
             if (shift_val > 0) begin
                 final_mant = s2_mant_q << shift_val;
@@ -235,41 +230,85 @@ module fp_add #(
                 final_mant = s2_mant_q >> (-shift_val);
             end
             final_exp = {1'b0, s2_exp_q} - shift_val;
-
-            // Extract final mantissa, dropping the implicit bit at ALIGN_MANT_W-1
-            out_mant = final_mant[ALIGN_MANT_W-2:ALIGN_MANT_W-2+1-MANT_W];
-
-            // Check for overflow/underflow on final exponent
-            if (final_exp >= EXP_ALL_ONES) begin // Overflow -> Infinity
-                out_exp = EXP_ALL_ONES;
-                out_mant = MANT_ALL_ZEROS;
-            end else if (final_exp <= 0) begin // Underflow -> Denormalized or Zero
-                // Note: This implementation flushes to zero on underflow,
-                // a simplified approach to avoid complex denormalization.
-                out_exp = EXP_ALL_ZEROS;
-                out_mant = MANT_ALL_ZEROS;
-            end else begin
-                out_exp = final_exp[EXP_W-1:0];
-            end
         end
 
     end
 
     // Stage 3 Pipeline
+    reg                       s3_special_case_q;
+    reg  [WIDTH-1:0]          s3_special_result_q;
+    reg                       s3_sign_q;
+    reg         [ALIGN_MANT_W-1:0]   s3_final_mant;
+    reg  signed [EXP_W:0]            s3_final_exp;
+    reg  [1+ALIGN_MANT_W-1:0] s3_mant_q;  // 1 bit for carry
+    reg                       s3_neg_zero_q;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            s3_special_case_q <= 0;
+            s3_special_result_q <= 0;
+            s3_sign_q <= 0;
+            s3_final_mant <= 0;
+            s3_final_exp <= 0;
+            s3_mant_q <= 0;
+        end else begin
+            s3_special_case_q <= s2_special_case_q;
+            s3_special_result_q <= s2_special_result_q;
+            s3_sign_q <= s2_sign_q;
+            s3_final_mant <= final_mant;
+            s3_final_exp <= final_exp;
+            s3_mant_q <= s2_mant_q;
+            s3_neg_zero_q <= s2_neg_zero_q;
+        end
+    end
+
+    //----------------------------------------------------------------
+    // Stage 4: Round and Pack
+    //----------------------------------------------------------------
+
+    // Stage 4 Combinational Logic
+    reg         [MANT_W-1:0]         out_mant;
+    reg         [EXP_W-1:0]          out_exp;
+    always @(*) begin
+        if (s3_mant_q == 0) begin
+            // Result is zero, no normalization needed
+            out_exp = EXP_ALL_ZEROS;
+            out_mant = MANT_ALL_ZEROS;
+        end else begin
+
+            // Extract final mantissa, dropping the implicit bit at ALIGN_MANT_W-1
+            out_mant = s3_final_mant[ALIGN_MANT_W-2:ALIGN_MANT_W-2+1-MANT_W];
+
+            // Check for overflow/underflow on final exponent
+            if (s3_final_exp >= EXP_ALL_ONES) begin // Overflow -> Infinity
+                out_exp = EXP_ALL_ONES;
+                out_mant = MANT_ALL_ZEROS;
+            end else if (s3_final_exp <= 0) begin // Underflow -> Denormalized or Zero
+                // Note: This implementation flushes to zero on underflow,
+                // a simplified approach to avoid complex denormalization.
+                out_exp = EXP_ALL_ZEROS;
+                out_mant = MANT_ALL_ZEROS;
+            end else begin
+                out_exp = s3_final_exp[EXP_W-1:0];
+            end
+        end
+    end
+
+    // Stage 4 Pipeline
     reg         [WIDTH-1:0]          result_q;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             result_q <= P_ZERO;
         end else begin
-            if (s2_special_case_q) begin
-                result_q <= s2_special_result_q;
+            if (s3_special_case_q) begin
+                result_q <= s3_special_result_q;
             end else begin
                 // Handle the sign of zero
                 if (out_exp == EXP_ALL_ZEROS && out_mant == MANT_ALL_ZEROS) begin
                     // Per IEEE 754-2008, +0 + -0 = +0 and -0 + -0 = -0
-                    result_q <= s2_neg_zero_q ? N_ZERO : P_ZERO;
+                    result_q <= s3_neg_zero_q ? N_ZERO : P_ZERO;
                 end else begin
-                    result_q <= {s2_sign_q, out_exp, out_mant};
+                    result_q <= {s3_sign_q, out_exp, out_mant};
                 end
             end
         end
