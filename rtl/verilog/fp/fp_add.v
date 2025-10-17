@@ -14,6 +14,7 @@
 // - Implements GRS rounding for improved accuracy.
 
 `include "common_inc.vh"
+`include "grs_round.vh" // Defines Rounding Modes
 
 module fp_add #(
     parameter WIDTH  = 16
@@ -23,16 +24,17 @@ module fp_add #(
 
     input  [WIDTH-1:0] a,
     input  [WIDTH-1:0] b,
-    // input  [2:0]       rounding_mode, // See grs_rounder.v for modes // TODO: (when needed) Implement dynamic port (caller can tie it to a constant if desired)
+    // input  [2:0]       round_mode, // See grs_rounder.v for modes // TODO: (when needed) Implement dynamic port (caller can tie it to a constant if desired)
 
     output [WIDTH-1:0] result
 );
     `VERIF_DECLARE_PIPELINE(4)  // Verification support
 
     // Derived parameters for convenience
-    localparam EXP_W          = (WIDTH == 64) ?   11 : (WIDTH == 32) ?   8 : (WIDTH == 16) ?  5 : 0; // IEEE-754
-    localparam EXP_BIAS       = (WIDTH == 64) ? 1023 : (WIDTH == 32) ? 127 : (WIDTH == 16) ? 15 : 0; // IEEE-754
-    localparam PRECISION_BITS = (WIDTH == 64) ?   52 : (WIDTH == 32) ? 127 : (WIDTH == 16) ? 14 : 0; // Select mantissa precision for accurate rounding // TODO: (when needed) Correct values for WIDTH 64 and 32
+    localparam EXP_W            = (WIDTH == 64) ?   11 : (WIDTH == 32) ?    8 : (WIDTH == 16) ?    5 : 0; // IEEE-754
+    localparam EXP_BIAS         = (WIDTH == 64) ? 1023 : (WIDTH == 32) ?  127 : (WIDTH == 16) ?   15 : 0; // IEEE-754
+    localparam PRECISION_BITS   = (WIDTH == 64) ?    5 : (WIDTH == 32) ?    5 : (WIDTH == 16) ?   14 : 0; // Select mantissa precision for accurate rounding // TODO: (when needed) Correct values for WIDTH 64 and 32
+    localparam [2:0] round_mode = (WIDTH == 64) ? `RNE : (WIDTH == 32) ? `RNE : (WIDTH == 16) ? `RTZ : `RNE;
 
     localparam MANT_W       = WIDTH - 1 - EXP_W;
     localparam SIGN_POS     = WIDTH - 1;
@@ -47,8 +49,6 @@ module fp_add #(
     localparam [WIDTH-1:0] QNAN = {1'b0, EXP_ALL_ONES, {1'b1, {(MANT_W-1){1'b0}}}};
     localparam [WIDTH-1:0] P_ZERO = {1'b0, {(WIDTH-1){1'b0}}};
     localparam [WIDTH-1:0] N_ZERO = {1'b1, {(WIDTH-1){1'b0}}};
-
-    localparam [2:0]       rounding_mode = 3'b000;  // = RNE (see grs_rounder.v for modes)
 
     //----------------------------------------------------------------
     // Input Unpacking
@@ -240,7 +240,7 @@ module fp_add #(
     reg                       s3_sign_q;
     reg         [ALIGN_MANT_W-1:0]   s3_final_mant;
     reg  signed [EXP_W:0]            s3_final_exp;
-    reg  [1+ALIGN_MANT_W-1:0] s3_mant_q;  // 1 bit for carry
+    reg  [1+ALIGN_MANT_W-1:0] s3_mant_q;  // 1 bit for carry // TODO: (now) We don't need to pipeline all bits - can pipeline only compare to zero.
     reg                       s3_neg_zero_q;
 
     always @(posedge clk or negedge rst_n) begin
@@ -266,30 +266,46 @@ module fp_add #(
     // Stage 4: Round and Pack
     //----------------------------------------------------------------
 
-    // Stage 4 Combinational Logic
+    // Combinational logic for rounding and packing
+    wire        [MANT_W:0]           rounded_mant_w_implicit;
+    wire                             rounder_overflow;
+    grs_rounder #(
+        .INPUT_WIDTH(ALIGN_MANT_W),
+        .OUTPUT_WIDTH(MANT_W + 1) // Keep implicit bit for overflow check
+    ) u_rounder (
+        .value_in(s3_final_mant),
+        .sign_in(s3_sign_q),
+        .mode(round_mode),
+        .value_out(rounded_mant_w_implicit),
+        .overflow_out(rounder_overflow)
+    );
+
     reg         [MANT_W-1:0]         out_mant;
     reg         [EXP_W-1:0]          out_exp;
+    reg signed  [EXP_W:0]            final_exp_rounded;
     always @(*) begin
-        if (s3_mant_q == 0) begin
+        if (s3_mant_q == 0) begin // Result from adder was zero
             // Result is zero, no normalization needed
             out_exp = EXP_ALL_ZEROS;
             out_mant = MANT_ALL_ZEROS;
         end else begin
+            // Handle exponent adjustment from rounding overflow
+            final_exp_rounded = s3_final_exp + rounder_overflow;
 
-            // Extract final mantissa, dropping the implicit bit at ALIGN_MANT_W-1
-            out_mant = s3_final_mant[ALIGN_MANT_W-2:ALIGN_MANT_W-2+1-MANT_W];
+            // The final mantissa is the output of the rounder, dropping the implicit bit
+            out_mant = rounded_mant_w_implicit[MANT_W-1:0];
 
             // Check for overflow/underflow on final exponent
-            if (s3_final_exp >= EXP_ALL_ONES) begin // Overflow -> Infinity
+            if (final_exp_rounded >= EXP_ALL_ONES) begin // Overflow -> Infinity
                 out_exp = EXP_ALL_ONES;
                 out_mant = MANT_ALL_ZEROS;
-            end else if (s3_final_exp <= 0) begin // Underflow -> Denormalized or Zero
+            end else if (final_exp_rounded <= 0) begin // Underflow -> Denormalized or Zero
                 // Note: This implementation flushes to zero on underflow,
                 // a simplified approach to avoid complex denormalization.
                 out_exp = EXP_ALL_ZEROS;
                 out_mant = MANT_ALL_ZEROS;
             end else begin
-                out_exp = s3_final_exp[EXP_W-1:0];
+                out_exp = final_exp_rounded[EXP_W-1:0];
             end
         end
     end
