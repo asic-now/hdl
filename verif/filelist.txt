@@ -9,6 +9,7 @@
 # Beginning of the manifest file
 
 # RTL Lib
+../rtl/verilog/lib/grs_round.v
 ../rtl/verilog/lib/grs_rounder.v
 
 # List all RTL Design Files here.
@@ -44,3 +45,7 @@
 ../verif/tests/fp16_classify/fp16_classify_if.sv
 ../verif/tests/fp16_classify/fp16_classify_pkg.sv
 ../verif/tests/fp16_classify/fp16_classify_tb_top.sv
+
+# - tests/lib
+../verif/tests/lib/grs_round_tb.v
+../verif/tests/lib/grs_rounder_tb.v

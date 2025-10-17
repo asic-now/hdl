@@ -5,6 +5,18 @@ version: '0.2'
 work_dir: .
 design_root_dir: ..
 simulations:
+  - name: grs_round
+    options: |-
+      -top work.grs_round_tb
+      -uvm 1.2
+      -c-opts "-shared"
+      -cc-verbose
+  - name: grs_rounder
+    options: |-
+      -top work.grs_rounder_tb
+      -uvm 1.2
+      -c-opts "-shared"
+      -cc-verbose
   - name: fp16_classify_random
     options: |-
       -top work.fp16_classify_tb_top
