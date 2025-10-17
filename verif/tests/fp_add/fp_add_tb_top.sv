@@ -39,10 +39,15 @@ module fp_add_tb_top;
         rst_n = 1;
     end
 
+    // Define each test component that this testbench can be ran with (using +UVM_TESTNAME=...)
+    typedef fp_add_special_cases_test #(WIDTH) fp_add_special_cases_test_t;
+    typedef fp_add_random_test        #(WIDTH) fp_add_random_test_t;
+    typedef fp_add_combined_test      #(WIDTH) fp_add_combined_test_t;
+
     // Main test execution block
     initial begin
         // Set the interface in the UVM configuration database for the tests to use
-        uvm_config_db#(virtual fp_add_if#(.WIDTH(WIDTH)))::set(null, "uvm_test_top.*", "dut_vif", dut_if);
+        uvm_config_db#(virtual fp_add_if#(WIDTH))::set(null, "uvm_test_top.*", "dut_vif", dut_if);
         // uvm_config_db#(virtual fp_add_if#(.WIDTH(WIDTH)))::set(null, "uvm_test_top.env.agent", "dut_vif", dut_if);
 
         // Run the test specified by +UVM_TESTNAME on the command line

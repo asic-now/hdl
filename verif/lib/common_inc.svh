@@ -20,4 +20,24 @@
         uvm_config_db#(int)::set(null, "*", "pipeline_latency", pipeline_latency); \
     end
 
+
+// Macro replacing `uvm_component_param_utils() for parameterized test components.
+// See https://dvcon-proceedings.org/wp-content/uploads/parameters-uvm-coverage-emulation-take-two-and-call-me-in-the-morning.pdf
+// Usage:
+// 1. Use '`my_uvm_component_param_utils(<component> #(<params>), "<component_name>")' in place of '`uvm_component_param_utils()'.
+// 2. Add 'typedef <component> #(<params>) <component>_t;' to the testbench top (it declares types so the UVM registration happens).
+// 3. Use +UVM_TESTNAME="<component_name>" in command line to select the test.
+`define my_uvm_component_param_utils(T, S) \
+     typedef uvm_component_registry #(T, S) type_id; \
+     static function type_id get_type(); \
+         return type_id::get(); \
+     endfunction \
+     virtual function uvm_object_wrapper get_object_type(); \
+         return type_id::get(); \
+     endfunction
+    // const static string type_name = $sformatf("fp_add_combined_test  #(%1d)", WIDTH);
+    // virtual function string get_type_name();
+    //     return type_name;
+    // endfunction
+
 `endif // COMMON_INC_SVH

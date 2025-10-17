@@ -203,3 +203,74 @@ See [Altair DSim](#altair-dsim) section.
    5. Under "Tools," set the default synthesis/simulation tool to Vivado.
 7. Use the "Verify Setup" command in the TerosHDL sidebar to check configuration and tool detection. Review Output > TerosHDL: Global log and correct any missing tools.  
 Note: "Verify Setup" can be tricky to troubleshoot - make sure project setup does not inadvertently override global Vivado path setting (see [vscode-terosHDL#778](https://github.com/TerosTechnology/vscode-terosHDL/issues/778)).
+
+## UVM
+
+### Parameterized Tests
+
+Parameterization can remove a lot of redundant code.
+
+In UVM it is not trivial to run a parameterized test due to UVM registry quirks.
+
+#### Method 1
+
+Create pseudo-classes in test package file *_pkg.sv, and then call simulator with `+UVM_TESTNAME=<pseudo-class>` on command line:
+
+```verilog
+  package ...
+
+    ...
+
+    // Macro to create wrapper classes for different precisions
+    `define CREATE_FP_TEST_WRAPPER(width_val, base_class, wrapper_name) \
+        class wrapper_name extends base_class#(.WIDTH(width_val)); \
+            `uvm_component_utils(wrapper_name) \
+            function new(string name=`"wrapper_name`", uvm_component parent=null); \
+                super.new(name, parent); \
+            endfunction \
+        endclass
+
+    `CREATE_FP_TEST_WRAPPER(16, fp_add_random_test,        fp16_add_random_test        )
+    `CREATE_FP_TEST_WRAPPER(16, fp_add_special_cases_test, fp16_add_special_cases_test )
+    `CREATE_FP_TEST_WRAPPER(16, fp_add_combined_test,      fp16_add_combined_test      )
+    `CREATE_FP_TEST_WRAPPER(32, fp_add_random_test,        fp32_add_random_test        )
+    `CREATE_FP_TEST_WRAPPER(32, fp_add_special_cases_test, fp32_add_special_cases_test )
+    `CREATE_FP_TEST_WRAPPER(32, fp_add_combined_test,      fp32_add_combined_test      )
+    `CREATE_FP_TEST_WRAPPER(64, fp_add_random_test,        fp64_add_random_test        )
+    `CREATE_FP_TEST_WRAPPER(64, fp_add_special_cases_test, fp64_add_special_cases_test )
+    `CREATE_FP_TEST_WRAPPER(64, fp_add_combined_test,      fp64_add_combined_test      )
+    ... etc.
+
+    // Cleanup the macro
+    `undef CREATE_FP_TEST_WRAPPER
+```
+
+Method 1 is clunky and super verbose - each test has to be wrapped with one new class for each possible parameter value, for multiple parameters - for each permutation of all parameters. It is all concentrated in the package file and makes a huge boilerplate codebase.
+
+#### Method 2 (Used here)
+
+This method is based on <https://dvcon-proceedings.org/wp-content/uploads/parameters-uvm-coverage-emulation-take-two-and-call-me-in-the-morning.pdf>
+
+It is much more compact than Method 1 and better scalable. Each test module is responsible for its own registration with 1 line. The only overhead is needing to list each test module in the corresponding test top module, but it is required to do only once per test module.
+
+Usage:
+
+1. In the test module use:
+  
+   ```verilog
+   `my_uvm_component_param_utils(<component> #(<params>), "<component_name>")
+   ```
+  
+   in place of
+
+   ```verilog
+   `uvm_component_param_utils(<component> #(<params>))
+   ```
+  
+2. Add typedef (one for each test module) to the testbench top (it declares type so that the UVM registration happens):
+  
+    ```verilog
+    typedef <component> #(<params>) <component>_t;
+    ```
+
+3. Use `+UVM_TESTNAME=<component_name>` in command line to select the test.
