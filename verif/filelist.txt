@@ -8,6 +8,9 @@
 
 # Beginning of the manifest file
 
+# RTL Lib
+../rtl/verilog/lib/grs_rounder.v
+
 # List all RTL Design Files here.
 ../rtl/verilog/fp/fp_add.v
 
