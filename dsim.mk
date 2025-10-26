@@ -19,7 +19,6 @@ MAKEFLAGS += --no-builtin-rules
 # Configurable Variables (can be overridden from the command line)
 #==============================================================================
 
-# Default DUT is the parameterized adder, configured for fp16
 DUT       ?= fp_add
 PRECISION ?= fp16
 
@@ -67,11 +66,11 @@ endif
 COMPILER_FLAGS = \
 	-lib 'work' \
 	-uvm 1.2 \
-	-g WIDTH=$(WIDTH) \
+	+define+WIDTH=$(WIDTH) \
 	+incdir+rtl/verilog/fp \
 	+incdir+$(RTL_LIB_DIR) \
 	+incdir+$(VERIF_LIB_DIR) \
-	+incdir+verif/tests/fp16_add \
+	+incdir+verif/tests/$(DUT) \
 	+incdir+verif/tests/fp16_classify
 
 SIMULATOR_FLAGS = \
@@ -83,7 +82,8 @@ SIMULATOR_FLAGS = \
 	-suppress IneffectiveDynamicCast:UninstVif
 
 # Runtime Plusargs
-RUN_PLUSARGS = +UVM_TESTNAME=$(PRECISION)_add_$(TEST)
+#RUN_PLUSARGS = +UVM_TESTNAME=$(PRECISION)_add_$(TEST)
+RUN_PLUSARGS = +UVM_TESTNAME=$(DUT)_$(TEST)
 
 #==============================================================================
 # Targets
@@ -92,7 +92,7 @@ RUN_PLUSARGS = +UVM_TESTNAME=$(PRECISION)_add_$(TEST)
 .PHONY: all compile run clean
 
 all:
-	@$(foreach p,$(PRECISIONS),$(MAKE) -f $(firstword $(MAKEFILE_LIST)) run PRECISION=$(p) TEST=$(TEST);)
+	@$(foreach p,$(PRECISIONS),$(MAKE) -f $(firstword $(MAKEFILE_LIST)) run DUT=$(DUT) PRECISION=$(p) TEST=$(TEST);)
 
 compile:
 	@echo "--- Compiling DUT: $(DUT) ---"
