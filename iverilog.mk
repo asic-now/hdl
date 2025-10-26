@@ -28,13 +28,13 @@ SIMULATOR   = vvp
 SIM_OUTPUT  = sim.vvp
 
 # Project Structure
-RTL_DIR      = rtl/verilog/fp16
-TEST_DIR     = verif/tests/fp16_add
+RTL_DIR      = rtl/verilog/fp
+TEST_DIR     = verif/tests/fp_add
 VERIF_LIB_DIR= verif/lib
 
 # Source Files
 # For Icarus, it's often more reliable to list all SV files explicitly.
-DUT_FILES    = $(RTL_DIR)/fp16_add.v
+DUT_FILES    = $(RTL_DIR)/fp_add.v
 TB_SRC_FILES = $(wildcard $(TEST_DIR)/*.sv) $(wildcard $(VERIF_LIB_DIR)/*.sv)
 
 # Include paths for the compiler

@@ -2,7 +2,7 @@
 
 This directory contains synthesizable Verilog RTL for 64-bit (double-precision) floating-point operations.
 
-* fp64_add.v
+* (fp64_add.v: moved to parameterized ../fp/fp_add.v)
 * fp64_classify.v
 * fp64_cmp.v
 * fp64_div.v

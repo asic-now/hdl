@@ -6,7 +6,7 @@
 #
 # Usage:
 #   make compile      - Compiles and elaborates the DUT and testbench.
-#   make run          - Runs the default test (fp16_add_random_test).
+#   make run          - Runs the default test (fp_add_random_test).
 #   make run TESTNAME=<test_class_name> - Runs a specific test.
 #   make all          - Compiles and runs the default test.
 #   make clean        - Removes all generated simulation files.
@@ -22,20 +22,20 @@ ELAB        = xelab
 SIM         = xsim
 
 # Default test to run if not specified on the command line
-TESTNAME ?= fp16_add_random_test
+TESTNAME ?= fp_add_random_test
 
 # Simulation Snapshot Name
 SNAPSHOT = tb_top_snapshot
 
 # Project Structure
-RTL_DIR      = rtl/verilog/fp16
-TEST_DIR     = verif/tests/fp16_add
+RTL_DIR      = rtl/verilog/fp
+TEST_DIR     = verif/tests/fp_add
 VERIF_LIB_DIR= verif/lib
 
 # Source Files
-DUT_FILES    = $(RTL_DIR)/fp16_add.v
+DUT_FILES    = $(RTL_DIR)/fp_add.v
 SV_FILES     = $(wildcard $(TEST_DIR)/*.sv) $(wildcard $(VERIF_LIB_DIR)/*.sv)
-TB_TOP_NAME  = fp16_add_tb_top
+TB_TOP_NAME  = fp_add_tb_top
 
 # Include paths for the compiler
 INCLUDE_DIRS = -i $(VERIF_LIB_DIR) -i $(TEST_DIR)

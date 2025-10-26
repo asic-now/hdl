@@ -2,7 +2,7 @@
 
 This directory contains synthesizable Verilog RTL for 16-bit (half-precision) floating-point operations.
 
-* fp16_add.v
+* (fp16_add.v: moved to parameterized ../fp/fp_add.v)
 * fp16_classify.v
 * fp16_cmp.v
 * fp16_div.v
