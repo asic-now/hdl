@@ -240,7 +240,7 @@ module fp_add #(
     reg                       s3_sign_q;
     reg         [ALIGN_MANT_W-1:0]   s3_final_mant;
     reg  signed [EXP_W:0]            s3_final_exp;
-    reg  [1+ALIGN_MANT_W-1:0] s3_mant_q;  // 1 bit for carry // TODO: (now) We don't need to pipeline all bits - can pipeline only compare to zero.
+    reg                       s3_mant_zero_q;
     reg                       s3_neg_zero_q;
 
     always @(posedge clk or negedge rst_n) begin
@@ -250,14 +250,14 @@ module fp_add #(
             s3_sign_q <= 0;
             s3_final_mant <= 0;
             s3_final_exp <= 0;
-            s3_mant_q <= 0;
+            s3_mant_zero_q <= 0;
         end else begin
             s3_special_case_q <= s2_special_case_q;
             s3_special_result_q <= s2_special_result_q;
             s3_sign_q <= s2_sign_q;
             s3_final_mant <= final_mant;
             s3_final_exp <= final_exp;
-            s3_mant_q <= s2_mant_q;
+            s3_mant_zero_q <= (s2_mant_q == 0);
             s3_neg_zero_q <= s2_neg_zero_q;
         end
     end
@@ -284,7 +284,7 @@ module fp_add #(
     reg         [EXP_W-1:0]          out_exp;
     reg signed  [EXP_W:0]            final_exp_rounded;
     always @(*) begin
-        if (s3_mant_q == 0) begin // Result from adder was zero
+        if (s3_mant_zero_q == 1'b1) begin // Result from adder was zero
             // Result is zero, no normalization needed
             out_exp = EXP_ALL_ZEROS;
             out_mant = MANT_ALL_ZEROS;
