@@ -15,13 +15,13 @@ It is WIP (Work In Progress), and not everything has been verified.
 The repository is organized into two main directories: rtl/ and verif/.
 
 * rtl/verilog/: Contains all synthesizable Verilog source code.  
-  * fp/: Parameterized modules for 16/32/64-bitfloating-point numbers.  
-  * fp16/: Modules for 16-bit (half-precision) floating-point numbers.  
-  * fp32/: Modules for 32-bit (single-precision) floating-point numbers.  
-  * fp64/: Modules for 64-bit (double-precision) floating-point numbers.  
+  * fp/: Parameterized modules for 16/32/64-bit floating-point numbers.  
+  * fp16/: Modules for 16-bit (half-precision) floating-point numbers. In process of moving to parameterized version.  
+  * fp32/: Modules for 32-bit (single-precision) floating-point numbers. In process of moving to parameterized version.  
+  * fp64/: Modules for 64-bit (double-precision) floating-point numbers. In process of moving to parameterized version.  
 * verif/: Contains the UVM verification environment.  
   * lib/: Contains generic, reusable UVM base classes and components designed to be shared across different testbenches.  
-  * tests/: Contains DUT-specific testbenches. Each subdirectory (e.g., fp16\_add/) is a complete testbench for a single RTL module.
+  * tests/: Contains DUT-specific testbenches. Each subdirectory (e.g., fp\_add/) is a complete testbench for a single RTL module.
 
 ## RTL Design Conventions
 
