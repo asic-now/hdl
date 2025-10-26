@@ -1,22 +1,16 @@
 # Tooling
 
+This project is beeing developed on Windows 10 OS using free version of Altair DSim (simulator) and DSim Studio (VSCode extension). Other OSs and simulators are supported, but not yet verified.
+
+For code highlighting and linting, TerosHDL VSCode extension is used with Vivado, Verilator and Verible.
+
 ## Simulator Setup
 
 The provided verification environment is based on the **Universal Verification Methodology (UVM)**. To run the tests, you must use a simulator that supports SystemVerilog and UVM.
 
-### Xilinx Vivado (Recommended for UVM)
-
-The Vivado Design Suite from AMD/Xilinx includes a UVM-compliant simulator (xsim) that is fully capable of running the testbenches in this project. A free version (Vivado ML Edition) is available.
-
-* **Installation**:  
-  1. Go to the official AMD/Xilinx downloads page: [https://www.xilinx.com/support/download.html](https://www.xilinx.com/support/download.html)  
-  2. Download the **Vivado ML Edition** installer for your operating system.  
-  3. During installation, you can deselect the device families to save space, but ensure the **Verification \-\> Vivado Simulator** component is selected.  
-* **Environment Setup**: Before running make, you must source the setup script to add the Vivado tools to your path.  
-  * On Linux: source /path/to/Xilinx/Vivado/2023.2/settings64.sh  
-  * On Windows: Run the Vivado command prompt, or execute the settings64.bat script.
-
 ### Altair DSim
+
+The DSim from Altair includes a UVM-compliant simulator (dsim) that is fully capable of running the testbenches in this project. A free version is available. There is also provided an extension for VSCode - DSim Studio, that makes running simulations easier right from the IDE.
 
 This section was written for Altair DSim v2025.1.
 
@@ -48,6 +42,18 @@ Most verification models are implemented with C reference functions. C functions
 
 * <https://help.metrics.ca/support/solutions/articles/154000141123-how-to-integrate-c-c-files-with-your-design>
 * <https://help.metrics.ca/support/solutions/articles/154000141203-user-guide-dsim-using-the-dpi-and-pli>
+
+### Xilinx Vivado (Recommended for UVM)
+
+The Vivado Design Suite from AMD/Xilinx includes a UVM-compliant simulator (xsim) that is fully capable of running the testbenches in this project. A free version (Vivado ML Edition) is available.
+
+* **Installation**:  
+  1. Go to the official AMD/Xilinx downloads page: [https://www.xilinx.com/support/download.html](https://www.xilinx.com/support/download.html)  
+  2. Download the **Vivado ML Edition** installer for your operating system.  
+  3. During installation, you can deselect the device families to save space, but ensure the **Verification \-\> Vivado Simulator** component is selected.  
+* **Environment Setup**: Before running make, you must source the setup script to add the Vivado tools to your path.  
+  * On Linux: source /path/to/Xilinx/Vivado/2023.2/settings64.sh  
+  * On Windows: Run the Vivado command prompt, or execute the settings64.bat script.
 
 ### Synopsys VCS
 
@@ -197,10 +203,11 @@ See [Altair DSim](#altair-dsim) section.
 6. Configure TerosHDL
    1. Open VSCode and select the TerosHDL icon on the sidebar.
    2. Go to "Configuration" section and choose "Open Global Settings Menu".
-   3. Under "Linter settings", select "Vivado" to enable Vivado as code linter.
-   4. Under "Linter settings" > "Vivado linter", enter "-i <include_path>" for each include path into "Verilog/SV linter arguments".  
+   3. You can load settings from either "teros-hdl.settings+verilator+verible.json" file or "teros-hdl.settings.json" file. Alternatively:
+   4. Under "Linter settings", select "Vivado" to enable Vivado as code linter.
+   5. Under "Linter settings" > "Vivado linter", enter "-i <include_path>" for each include path into "Verilog/SV linter arguments".  
    Note: [vscode-terosHDL#816](https://github.com/TerosTechnology/vscode-terosHDL/issues/816) Include paths don't work as expected. Use absolute paths in Vivado arguments until the issue is resolved.
-   5. Under "Tools," set the default synthesis/simulation tool to Vivado.
+   6. Under "Tools," set the default synthesis/simulation tool to Vivado.
 7. Use the "Verify Setup" command in the TerosHDL sidebar to check configuration and tool detection. Review Output > TerosHDL: Global log and correct any missing tools.  
 Note: "Verify Setup" can be tricky to troubleshoot - make sure project setup does not inadvertently override global Vivado path setting (see [vscode-terosHDL#778](https://github.com/TerosTechnology/vscode-terosHDL/issues/778)).
 
