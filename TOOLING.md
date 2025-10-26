@@ -1,8 +1,16 @@
 # Tooling
 
-This project is beeing developed on Windows 10 OS using free version of Altair DSim (simulator) and DSim Studio (VSCode extension). Other OSs and simulators are supported, but not yet verified.
+This project has beeing developed on Windows 10 OS using free version of Altair DSim (simulator) and DSim Studio (VSCode extension). Other OSs and simulators are supported, but not yet verified.
 
 For code highlighting and linting, TerosHDL VSCode extension is used with Vivado, Verilator and Verible.
+
+Once all dependencies are installed, compile and simulate modules by running `make` from project root:
+
+```bash
+make -f dsim.mk
+```
+
+You can specify DUT, PRECISION, TEST, and select target compile, run or all (all simulates all tests for DUT/PRECISION).
 
 ## Simulator Setup
 
