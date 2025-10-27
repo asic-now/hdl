@@ -3,7 +3,7 @@
 // Verilog RTL to convert a 32-bit float to a 64-bit float.
 //
 // Features:
-// - Refactored to use fp32_classify for special case handling.
+// - Refactored to use fp_classify for special case handling.
 // - Uses simple, sequential assignments for better compiler compatibility.
 
 module fp32_to_fp64 (
@@ -17,7 +17,7 @@ module fp32_to_fp64 (
     wire is_snan, is_qnan, is_neg_inf, is_pos_inf, is_neg_norm, is_pos_norm,
          is_neg_denorm, is_pos_denorm, is_neg_zero, is_pos_zero;
 
-    fp32_classify classifier (
+    fp_classify #(32) classifier (
         .in(fp32_in),
         .is_snan(is_snan), .is_qnan(is_qnan),
         .is_neg_inf(is_neg_inf), .is_pos_inf(is_pos_inf),

@@ -3,7 +3,7 @@
 // Converts a 16-bit half-precision float to a 32-bit single-precision float.
 //
 // Features:
-// - Refactored to use fp16_classify for special case handling.
+// - Refactored to use fp_classify for special case handling.
 // - Uses simple, sequential assignments for better compiler compatibility.
 
 module fp16_to_fp32 (
@@ -17,7 +17,7 @@ module fp16_to_fp32 (
     wire is_snan, is_qnan, is_neg_inf, is_pos_inf, is_neg_norm, is_pos_norm,
          is_neg_denorm, is_pos_denorm, is_neg_zero, is_pos_zero;
 
-    fp16_classify classifier (
+    fp_classify #(16) classifier (
         .in(fp16_in),
         .is_snan(is_snan), .is_qnan(is_qnan),
         .is_neg_inf(is_neg_inf), .is_pos_inf(is_pos_inf),

@@ -3,7 +3,7 @@
 // Converts a 64-bit double-precision float to a 16-bit half-precision float.
 //
 // Features:
-// - Uses fp64_classify for special case handling.
+// - Uses fp_classify for special case handling.
 // - Handles overflow (to infinity) and underflow (to denormalized/zero).
 // - Truncates mantissa on conversion.
 // - Uses simple, sequential assignments for better compiler compatibility.
@@ -19,7 +19,7 @@ module fp64_to_fp16 (
     wire is_snan, is_qnan, is_neg_inf, is_pos_inf, is_neg_norm, is_pos_norm,
          is_neg_denorm, is_pos_denorm, is_neg_zero, is_pos_zero;
 
-    fp64_classify classifier (
+    fp_classify #(64) classifier (
         .in(fp64_in),
         .is_snan(is_snan), .is_qnan(is_qnan),
         .is_neg_inf(is_neg_inf), .is_pos_inf(is_pos_inf),

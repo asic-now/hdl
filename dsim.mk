@@ -70,8 +70,7 @@ COMPILER_FLAGS = \
 	+incdir+rtl/verilog/fp \
 	+incdir+$(RTL_LIB_DIR) \
 	+incdir+$(VERIF_LIB_DIR) \
-	+incdir+verif/tests/$(DUT) \
-	+incdir+verif/tests/fp16_classify
+	+incdir+verif/tests/$(DUT)
 
 SIMULATOR_FLAGS = \
 	-top work.$(TB_TOP_NAME) \

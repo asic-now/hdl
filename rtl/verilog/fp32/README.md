@@ -3,7 +3,7 @@
 This directory contains synthesizable Verilog RTL for 32-bit (single-precision) floating-point operations.
 
 * (fp32_add.v: moved to parameterized ../fp/fp_add.v)
-* fp32_classify.v
+* (fp32_classify.v: moved to parameterized ../fp/fp_classify.v)
 * fp32_cmp.v
 * fp32_div.v
 * fp32_invsqrt.v

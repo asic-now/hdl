@@ -342,135 +342,6 @@ files:
     is_manual: true
     source_type: none
 
-  - name: verif\tests\fp16_classify\fp16_classify_agent.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_base_test.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_combined_sequence.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_combined_test.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_driver.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_env.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_if.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_model.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_monitor.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_pkg.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_random_sequence.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_random_test.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_special_cases_sequence.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_special_cases_test.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_tb_top.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-  - name: verif\tests\fp16_classify\fp16_classify_transaction.sv
-    file_type: systemVerilogSource
-    file_version: !<tag:yaml.org,2002:js/undefined> ''
-    is_include_file: false
-    include_path: ''
-    logical_name: verif/tests/fp16_classify
-    is_manual: true
-    source_type: none
-
   - name: rtl\verilog\fp\fp_add.v
     file_type: verilogSource
     file_version: '2000'
@@ -479,14 +350,15 @@ files:
     logical_name: rtl/verilog/fp
     is_manual: true
     source_type: none
-  - name: rtl\verilog\fp32\fp32_classify.v
+  - name: rtl\verilog\fp\fp_classify.v
     file_type: verilogSource
     file_version: '2000'
     is_include_file: false
     include_path: ''
-    logical_name: rtl/verilog/fp32
+    logical_name: rtl/verilog/fp
     is_manual: true
     source_type: none
+
   - name: rtl\verilog\fp32\fp32_cmp.v
     file_type: verilogSource
     file_version: '2000'
@@ -599,14 +471,7 @@ files:
     logical_name: rtl/verilog/fp32
     is_manual: true
     source_type: none
-  - name: rtl\verilog\fp16\fp16_classify.v
-    file_type: verilogSource
-    file_version: '2000'
-    is_include_file: false
-    include_path: ''
-    logical_name: rtl/verilog/fp16
-    is_manual: true
-    source_type: none
+
   - name: rtl\verilog\fp16\fp16_cmp.v
     file_type: verilogSource
     file_version: '2000'
@@ -751,14 +616,7 @@ files:
     logical_name: rtl/verilog/lib
     is_manual: true
     source_type: none
-  - name: rtl\verilog\fp64\fp64_classify.v
-    file_type: verilogSource
-    file_version: '2000'
-    is_include_file: false
-    include_path: ''
-    logical_name: rtl/verilog/fp64
-    is_manual: true
-    source_type: none
+
   - name: rtl\verilog\fp64\fp64_cmp.v
     file_type: verilogSource
     file_version: '2000'
@@ -969,7 +827,7 @@ configuration:
         -i rtl/verilog/lib
         -i verif/lib
         -i verif/tests/fp_add
-        -i verif/tests/fp16_classify
+        -i verif/tests/fp_classify
     vsg:
       arguments: ''
   schematic:

@@ -3,7 +3,7 @@
 // Verilog RTL for 32-bit float inverse square root (1/sqrt(x)).
 //
 // Features:
-// - Refactored to use fp32_classify and an external LUT module.
+// - Refactored to use fp_classify and an external LUT module.
 // - Parameter USE_LUT selects between a LUT-based or combinatorial initial guess.
 // - Combinational data path using placeholder FPUs for Newton-Raphson iteration.
 //   WARNING: This design is purely combinational and will result in long logic
@@ -24,7 +24,7 @@ module fp32_invsqrt #(
     wire is_snan, is_qnan, is_neg_inf, is_pos_inf, is_neg_norm, is_pos_norm,
          is_neg_denorm, is_pos_denorm, is_neg_zero, is_pos_zero;
 
-    fp32_classify classifier (
+    fp_classify #(32) classifier (
         .in(fp_in),
         .is_snan(is_snan), .is_qnan(is_qnan),
         .is_neg_inf(is_neg_inf), .is_pos_inf(is_pos_inf),
