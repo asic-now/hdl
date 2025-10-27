@@ -29,7 +29,7 @@ DUTS  ?= fp_add fp_classify
 TEST  ?= combined_test
 TESTS ?= random_test special_cases_test combined_test
 
-SRC_FILES_LIST   ?= verif/filelist.txt
+SRC_FILES_LIST   ?= verif/filelist.libs.txt
 C_MODEL_FILES    ?= verif/lib/fp16_model.c verif/lib/fp32_model.c verif/lib/fp64_model.c verif/lib/fp_dpi_utils.c
 
 #==============================================================================
@@ -66,7 +66,6 @@ endif
 COMPILER_FLAGS = \
 	-lib 'work' \
 	-uvm 1.2 \
-	+define+WIDTH=$(WIDTH) \
 	+incdir+rtl/verilog/fp \
 	+incdir+$(RTL_LIB_DIR) \
 	+incdir+$(VERIF_LIB_DIR) \
@@ -75,6 +74,7 @@ COMPILER_FLAGS = \
 SIMULATOR_FLAGS = \
 	-top work.$(TB_TOP_NAME) \
 	-uvm 1.2 \
+	-defparam WIDTH=$(WIDTH) \
 	+acc+b $(C_MODEL_FILES) \
 	-c-opts "-shared" \
 	-cc-verbose \
@@ -95,7 +95,7 @@ all:
 
 compile:
 	@echo "--- Compiling DUT: $(DUT) ---"
-	$(COMPILER) $(COMPILER_FLAGS) -F "$(SRC_FILES_LIST)"
+	$(COMPILER) $(COMPILER_FLAGS) -F "$(SRC_FILES_LIST)" -F verif/tests/$(DUT)/filelist.txt
 
 run: compile
 	@echo "--- Running Test: $(TEST) on $(DUT) ---"

@@ -1,0 +1,19 @@
+# verif/filelist.libs.txt
+
+# Note: You can use # to add comments to the file.
+# The filelist*.txt is a manifest file that is synchronized to your workspace in DSim Cloud.
+# The DSim simulator in DSim Cloud will consume this file.
+
+# Order of files seems super-important and should be in dependency order. 
+# Compilation passes regardless of the order, but elaboration fails if order is reversed.
+
+# RTL Lib
+../rtl/verilog/lib/grs_round.v
+../rtl/verilog/lib/grs_rounder.v
+
+# Verification Lib
+../verif/lib/fp_dpi_pkg.sv
+../verif/lib/fp_lib_pkg.sv
+
+# Testbenches
+# DO NOT INCLUDE TESTBENCH FILES HERE!
