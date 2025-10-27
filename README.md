@@ -157,7 +157,7 @@ The table below shows the implementation and verification status of the floating
 | Operation     | fp16          | fp32          | fp64          |
 |---------------|---------------|---------------|---------------|
 | `add`         | [x]  Verified | [x]  Verified | [x]  Verified |
-| `classify`    | [x]  Verified | RTL only      | RTL only      |
+| `classify`    | [x]  Verified | [x]  Verified | [x]  Verified |
 | `cmp`         | RTL only      | RTL only      | RTL only      |
 | `div`         | RTL only      | RTL only      | RTL only      |
 | `invsqrt`     | RTL only      | RTL only      | RTL only      |
