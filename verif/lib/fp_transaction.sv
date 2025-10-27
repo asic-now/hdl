@@ -25,7 +25,7 @@ class fp_transaction #(
         string s;
 
         if (!$cast(golden_trans, golden_trans_item)) begin
-            `uvm_fatal("CAST_FAIL", "Failed to cast golden transaction in fp_transaction::compare")
+            `uvm_fatal("CAST_FAIL", "Failed to cast golden transaction in fp_transaction::compare()")
             is_match = 0;
             return "FATAL: Cast failed in fp_transaction::compare()";
         end

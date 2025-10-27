@@ -1,18 +1,20 @@
 // verif/tests/fp_add/fp_add_model.sv
-// This file contains the DPI-C imports for the C reference models.
+// Reference model for the fp_add operation.
+// This model uses a "golden" C function via the DPI-C interface,
+// ensuring it is a trusted, independent reference.
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-// DPI-C imports for the C reference models.
+// DPI-C imports of the C reference model functions.
 // Note: The function names must match those in the C files.
 // Use C-compatible integer types for DPI return values
-// bit [15:0] : shortint unsigned
-// bit [31:0] : int unsigned     
-// bit [63:0] : longint unsigned 
+// bit [15:0] : shortint unsigned : uint16_t
+// bit [31:0] : int unsigned      : uint32_t
+// bit [63:0] : longint unsigned  : uint64_t
 import "DPI-C" function shortint unsigned c_fp16_add(shortint unsigned a, shortint unsigned b);
-import "DPI-C" function int unsigned      c_fp32_add(int unsigned a, int unsigned b);
-import "DPI-C" function longint unsigned  c_fp64_add(longint unsigned a, longint unsigned b);
+import "DPI-C" function int unsigned      c_fp32_add(int      unsigned a, int unsigned b);
+import "DPI-C" function longint unsigned  c_fp64_add(longint  unsigned a, longint unsigned b);
 
 class fp_add_model #(
     parameter int WIDTH = 16

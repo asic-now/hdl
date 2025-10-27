@@ -112,6 +112,13 @@ function logic [63:0] get_qnan(int unsigned width);
     return qnan;
 endfunction
 
+function logic [63:0] get_n_qnan(int unsigned width);
+    logic [63:0] qnan;
+    qnan = get_qnan(width);
+    qnan[width-1] = 1;
+    return qnan;
+endfunction
+
 function logic [63:0] get_snan(int unsigned width);
     logic [63:0] snan;
     snan = 0;
@@ -126,5 +133,12 @@ function logic [63:0] get_snan(int unsigned width);
     endcase
     // Mantissa is non-zero, and MSB is 0 for SNaN
     snan[0] = 1;
+    return snan;
+endfunction
+
+function logic [63:0] get_n_snan(int unsigned width);
+    logic [63:0] snan;
+    snan = get_snan(width);
+    snan[width-1] = 1;
     return snan;
 endfunction

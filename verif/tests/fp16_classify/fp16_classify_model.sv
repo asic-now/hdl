@@ -12,8 +12,8 @@
 
 // DPI-C import of the C reference function
 import "DPI-C" context function void c_fp16_classify(
-    input  shortint                in,    // C uint16_t maps to SV shortint
-    output fp16_classify_outputs_s out_s  // C struct* maps to SV output struct
+    input  shortint              in,    // C uint16_t maps to SV shortint
+    output fp_classify_outputs_s out_s  // C struct* maps to SV output struct
 );
 
 class fp16_classify_model extends fp_model_base #(fp16_classify_transaction);

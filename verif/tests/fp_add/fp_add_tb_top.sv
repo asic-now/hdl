@@ -14,9 +14,9 @@ module fp_add_tb_top;
     logic rst_n;
 
     // Instantiate the DUT interface
-    fp_add_if #(.WIDTH(WIDTH)) dut_if (clk, rst_n);
+    fp_add_if #(WIDTH) dut_if (clk, rst_n);
 
-    // Instantiate the parameterized DUT
+    // Instantiate the DUT
     fp_add #(WIDTH) dut (
         .clk(dut_if.clk),
         .rst_n(dut_if.rst_n),
@@ -48,7 +48,7 @@ module fp_add_tb_top;
     initial begin
         // Set the interface in the UVM configuration database for the tests to use
         uvm_config_db#(virtual fp_add_if#(WIDTH))::set(null, "uvm_test_top.*", "dut_vif", dut_if);
-        // uvm_config_db#(virtual fp_add_if#(.WIDTH(WIDTH)))::set(null, "uvm_test_top.env.agent", "dut_vif", dut_if);
+        // uvm_config_db#(virtual fp_add_if#(WIDTH))::set(null, "uvm_test_top.env.agent", "dut_vif", dut_if);
 
         // Run the test specified by +UVM_TESTNAME on the command line
         run_test();

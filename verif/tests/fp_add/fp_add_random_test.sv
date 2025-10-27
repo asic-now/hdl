@@ -1,4 +1,5 @@
 // verif/tests/fp_add/fp_add_random_test.sv
+// Test that runs a random sequence.
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;

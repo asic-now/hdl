@@ -16,7 +16,7 @@ class fp_add_agent #(
     uvm_sequencer #(fp_transaction2 #(WIDTH)) seqr;
 
     // Analysis port to broadcast monitored transactions
-    uvm_analysis_port #(fp_transaction2 #(WIDTH)) ap;
+    // uvm_analysis_port #(fp_transaction2 #(WIDTH)) ap;
 
     // Synchronization FIFO between driver and monitor
     uvm_tlm_analysis_fifo #(fp_transaction2 #(WIDTH)) fifo;

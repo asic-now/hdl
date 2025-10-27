@@ -1,5 +1,5 @@
 // verif/tests/fp_add/fp_add_pkg.sv
-// Main package for the parameterized fp_add UVM testbench.
+// Package for the parameterized fp_add UVM testbench.
 
 package fp_add_pkg;
     import uvm_pkg::*;
@@ -7,7 +7,9 @@ package fp_add_pkg;
 
     import fp_lib_pkg::*;
 
-    // Include all component files
+    // ATTENTION: DO NOT INCLUDE ANY files with `module` or `interface` here. Include them in filelist.txt.
+
+    // Include DUT-specific components
     `include "fp_add_driver.sv"
     `include "fp_add_monitor.sv"
     `include "fp_add_agent.sv"

@@ -24,7 +24,7 @@ PRECISION ?= fp16
 
 PRECISIONS ?= fp16 fp32 fp64
 
-DUTS  ?= fp_add fp16_classify
+DUTS  ?= fp_add fp_classify
 
 TEST  ?= combined_test
 TESTS ?= random_test special_cases_test combined_test

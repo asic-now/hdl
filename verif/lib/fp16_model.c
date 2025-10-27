@@ -12,11 +12,7 @@
 // Standard DPI-C inclusion for simulator integration
 #include "svdpi.h"
 
-// Helper union for type-punning between float and its bit representation
-typedef union {
-    float f;
-    uint32_t u;
-} float_conv;
+#include "fp_model.h"
 
 // Converts a 16-bit half-precision float to a 32-bit single-precision float
 static float fp16_to_float(uint16_t h) {
@@ -82,25 +78,8 @@ static uint16_t float_to_fp16(float f) {
     return (sign << 15) | (half_exp << 10) | half_mant;
 }
 
-// Define the output struct using C bit-fields to ensure a memory layout
-// identical to the SystemVerilog 'struct packed'. The total size is 10 bits.
-// The order is reversed from the SV declaration to match how C compilers
-// typically pack bit-fields (from LSB upwards in memory).
-typedef struct {
-    unsigned int is_pos_inf      : 1; // Corresponds to bit 0 in the SV packed struct
-    unsigned int is_pos_normal   : 1;
-    unsigned int is_pos_denormal : 1;
-    unsigned int is_pos_zero     : 1;
-    unsigned int is_neg_zero     : 1;
-    unsigned int is_neg_denormal : 1;
-    unsigned int is_neg_normal   : 1;
-    unsigned int is_neg_inf      : 1;
-    unsigned int is_qnan         : 1;
-    unsigned int is_snan         : 1; // Corresponds to bit 9
-} fp16_classify_outputs_s;
-
 // C model function to be exported
-void c_fp16_classify(const uint16_t in, fp16_classify_outputs_s* out) {
+void c_fp16_classify(const uint16_t in, fp_classify_outputs_s* out) {
     // Unpack the 16-bit input
     uint8_t  sign = (in >> 15) & 0x1;
     uint8_t  exp  = (in >> 10) & 0x1F;
@@ -118,7 +97,7 @@ void c_fp16_classify(const uint16_t in, fp16_classify_outputs_s* out) {
     int is_normal   = !exp_is_all_ones && !exp_is_all_zeros;
 
     // Initialize all outputs to 0
-    *out = (fp16_classify_outputs_s){0};
+    *out = (fp_classify_outputs_s){0};
 
     // Determine NaN type
     if (is_nan) {
@@ -131,20 +110,19 @@ void c_fp16_classify(const uint16_t in, fp16_classify_outputs_s* out) {
 
     // Set final outputs based on sign
     if (sign) { // Negative
-        if (is_inf)      out->is_neg_inf = 1;
-        if (is_normal)   out->is_neg_normal = 1;
+        if (is_inf)      out->is_neg_inf      = 1;
+        if (is_normal)   out->is_neg_normal   = 1;
         if (is_denormal) out->is_neg_denormal = 1;
-        if (is_zero)     out->is_neg_zero = 1;
+        if (is_zero)     out->is_neg_zero     = 1;
     } else { // Positive
-        if (is_inf)      out->is_pos_inf = 1;
-        if (is_normal)   out->is_pos_normal = 1;
+        if (is_inf)      out->is_pos_inf      = 1;
+        if (is_normal)   out->is_pos_normal   = 1;
         if (is_denormal) out->is_pos_denormal = 1;
-        if (is_zero)     out->is_pos_zero = 1;
+        if (is_zero)     out->is_pos_zero     = 1;
     }
 }
 
 // The exported DPI-C function that will be called from SystemVerilog
-// extern "C"
 uint16_t c_fp16_add(uint16_t a, uint16_t b) {
     float fa = fp16_to_float(a);
     float fb = fp16_to_float(b);

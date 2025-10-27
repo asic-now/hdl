@@ -1,5 +1,5 @@
 // verif/tests/fp_add/fp_add_special_cases_sequence.sv
-// A sequence that generates directed tests for special FP values.
+// A directed sequence that generates transactions for special FP values.
 
 `include "uvm_macros.svh"
 
@@ -34,7 +34,9 @@ class fp_add_special_cases_sequence #(
             fp_lib_pkg::get_p_inf(WIDTH),
             fp_lib_pkg::get_n_inf(WIDTH),
             fp_lib_pkg::get_qnan(WIDTH),
-            fp_lib_pkg::get_snan(WIDTH)
+            fp_lib_pkg::get_n_qnan(WIDTH),
+            fp_lib_pkg::get_snan(WIDTH),
+            fp_lib_pkg::get_n_snan(WIDTH)
         };
 
         `uvm_info(get_type_name(), "Starting special cases sequence", UVM_LOW)

@@ -17,6 +17,7 @@ simulations:
       -uvm 1.2
       -c-opts "-shared"
       -cc-verbose
+
   - name: fp16_classify_random
     options: |-
       -top work.fp16_classify_tb_top
@@ -44,6 +45,97 @@ simulations:
       -defparam WIDTH=16
       +UVM_TESTNAME=fp16_classify_combined_test
       +acc+b ../verif/lib/fp16_model.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+
+  - name: fp_classify_random 16
+    options: |-
+      -top work.fp_classify_tb_top
+      -uvm 1.2
+      -defparam WIDTH=16
+      +UVM_TESTNAME=fp_classify_random_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_classify_special 16
+    options: |-
+      -top work.fp_classify_tb_top
+      -uvm 1.2
+      -defparam WIDTH=16
+      +UVM_TESTNAME=fp_classify_special_cases_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_classify_all 16
+    options: |-
+      -top work.fp_classify_tb_top
+      -uvm 1.2
+      -defparam WIDTH=16
+      +UVM_TESTNAME=fp_classify_combined_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_classify_random 32
+    options: |-
+      -top work.fp_classify_tb_top
+      -uvm 1.2
+      -defparam WIDTH=32
+      +UVM_TESTNAME=fp_classify_random_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_classify_special 32
+    options: |-
+      -top work.fp_classify_tb_top
+      -uvm 1.2
+      -defparam WIDTH=32
+      +UVM_TESTNAME=fp_classify_special_cases_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_classify_all 32
+    options: |-
+      -top work.fp_classify_tb_top
+      -uvm 1.2
+      -defparam WIDTH=32
+      +UVM_TESTNAME=fp_classify_combined_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_classify_random 64
+    options: |-
+      -top work.fp_classify_tb_top
+      -uvm 1.2
+      -defparam WIDTH=64
+      +UVM_TESTNAME=fp_classify_random_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_classify_special 64
+    options: |-
+      -top work.fp_classify_tb_top
+      -uvm 1.2
+      -defparam WIDTH=64
+      +UVM_TESTNAME=fp_classify_special_cases_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_classify_all 64
+    options: |-
+      -top work.fp_classify_tb_top
+      -uvm 1.2
+      -defparam WIDTH=64
+      +UVM_TESTNAME=fp_classify_combined_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -150,7 +242,7 @@ source_files:
       +incdir+../rtl/verilog/lib
       +incdir+../verif/lib
       +incdir+../verif/tests/fp_add
-      +incdir+../verif/tests/fp16_add
+      +incdir+../verif/tests/fp_classify
       +incdir+../verif/tests/fp16_classify
     file_list: relative-to-file
 library_search_paths:

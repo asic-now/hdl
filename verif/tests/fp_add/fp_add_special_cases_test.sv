@@ -1,4 +1,5 @@
 // verif/tests/fp_add/fp_add_special_cases_test.sv
+// A directed test that runs the special cases sequence.
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;

@@ -12,11 +12,7 @@
 // Standard DPI-C inclusion for simulator integration
 #include "svdpi.h"
 
-// Helper union for type-punning between float and its bit representation
-typedef union {
-    float    f;
-    uint32_t u;
-} float_conv;
+#include "fp_model.h"
 
 // Converts a 32-bit integer representation to a C float
 static float u32_to_float(uint32_t u) {
@@ -37,6 +33,50 @@ static uint32_t float_to_u32(float f) {
         return 0x7FC00000;
     }
     return conv.u;
+}
+
+// C model function to be exported
+void c_fp32_classify(const uint32_t in, fp_classify_outputs_s* out) {
+    // Unpack the 32-bit input
+    uint8_t  sign = (in >> 31) & 0x1;
+    uint8_t  exp  = (in >> 23) & 0xFF;
+    uint32_t mant = in & 0x7FFFFF;
+
+    // Intermediate checks based on IEEE 754 for FP32
+    int exp_is_all_ones  = (exp == 0xFF);
+    int exp_is_all_zeros = (exp == 0x00);
+    int mant_is_zero     = (mant == 0x000000);
+
+    int is_nan      = exp_is_all_ones && !mant_is_zero;
+    int is_inf      = exp_is_all_ones && mant_is_zero;
+    int is_zero     = exp_is_all_zeros && mant_is_zero;
+    int is_denormal = exp_is_all_zeros && !mant_is_zero;
+    int is_normal   = !exp_is_all_ones && !exp_is_all_zeros;
+
+    // Initialize all outputs to 0
+    *out = (fp_classify_outputs_s){0};
+
+    // Determine NaN type
+    if (is_nan) {
+        if (mant & 0x400000) { // MSB of mantissa for FP32
+            out->is_qnan = 1;
+        } else {
+            out->is_snan = 1;
+        }
+    }
+
+    // Set final outputs based on sign
+    if (sign) { // Negative
+        if (is_inf)      out->is_neg_inf      = 1;
+        if (is_normal)   out->is_neg_normal   = 1;
+        if (is_denormal) out->is_neg_denormal = 1;
+        if (is_zero)     out->is_neg_zero     = 1;
+    } else { // Positive
+        if (is_inf)      out->is_pos_inf      = 1;
+        if (is_normal)   out->is_pos_normal   = 1;
+        if (is_denormal) out->is_pos_denormal = 1;
+        if (is_zero)     out->is_pos_zero     = 1;
+    }
 }
 
 // The exported DPI-C function that will be called from SystemVerilog

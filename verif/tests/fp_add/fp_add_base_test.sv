@@ -1,5 +1,5 @@
 // verif/tests/fp_add/fp_add_base_test.sv
-// Base test for the fp_add UVM environment.
+// Base test class for the fp_add UVM environment.
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;

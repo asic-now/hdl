@@ -14,6 +14,7 @@
 
 # List all RTL Design Files here.
 ../rtl/verilog/fp/fp_add.v
+../rtl/verilog/fp/fp_classify.v
 
 ../rtl/verilog/fp16/fp16_classify.v
 
@@ -35,10 +36,15 @@
 ../verif/tests/fp_add/fp_add_pkg.sv
 ../verif/tests/fp_add/fp_add_tb_top.sv
 
+# - tests/fp_classify
+../verif/tests/fp_classify/fp_classify_if.sv
+../verif/tests/fp_classify/fp_classify_pkg.sv
+../verif/tests/fp_classify/fp_classify_tb_top.sv
+
 # - tests/fp16_classify
-../verif/tests/fp16_classify/fp16_classify_if.sv
-../verif/tests/fp16_classify/fp16_classify_pkg.sv
-../verif/tests/fp16_classify/fp16_classify_tb_top.sv
+#../verif/tests/fp16_classify/fp16_classify_if.sv
+#../verif/tests/fp16_classify/fp16_classify_pkg.sv
+#../verif/tests/fp16_classify/fp16_classify_tb_top.sv
 
 # - tests/lib
 ../verif/tests/lib/grs_round_tb.v
