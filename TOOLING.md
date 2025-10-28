@@ -1,13 +1,19 @@
 # Tooling
 
-This project has beeing developed on Windows 10 OS using free version of Altair DSim (simulator) and DSim Studio (VSCode extension). Other OSs and simulators are supported, but not yet verified.
+This project has been developed on Windows 10 OS using free version of Altair DSim (simulator) and DSim Studio (VSCode extension). Other OSs and simulators are supported, but not yet verified.
 
 For code highlighting and linting, TerosHDL VSCode extension is used with Vivado, Verilator and Verible.
 
-Once all dependencies are installed, compile and simulate modules by running `make` from project root:
+Once all dependencies are installed, compile and simulate modules by opening DSIm Studio terminal in VSCode and running `make` from project root (note that DSim Studio terminal opens in `verif` directory):
 
 ```bash
 make -f dsim.mk
+```
+
+You can get fancy with the command, e.g. running from verif directory, only one DUT, add time measurement for the whole run and capture log:
+
+```bash
+(time make -C ../ -f dsim.mk DUT=fp_classify) 2>&1 | tee ../log.run
 ```
 
 You can specify DUT, PRECISION, TEST, and select target compile, run or all (all simulates all tests for DUT/PRECISION).
