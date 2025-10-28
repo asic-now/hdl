@@ -142,3 +142,19 @@ function logic [63:0] get_n_snan(int unsigned width);
     snan[width-1] = 1;
     return snan;
 endfunction
+
+function logic [63:0] get_denormal(int unsigned width);
+    logic [63:0] denormal;
+    denormal = 0;
+    // For a denormal number, the exponent is all zeros and the mantissa is non-zero.
+    // We'll create the smallest positive denormal number by setting the LSB of the mantissa.
+    denormal[0] = 1;
+    return denormal;
+endfunction
+
+function logic [63:0] get_n_denormal(int unsigned width);
+    logic [63:0] denormal;
+    denormal = get_denormal(width);
+    denormal[width-1] = 1;
+    return denormal;
+endfunction
