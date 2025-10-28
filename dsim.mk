@@ -19,6 +19,8 @@ MAKEFLAGS += --no-builtin-rules
 # Configurable Variables (can be overridden from the command line)
 #==============================================================================
 
+RESULTS ?= results.log
+
 DUT    ?= fp_add
 DUTS   ?= fp_add fp_classify
 
@@ -86,26 +88,61 @@ RUN_PLUSARGS = +UVM_TESTNAME=$(DUT)_$(TEST)
 # Targets
 #==============================================================================
 
-.PHONY: all compile run clean
+.PHONY: all compile run clean results
 
 all:
 	@echo "--- Running all DUTS: [$(DUTS)] TESTS: [$(TESTS)] WIDTHS: [$(WIDTHS)] ---"
+	@rm -f $(RESULTS)
 	@for d in $(DUTS); do \
 		for t in $(TESTS); do \
 			for w in $(WIDTHS); do \
 				$(MAKE) -f $(firstword $(MAKEFILE_LIST)) run DUT=$$d TEST=$$t WIDTH=$$w; \
 			done; \
 		done; \
-	done
+	done;
+	@$(MAKE) -f $(firstword $(MAKEFILE_LIST)) results
 
 compile:
 	@echo "--- Compiling DUT: $(DUT) $(WIDTH) ---"
-	$(COMPILER) $(COMPILER_FLAGS) -F "$(SRC_FILES_LIST)" -F $(TEST_DIR)/filelist.txt
+	@if ! $(COMPILER) $(COMPILER_FLAGS) -F "$(SRC_FILES_LIST)" -F $(TEST_DIR)/filelist.txt > compile_$(DUT)_$(WIDTH).log 2>&1; then \
+		echo "Compilation failed for DUT=$(DUT) WIDTH=$(WIDTH). See compile_$(DUT)_$(WIDTH).log"; \
+		echo "$(DUT),$(WIDTH),$(TEST),FAIL (compile)" >> $(RESULTS); \
+		exit 1; \
+	fi
 
 run: compile
+	@# Run simulation and capture result
 	@echo "--- Running Test: $(TEST) on $(DUT) $(WIDTH) ---"
-	$(SIMULATOR) $(SIMULATOR_FLAGS) $(RUN_PLUSARGS)
+	@if $(SIMULATOR) $(SIMULATOR_FLAGS) $(RUN_PLUSARGS) 2>&1 | tee sim_$(DUT)_$(WIDTH)_$(TEST).log | grep -E "UVM_ERROR\s+:\s+[1-9]\d*|UVM_FATAL\s+:\s+[1-9]\d*" > /dev/null; then \
+		echo "$(DUT),$(WIDTH),$(TEST),FAIL (sim)" >> $(RESULTS); \
+	else \
+		echo "$(DUT),$(WIDTH),$(TEST),PASS" >> $(RESULTS); \
+	fi
+
+results:
+	@echo ""
+	@echo "Simulation Summary"
+	@echo "========================================================================="
+	@printf "%-15s | %-15s | %-9s | %-25s\n" "RESULT" "DUT" "WIDTH" "TEST"
+	@printf "%-15s | %-15s | %-9s | %-25s\n" "---------------" "---------------" "---------" "-------------------------"
+	@if [ -f $(RESULTS) ]; then \
+		cat $(RESULTS) | while IFS=, read -r dut width test result; do \
+			printf "%-15s | %-15s | %-9s | %-25s\n" "$$result" "$$dut" "$$width" "$$test"; \
+		done; \
+		echo "========================================================================="; \
+		total_tests=$$(wc -l < $(RESULTS)); \
+		pass_count=$$(grep -c "PASS" $(RESULTS)); \
+		fail_count=$$(grep -c "FAIL" $(RESULTS)); \
+		verdict="PASS"; \
+		if [ $$fail_count -gt 0 ]; then \
+			verdict="FAIL"; \
+		fi; \
+		printf "%-15s | Total: %-8d | Pass: %-3d | Fail: %-3d\n" "$$verdict" $$total_tests $$pass_count $$fail_count; \
+	else \
+		echo "No results found."; \
+	fi
+	@echo "========================================================================="
 
 clean:
 	@echo "--- Cleaning up DSim files ---"
-	rm -rf *.log *.syn DSim.sln dsim_work/ *.so *.o *.dll
+	rm -rf *.log *.syn DSim.sln dsim_work/ *.so *.o *.dll $(RESULTS)
