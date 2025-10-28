@@ -44,7 +44,7 @@ class fp_add_special_cases_sequence #(
         // Test adding each special value to another special value
         foreach (special_values[i]) begin
             foreach (special_values[j]) begin
-                `uvm_do_with(req, {
+                `uvm_do_special_case("req", req, {
                     req.inputs[0] == special_values[i];
                     req.inputs[1] == special_values[j];
                 })
@@ -54,11 +54,11 @@ class fp_add_special_cases_sequence #(
         // Test adding a normal number to each special value
         foreach (special_values[i]) begin
             foreach (normal_values[j]) begin
-                `uvm_do_with(req, {
+                `uvm_do_special_case("req", req, {
                     req.inputs[0] == special_values[i];
                     req.inputs[1] == normal_values[j];
                 })
-                `uvm_do_with(req, {
+                `uvm_do_special_case("req", req, {
                     req.inputs[0] == normal_values[j];
                     req.inputs[1] == special_values[i];
                 })

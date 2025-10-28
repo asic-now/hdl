@@ -37,22 +37,23 @@ class fp_classify_special_cases_sequence #(
             fp_lib_pkg::get_qnan(WIDTH),
             fp_lib_pkg::get_n_qnan(WIDTH),
             fp_lib_pkg::get_snan(WIDTH),
-            fp_lib_pkg::get_n_snan(WIDTH)
-            // TODO: (now) +Denormal and -Denormal
+            fp_lib_pkg::get_n_snan(WIDTH),
+            fp_lib_pkg::get_denormal(WIDTH),
+            fp_lib_pkg::get_n_denormal(WIDTH),
+            fp_lib_pkg::get_denormal(WIDTH),
+            fp_lib_pkg::get_n_denormal(WIDTH)
         };
 
         `uvm_info(get_type_name(), "Starting special cases sequence", UVM_LOW)
 
         // Test normal numbers
         foreach (normal_values[i]) begin
-            `uvm_do_with(req, { req.inputs[0] == normal_values[i]; })
-            //`uvm_do_special_case("req_p_norm", req, { req.inputs[0] == normal_values[i]; })
+            `uvm_do_special_case("req", req, { req.inputs[0] == normal_values[i]; })
         end
 
         // Test special values
         foreach (special_values[i]) begin
-            `uvm_do_with(req, { req.inputs[0] == special_values[i]; })
-            //`uvm_do_special_case("req_p_norm", req, { req.inputs[0] == special_values[i]; })
+            `uvm_do_special_case("req", req, { req.inputs[0] == special_values[i]; })
         end
 
         `uvm_info(get_type_name(), "Finished special cases sequence", UVM_LOW)
