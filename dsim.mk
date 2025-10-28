@@ -19,23 +19,37 @@ MAKEFLAGS += --no-builtin-rules
 # Configurable Variables (can be overridden from the command line)
 #==============================================================================
 
-DUT       ?= fp_add
-PRECISION ?= fp16
+DUT    ?= fp_add
+DUTS   ?= fp_add fp_classify
 
-PRECISIONS ?= fp16 fp32 fp64
+TEST   ?= combined_test
+TESTS  ?= random_test special_cases_test combined_test
 
-DUTS  ?= fp_add fp_classify
-
-TEST  ?= combined_test
-TESTS ?= random_test special_cases_test combined_test
+WIDTH  ?= 16
+WIDTHS ?= 16 32 64
 
 SRC_FILES_LIST   ?= verif/filelist.libs.txt
 C_MODEL_FILES    ?= verif/lib/fp16_model.c verif/lib/fp32_model.c verif/lib/fp64_model.c verif/lib/fp_dpi_utils.c
 
+# Set DUTS to a single test if DUT is provided on the command line
+ifeq ($(origin DUT), command line)
+	DUTS := $(DUT)
+endif
+
+# Set TESTS to a single test if TEST is provided on the command line
+ifeq ($(origin TEST), command line)
+	TESTS := $(TEST)
+endif
+
+# Set WIDTHS to a single test if WIDTH is provided on the command line
+ifeq ($(origin WIDTH), command line)
+	WIDTHS := $(WIDTH)
+endif
+
 #==============================================================================
 # Static Variables (derived from the above)
 #==============================================================================
-# DUT_PREFIX       = $(word 1, $(subst _, ,$(DUT))) # e.g., fp16
+
 TB_TOP_NAME      = $(DUT)_tb_top
 
 # DSim Commands
@@ -44,23 +58,8 @@ SIMULATOR = dsim
 
 # Project Structure
 RTL_LIB_DIR      = rtl/verilog/lib
-# RTL_DIR          = rtl/verilog/$(DUT_PREFIX)
 VERIF_LIB_DIR    = verif/lib
-# TEST_DIR         = verif/tests/$(DUT)
-
-# Set parameters based on precision
-ifeq ($(PRECISION),fp16)
-	WIDTH=16
-else ifeq ($(PRECISION),fp32)
-	WIDTH=32
-else ifeq ($(PRECISION),fp64)
-	WIDTH=64
-endif
-
-# Source Files
-# DUT_FILE         = $(RTL_DIR)/$(DUT).v
-# TB_PKG_FILE      = $(TEST_DIR)/$(DUT)_pkg.sv
-# TB_TOP_FILE      = $(TEST_DIR)/$(TB_TOP_NAME).sv
+TEST_DIR         = verif/tests/$(DUT)
 
 # Compilation & Run Flags for DSim commands
 COMPILER_FLAGS = \
@@ -69,7 +68,7 @@ COMPILER_FLAGS = \
 	+incdir+rtl/verilog/fp \
 	+incdir+$(RTL_LIB_DIR) \
 	+incdir+$(VERIF_LIB_DIR) \
-	+incdir+verif/tests/$(DUT)
+	+incdir+$(TEST_DIR)
 
 SIMULATOR_FLAGS = \
 	-top work.$(TB_TOP_NAME) \
@@ -81,7 +80,6 @@ SIMULATOR_FLAGS = \
 	-suppress IneffectiveDynamicCast:UninstVif
 
 # Runtime Plusargs
-#RUN_PLUSARGS = +UVM_TESTNAME=$(PRECISION)_add_$(TEST)
 RUN_PLUSARGS = +UVM_TESTNAME=$(DUT)_$(TEST)
 
 #==============================================================================
@@ -91,14 +89,21 @@ RUN_PLUSARGS = +UVM_TESTNAME=$(DUT)_$(TEST)
 .PHONY: all compile run clean
 
 all:
-	@$(foreach p,$(PRECISIONS),$(MAKE) -f $(firstword $(MAKEFILE_LIST)) run DUT=$(DUT) PRECISION=$(p) TEST=$(TEST);)
+	@echo "--- Running all DUTS: [$(DUTS)] TESTS: [$(TESTS)] WIDTHS: [$(WIDTHS)] ---"
+	@for d in $(DUTS); do \
+		for t in $(TESTS); do \
+			for w in $(WIDTHS); do \
+				$(MAKE) -f $(firstword $(MAKEFILE_LIST)) run DUT=$$d TEST=$$t WIDTH=$$w; \
+			done; \
+		done; \
+	done
 
 compile:
-	@echo "--- Compiling DUT: $(DUT) ---"
-	$(COMPILER) $(COMPILER_FLAGS) -F "$(SRC_FILES_LIST)" -F verif/tests/$(DUT)/filelist.txt
+	@echo "--- Compiling DUT: $(DUT) $(WIDTH) ---"
+	$(COMPILER) $(COMPILER_FLAGS) -F "$(SRC_FILES_LIST)" -F $(TEST_DIR)/filelist.txt
 
 run: compile
-	@echo "--- Running Test: $(TEST) on $(DUT) ---"
+	@echo "--- Running Test: $(TEST) on $(DUT) $(WIDTH) ---"
 	$(SIMULATOR) $(SIMULATOR_FLAGS) $(RUN_PLUSARGS)
 
 clean:
