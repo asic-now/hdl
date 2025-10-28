@@ -27,7 +27,7 @@ module fp_classify #(
     `VERIF_DECLARE_PIPELINE(0)  // Verification Support
 
     // Derived parameters for convenience
-    localparam EXP_W            = (WIDTH == 64) ?   11 : (WIDTH == 32) ?    8 : (WIDTH == 16) ?    5 : 0; // IEEE-754
+    localparam EXP_W        = (WIDTH == 64) ?   11 : (WIDTH == 32) ?    8 : (WIDTH == 16) ?    5 : 0; // IEEE-754
 
     localparam MANT_W       = WIDTH - 1 - EXP_W;
     localparam SIGN_POS     = WIDTH - 1;
