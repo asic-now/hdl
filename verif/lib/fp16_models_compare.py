@@ -12,7 +12,7 @@ import subprocess
 import os
 from typing import Optional
 
-from fp16_model import fp16_add, fp16_print
+from fp16_model import fp16_add, fp16_mul, fp16_print
 
 
 def get_lib_path():
@@ -29,13 +29,15 @@ libfp16: Optional[CDLL] = None
 
 
 def load_libfp16() -> CDLL:
-    """Load the shared library containing the C c_fp16_add function"""
+    """Load the shared library containing the C model functions"""
     global libfp16  # pylint: disable=global-statement
     if libfp16 is None:
         lib_path = get_lib_path()
         libfp16 = ctypes.CDLL(lib_path)
         libfp16.c_fp16_add.argtypes = [c_uint16, c_uint16]
         libfp16.c_fp16_add.restype = c_uint16
+        libfp16.c_fp16_mul.argtypes = [c_uint16, c_uint16]
+        libfp16.c_fp16_mul.restype = c_uint16
     return libfp16
 
 
@@ -54,6 +56,24 @@ def fp16_add_c(a_hex: str, b_hex: str) -> str:
     a_val = int(a_hex, 16)
     b_val = int(b_hex, 16)
     result = lib.c_fp16_add(c_uint16(a_val), c_uint16(b_val))
+    return f"{result:04x}"
+
+
+def fp16_mul_c(a_hex: str, b_hex: str) -> str:
+    """
+    Call the C c_fp16_mul() function via ctypes.
+
+    Args:
+        a_hex (str): hex string representing a 16-bit half-precision float bit pattern.
+        b_hex (str): hex string representing a 16-bit half-precision float bit pattern.
+
+    Returns:
+        str: hex string representing the fp16 bit pattern result.
+    """
+    lib = load_libfp16()
+    a_val = int(a_hex, 16)
+    b_val = int(b_hex, 16)
+    result = lib.c_fp16_mul(c_uint16(a_val), c_uint16(b_val))
     return f"{result:04x}"
 
 
@@ -88,6 +108,51 @@ def compare_fp16_add(a_hex: str, b_hex: str, c_py: str, c_c: str) -> int:
         res = 1
     print(
         f"{s} fp16_add(0x{a_hex}, 0x{b_hex}) results - Python: 0x{py_result}{exp_py}, C: 0x{c_result}{exp_c}"
+    )
+    if s != "PASS":
+        vals = [
+            "0x" + a_hex,
+            "0x" + b_hex,
+            "0x" + c_result,
+            "0x" + py_result,
+        ]
+        if c_py:
+            vals.append("0x" + c_py)
+        fp16_print(vals)
+    return res
+
+
+def compare_fp16_mul(a_hex: str, b_hex: str, c_py: str, c_c: str) -> int:
+    """
+    Compare C and Python fp16_mul implementations and print results.
+
+    Args:
+        a_hex (str): hex string of first operand.
+        b_hex (str): hex string of second operand.
+        c_py  (str): hex string of expected Py output.
+        c_c   (str): hex string of expected C  output.
+    """
+    c_result = fp16_mul_c(a_hex, b_hex)
+    py_result = fp16_mul(a_hex, b_hex)["hex"]
+    exp_py = ""
+    exp_c = ""
+    s = "PASS"
+    res = 0
+    if c_py and py_result != c_py:
+        exp_py = f", Expected: 0x{c_py}"
+        s = "FAIL"
+        res = 1
+    if not res and c_c and py_result != c_py:
+        exp_c = f", Expected: 0x{c_c}"
+        s = "FAIL"
+        res = 1
+    if not res and (not c_py or not c_c) and c_result != py_result:
+        exp_py = f", Expected: 0x{c_py}" if c_py else f", Expected: 0x{c_result}"
+        exp_c = f", Expected: 0x{c_c}" if c_c else f", Expected: 0x{py_result}"
+        s = "FAIL"
+        res = 1
+    print(
+        f"{s} fp16_mul(0x{a_hex}, 0x{b_hex}) results - Python: 0x{py_result}{exp_py}, C: 0x{c_result}{exp_c}"
     )
     if s != "PASS":
         vals = [
@@ -141,13 +206,12 @@ def compile_lib():
     return result
 
 
-def main():
-    """Example test"""
-    compile_lib()
+def add_test():
+    """Test add models."""
     total = 0
     res = 0
 
-    test_cases = [
+    add_test_cases = [
         # (   a,      b,   c_py,    c_c),
         # Edge cases
         # signaling NaN -> quiet NaN
@@ -187,7 +251,7 @@ def main():
         ("c540", "2cab", "c52d", "c52d"),
         ("5a63", "dbdb", "d1e0", "d1e0"),
     ]
-    for a, b, c_py, c_c in test_cases:
+    for a, b, c_py, c_c in add_test_cases:
         exp_str = ""
         if c_py:
             exp_str += f"=0x{c_py}/* py */"
@@ -196,12 +260,48 @@ def main():
         print(f"\nTesting: fp16_add(0x{a}, 0x{b}){exp_str}")
         res += compare_fp16_add(a, b, c_py, c_c)
         total += 1
+    if res:
+        print(f"FAIL ADD Test: {res} failed of {total} test cases.")
+    else:
+        print(f"PASS ADD Test: All {total} test cases passed.")
+    return 1 if res != 0 else 0
+
+
+def mul_test():
+    """Test mul models."""
+    total = 0
+    res = 0
+
+    mul_test_cases = [
+        # (   a,      b,   c_py,    c_c),
+        ("d6b8", "8c61", "275b", "275a"),  # Sim PASS
+        ("06f3", "0e82", "0001", "0001"),  # Sim FAIL
+        #
+        ("4000", "4200", "4600", "4600"),  # 2.0 * 3.0 = 6.0
+        ("c000", "4200", "c600", "c600"),  # -2.0 * 3.0 = -6.0
+        ("3800", "3400", "3000", "3000"),  # 0.5 * 0.25 = 0.125
+        ("7c00", "4000", "7c00", "7c00"),  # +Inf * 2.0 = +Inf
+        ("7c00", "0000", "fe00", "fe00"),  # +Inf * 0 = -NaN
+        ("7c01", "4000", "7e01", "7e00"),  # sNaN * 2.0 = qNaN
+    ]
+    for a, b, c_py, c_c in mul_test_cases:
+        print(f"\nTesting: fp16_mul(0x{a}, 0x{b})")
+        res += compare_fp16_mul(a, b, c_py, c_c)
+        total += 1
 
     if res:
-        print(f"FAIL Test: {res} failed of {total} test cases.")
+        print(f"FAIL MUL Test: {res} failed of {total} test cases.")
     else:
-        print(f"PASS Test: All {total} test cases passed.")
+        print(f"PASS MUL Test: All {total} test cases passed.")
     return 1 if res != 0 else 0
+
+
+def main():
+    compile_lib()
+    res = 0
+    res += add_test()
+    res += mul_test()
+    return res
 
 
 if __name__ == "__main__":
