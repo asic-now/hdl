@@ -4,7 +4,7 @@
 This script models 16-bit IEEE 754 half-precision operations.
 
 
-E.g. "add" command adds two values given as hex (like 0xc540)
+E.g. "add" command adds two values given as hex (like 0xc540) with a given rounding mode
 and outputs the result in multiple formats.
 """
 # verif/lib/fp16_model.py
@@ -13,6 +13,16 @@ import argparse
 from typing import Dict, List, Tuple
 
 import numpy as np
+
+# Rounding modes matching grs_round.vh
+RNE = 0  # Round to Nearest, Ties to Even
+RTZ = 1  # Round Towards Zero
+RPI = 2  # Round Towards Positive Infinity
+RNI = 3  # Round Towards Negative Infinity
+RNA = 4  # Round to Nearest, Ties Away from Zero
+
+ROUNDING_MODES = {"rne": RNE, "rtz": RTZ, "rpi": RPI, "rni": RNI, "rna": RNA}
+
 
 def fp16_parse_hex(hex_str: str) -> np.float16:
     """Convert hexadecimal string to 2-byte big-endian fp16 value."""
@@ -39,43 +49,86 @@ def fp16_result(c) -> Dict[str, str]:
         'oct': f'{c_int:06o}',
     }
 
-def fp16_add(a_hex: str, b_hex: str) -> Dict[str, str]:
+def round_float32_to_float16(val: np.float32, mode: int) -> np.float16:
+    """
+    Rounds a float32 value to float16 with a specified rounding mode.
+    This is a simplified implementation. For full compliance, a more
+    detailed bit-level manipulation is needed, especially for denormals.
+    """
+    if mode == RNE:  # Round to Nearest, Ties to Even (numpy default)
+        return np.float16(val)
+
+    # For other modes, we can use some tricks with higher precision floats
+    # This is not perfect but works for many cases.
+    # A proper implementation would involve bit-level manipulation of the float.
+    if np.isinf(val) or np.isnan(val) or val == 0:
+        return np.float16(val)
+
+    if mode == RTZ:  # Round Towards Zero
+        return (
+            np.float16(np.trunc(val * (2**10)) / (2**10))
+            if val > 0
+            else np.float16(np.ceil(val * (2**10)) / (2**10))
+        )
+    if mode == RPI:  # Round Towards Positive Infinity
+        return np.float16(np.ceil(val * (2**10)) / (2**10))
+    if mode == RNI:  # Round Towards Negative Infinity
+        return np.float16(np.floor(val * (2**10)) / (2**10))
+    if mode == RNA:  # Round to Nearest, Ties Away from Zero
+        # This is tricky without bit manipulation. Python's round() does this.
+        # We'll do a simplified version.
+        return np.float16(np.round(val, 4))  # Approximate
+
+    # Default to RNE if mode is unknown
+    return np.float16(val)
+
+
+def fp16_add(a_hex: str, b_hex: str, rounding_mode: int = RNE) -> Dict[str, str]:
     """
     Add two IEEE 754 binary16 (fp16) numbers given as hex strings.
 
     Parameters:
         a_hex (str): First 16-bit half-precision floating-point value as a hex string (e.g. 'c540').
         b_hex (str): Second 16-bit half-precision floating-point value as a hex string.
+        rounding_mode (int): The rounding mode to use, matching grs_round.vh.
 
     Returns:
         Dict[str, str]: Result in multiple formats (fp16 string, hex, bin, dec, oct).
     """
 
     # Convert hex strings to fp16
-    a = fp16_parse_hex(a_hex)
-    b = fp16_parse_hex(b_hex)
-    # Add as fp16 and limit to fp16 precision
-    c = np.float16(a + b)
-    print(f"DEBUG: a = {a}, b = {b}, c = {c}")
+    a_fp16 = fp16_parse_hex(a_hex)
+    b_fp16 = fp16_parse_hex(b_hex)
+
+    # Perform operation in higher precision (float32) to have bits for rounding
+    result_f32 = np.float32(a_fp16) + np.float32(b_fp16)
+
+    # Round the result to fp16 using the specified mode
+    c = round_float32_to_float16(result_f32, rounding_mode)
+
+    print(f"DEBUG: a = {a_fp16}, b = {b_fp16}, c = {c}")
     return fp16_result(c)
 
-def fp16_mul(a_hex: str, b_hex: str) -> Dict[str, str]:
+def fp16_mul(a_hex: str, b_hex: str, rounding_mode: int = RNE) -> Dict[str, str]:
     """
     Multiply two IEEE 754 binary16 (fp16) numbers given as hex strings.
 
     Parameters:
         a_hex (str): First 16-bit half-precision floating-point value as a hex string.
         b_hex (str): Second 16-bit half-precision floating-point value as a hex string.
+        rounding_mode (int): The rounding mode to use, matching grs_round.vh.
 
     Returns:
         Dict[str, str]: Result in multiple formats (fp16 string, hex, bin, dec, oct).
     """
 
     # Convert hex strings to fp16
-    a = fp16_parse_hex(a_hex)
-    b = fp16_parse_hex(b_hex)
-    # Mul as fp16 and limit to fp16 precision
-    c = np.float16(a * b)
+    a_fp16 = fp16_parse_hex(a_hex)
+    b_fp16 = fp16_parse_hex(b_hex)
+    # Perform operation in higher precision (float32)
+    result_f32 = np.float32(a_fp16) * np.float32(b_fp16)
+    # Round the result to fp16 using the specified mode
+    c = round_float32_to_float16(result_f32, rounding_mode)
     return fp16_result(c)
 
 def fp16_print(numbers: List[str]) -> None:
@@ -111,6 +164,12 @@ def parse_args() -> argparse.Namespace:
         sp = subparsers.add_parser(cmd, help=f"{cmd} two fp16 values")
         sp.add_argument("a", help="First operand (e.g. 0xc540, 50560, 0b1100... or 0o...)")
         sp.add_argument("b", help="Second operand (same format as first)")
+        sp.add_argument(
+            "--round",
+            choices=ROUNDING_MODES.keys(),
+            default="rne",
+            help="Rounding mode",
+        )
     sp = subparsers.add_parser('print', help="Print fp16 numbers as float/scientific")
     sp.add_argument("numbers", nargs='+',
         help="One or more fp16 bit-patterns (hex/bin/dec/oct) to print as float/scientific"
@@ -181,10 +240,11 @@ def main() -> None:
         fmt, prefix = detect_format(args.a)
         a_hex = to_hex_str(args.a)
         b_hex = to_hex_str(args.b)
+        rounding_mode = ROUNDING_MODES[args.round]
         if args.command == "add":
-            result = fp16_add(a_hex, b_hex)
+            result = fp16_add(a_hex, b_hex, rounding_mode)
         else:
-            result = fp16_mul(a_hex, b_hex)
+            result = fp16_mul(a_hex, b_hex, rounding_mode)
         # Only print result in matching format, with no markup
         print(prefix+result[fmt])
     elif args.command == "print":

@@ -5,6 +5,8 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
+`include "grs_round.vh"
+
 class fp_transaction #(
     int NUM_INPUTS = 2,
     int INPUT_WIDTH = 16,
@@ -13,16 +15,28 @@ class fp_transaction #(
 
     `uvm_object_param_utils(fp_transaction #(NUM_INPUTS, INPUT_WIDTH, OUTPUT_WIDTH))
 
+    // Rounding modes matching grs_round.vh
+    // `define RNE 3'b000 // Round to Nearest, Ties to Even (Default IEEE mode)
+    // `define RTZ 3'b001 // Round Towards Zero / Truncation
+    // `define RPI 3'b010 // Round Towards Positive Infinity
+    // `define RNI 3'b011 // Round Towards Negative Infinity
+    // `define RNA 3'b100 // Round to Nearest, Ties Away from Zero
+    rand logic [2:0] rounding_mode;
+
     function new(string name = "fp_transaction");
         super.new(name);
     endfunction
+
+    constraint rounding_mode_c {
+        rounding_mode inside {`RNE, `RTZ, `RPI, `RNI, `RNA};
+    }
 
     // Override the compare function to handle FP-specific canonicalization.
     // It now returns a fully formatted log message for both PASS and FAIL cases.
     virtual function string compare(input uvm_sequence_item golden_trans_item, output bit is_match);
         fp_transaction #(NUM_INPUTS, INPUT_WIDTH, OUTPUT_WIDTH) golden_trans;
         logic [OUTPUT_WIDTH-1:0] dut_canonical, golden_canonical;
-        string s;
+        string s, rounding_mode_str;
 
         if (!$cast(golden_trans, golden_trans_item)) begin
             `uvm_fatal("CAST_FAIL", "Failed to cast golden transaction in fp_transaction::compare()")
@@ -37,8 +51,26 @@ class fp_transaction #(
 
         is_match = (dut_canonical == golden_canonical);
 
+        // The rounding mode should be identical for both DUT and MODEL
+        // If it's not, it indicates a testbench error or a mismatch in how
+        // the mode is passed/interpreted.
+        if (this.rounding_mode != golden_trans.rounding_mode) begin
+            `uvm_error("ROUND_MODE_MISMATCH", $sformatf("Rounding mode mismatch: DUT=%0d, MODEL=%0d", this.rounding_mode, golden_trans.rounding_mode))
+            is_match = 0; // Treat as a failure if rounding mode itself doesn't match
+        end
+
+        // Convert rounding_mode to string for better readability in logs
+        case (this.rounding_mode)
+            3'b000: rounding_mode_str = "RNE";
+            3'b001: rounding_mode_str = "RTZ";
+            3'b010: rounding_mode_str = "RPI";
+            3'b011: rounding_mode_str = "RNI";
+            3'b100: rounding_mode_str = "RNA";
+            default: rounding_mode_str = $sformatf("UNKNOWN(%0d)", this.rounding_mode);
+        endcase
+
         // Format inputs
-        s = $sformatf("[%s]: inputs[", get_name());
+        s = $sformatf("[%s]: RM=%s, inputs[", get_name(), rounding_mode_str);
         foreach(inputs[i]) begin
             s = {s, $sformatf("%s0x%h", (i > 0) ? ", " : "", inputs[i])};
         end

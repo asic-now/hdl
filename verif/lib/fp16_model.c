@@ -78,7 +78,7 @@ static uint16_t float_to_fp16_works_for_add(float f) {
     return (sign << 15) | (half_exp << 10) | half_mant;
 }
 
-static uint16_t float_to_fp16(float f) {
+static uint16_t float_to_fp16(float f, const int rounding_mode) {
     // This implementation correctly handles rounding (Round to Nearest, Ties to Even)
     // and underflow to denormalized numbers.
     float_conv conv;
@@ -170,50 +170,50 @@ void c_fp16_classify(const uint16_t in, fp_classify_outputs_s* out) {
 }
 
 // The exported DPI-C function that will be called from SystemVerilog
-uint16_t c_fp16_add(uint16_t a, uint16_t b) {
+uint16_t c_fp16_add(uint16_t a, uint16_t b, const int rounding_mode) {
     float fa = fp16_to_float(a);
     float fb = fp16_to_float(b);
     float fresult = fa + fb;
-    return float_to_fp16(fresult);
+    return float_to_fp16(fresult, rounding_mode);
 }
 
 // Multiply two fp16 numbers: c = a * b
-uint16_t c_fp16_mul(uint16_t a, uint16_t b) {
+uint16_t c_fp16_mul(uint16_t a, uint16_t b, const int rounding_mode) {
     float fa = fp16_to_float(a);
     float fb = fp16_to_float(b);
     float fc = fa * fb;
-    return float_to_fp16(fc);
+    return float_to_fp16(fc, rounding_mode);
 }
 
 // Divide two fp16 numbers: c = a / b
-uint16_t c_fp16_div(uint16_t a, uint16_t b) {
+uint16_t c_fp16_div(uint16_t a, uint16_t b, const int rounding_mode) {
     float fa = fp16_to_float(a);
     float fb = fp16_to_float(b);
     float fc = fa / fb;
-    return float_to_fp16(fc);
+    return float_to_fp16(fc, rounding_mode);
 }
 
 // Fused multiply-add: c = a * b + c
-uint16_t c_fp16_mul_add(uint16_t a, uint16_t b, uint16_t c) {
+uint16_t c_fp16_mul_add(uint16_t a, uint16_t b, uint16_t c, const int rounding_mode) {
     float fa = fp16_to_float(a);
     float fb = fp16_to_float(b);
     float fc = fp16_to_float(c);
-    return float_to_fp16(fa * fb + fc);
+    return float_to_fp16(fa * fb + fc, rounding_mode);
 }
 
 // Fused multiply-subtract: c = a * b - c
-uint16_t c_fp16_mul_sub(uint16_t a, uint16_t b, uint16_t c) {
+uint16_t c_fp16_mul_sub(uint16_t a, uint16_t b, uint16_t c, const int rounding_mode) {
     float fa = fp16_to_float(a);
     float fb = fp16_to_float(b);
     float fc = fp16_to_float(c);
-    return float_to_fp16(fa * fb - fc);
+    return float_to_fp16(fa * fb - fc, rounding_mode);
 }
 
 // Reciprocal: c = 1.0 / a
-uint16_t c_fp16_recip(uint16_t a) {
+uint16_t c_fp16_recip(uint16_t a, const int rounding_mode) {
     float fa = fp16_to_float(a);
     float fc = 1.0f / fa;
-    return float_to_fp16(fc);
+    return float_to_fp16(fc, rounding_mode);
 }
 
 // Compare: -1 if a < b, 0 if a == b, 1 if a > b
@@ -226,15 +226,15 @@ int c_fp16_cmp(uint16_t a, uint16_t b) {
 }
 
 // Inverse square root: c = 1.0 / sqrt(a)
-uint16_t c_fp16_invsqrt(uint16_t a) {
+uint16_t c_fp16_invsqrt(uint16_t a, const int rounding_mode) {
     float fa = fp16_to_float(a);
     float fc = 1.0f / sqrtf(fa);
-    return float_to_fp16(fc);
+    return float_to_fp16(fc, rounding_mode);
 }
 
 // Square root: c = sqrt(a)
-uint16_t c_fp16_sqrt(uint16_t a) {
+uint16_t c_fp16_sqrt(uint16_t a, const int rounding_mode) {
     float fa = fp16_to_float(a);
     float fc = sqrtf(fa);
-    return float_to_fp16(fc);
+    return float_to_fp16(fc, rounding_mode);
 }

@@ -24,7 +24,7 @@ module fp_mul #(
 
     input  [WIDTH-1:0] a,
     input  [WIDTH-1:0] b,
-    // input  [2:0]       round_mode, // See grs_rounder.v for modes // TODO: (when needed) Implement dynamic port (caller can tie it to a constant if desired)
+    input  [2:0]       rounding_mode_i, // See grs_rounder.v for modes
 
     output [WIDTH-1:0] result
 );
@@ -34,7 +34,6 @@ module fp_mul #(
     localparam EXP_W            = (WIDTH == 64) ?   11 : (WIDTH == 32) ?    8 : (WIDTH == 16) ?    5 : 0; // IEEE-754
     localparam EXP_BIAS         = (WIDTH == 64) ? 1023 : (WIDTH == 32) ?  127 : (WIDTH == 16) ?   15 : 0; // IEEE-754
     localparam PRECISION_BITS   = (WIDTH == 64) ?    5 : (WIDTH == 32) ?    5 : (WIDTH == 16) ?   14 : 0; // Select mantissa precision for accurate rounding
-    localparam [2:0] round_mode = (WIDTH == 64) ? `RNE : (WIDTH == 32) ? `RNE : (WIDTH == 16) ? `RNE : `RNE;
 
     localparam MANT_W       = WIDTH - 1 - EXP_W;
     localparam SIGN_POS     = WIDTH - 1;
@@ -125,6 +124,7 @@ module fp_mul #(
     reg [MANT_W:0]         s1_mant_b_q;
     reg                    s1_special_case_q;
     reg [WIDTH-1:0]        s1_special_result_q;
+    reg [2:0]              s1_rounding_mode_q;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s1_exp_sum_q        <= '0;
@@ -133,6 +133,7 @@ module fp_mul #(
             s1_mant_b_q         <= '0;
             s1_special_case_q   <= 1'b0;
             s1_special_result_q <= P_ZERO;
+            s1_rounding_mode_q  <= `RNE;
         end else begin
             s1_exp_sum_q        <= s1_exp_sum_d;
             s1_sign_q           <= s1_sign_d;
@@ -140,6 +141,7 @@ module fp_mul #(
             s1_mant_b_q         <= s1_mant_b_d;
             s1_special_case_q   <= s1_special_case_d;
             s1_special_result_q <= s1_special_result_d;
+            s1_rounding_mode_q  <= rounding_mode_i;
         end
     end
 
@@ -156,6 +158,7 @@ module fp_mul #(
     reg        [2*MANT_W+1:0] s2_mant_product_q;
     reg                       s2_special_case_q;
     reg        [WIDTH-1:0]    s2_special_result_q;
+    reg        [2:0]          s2_rounding_mode_q;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s2_exp_q            <= '0;
@@ -163,12 +166,14 @@ module fp_mul #(
             s2_mant_product_q   <= '0;
             s2_special_case_q   <= 1'b0;
             s2_special_result_q <= P_ZERO;
+            s2_rounding_mode_q  <= `RNE;
         end else begin
             s2_exp_q            <= s1_exp_sum_q;
             s2_sign_q           <= s1_sign_q;
             s2_mant_product_q   <= s2_mant_product_d;
             s2_special_case_q   <= s1_special_case_q;
             s2_special_result_q <= s1_special_result_q;
+            s2_rounding_mode_q  <= s1_rounding_mode_q;
         end
     end
 
@@ -199,6 +204,7 @@ module fp_mul #(
     reg        [2*MANT_W:0]  s3_mant_q;
     reg                      s3_special_case_q;
     reg        [WIDTH-1:0]   s3_special_result_q;
+    reg        [2:0]         s3_rounding_mode_q;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s3_exp_q            <= '0;
@@ -206,12 +212,14 @@ module fp_mul #(
             s3_mant_q           <= '0;
             s3_special_case_q   <= 1'b0;
             s3_special_result_q <= P_ZERO;
+            s3_rounding_mode_q  <= `RNE;
         end else begin
             s3_exp_q            <= s3_exp_d;
             s3_sign_q           <= s2_sign_q;
             s3_mant_q           <= s3_mant_d;
             s3_special_case_q   <= s2_special_case_q;
             s3_special_result_q <= s2_special_result_q;
+            s3_rounding_mode_q  <= s2_rounding_mode_q;
         end
     end
 
@@ -235,7 +243,7 @@ module fp_mul #(
     ) u_rounder (
         .value_in(mant_to_round),
         .sign_in(s3_sign_q),
-        .mode(round_mode),
+        .mode(s3_rounding_mode_q),
         .value_out(rounded_mant_w_implicit),
         .overflow_out(rounder_overflow)
     );

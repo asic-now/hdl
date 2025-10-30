@@ -34,9 +34,9 @@ def load_libfp16() -> CDLL:
     if libfp16 is None:
         lib_path = get_lib_path()
         libfp16 = ctypes.CDLL(lib_path)
-        libfp16.c_fp16_add.argtypes = [c_uint16, c_uint16]
+        libfp16.c_fp16_add.argtypes = [c_uint16, c_uint16, ctypes.c_int]
         libfp16.c_fp16_add.restype = c_uint16
-        libfp16.c_fp16_mul.argtypes = [c_uint16, c_uint16]
+        libfp16.c_fp16_mul.argtypes = [c_uint16, c_uint16, ctypes.c_int]
         libfp16.c_fp16_mul.restype = c_uint16
     return libfp16
 
@@ -55,7 +55,8 @@ def fp16_add_c(a_hex: str, b_hex: str) -> str:
     lib = load_libfp16()
     a_val = int(a_hex, 16)
     b_val = int(b_hex, 16)
-    result = lib.c_fp16_add(c_uint16(a_val), c_uint16(b_val))
+    # TODO: Pass rounding mode from testcase
+    result = lib.c_fp16_add(c_uint16(a_val), c_uint16(b_val), 0)  # 0 = RNE
     return f"{result:04x}"
 
 
@@ -73,7 +74,8 @@ def fp16_mul_c(a_hex: str, b_hex: str) -> str:
     lib = load_libfp16()
     a_val = int(a_hex, 16)
     b_val = int(b_hex, 16)
-    result = lib.c_fp16_mul(c_uint16(a_val), c_uint16(b_val))
+    # TODO: Pass rounding mode from testcase
+    result = lib.c_fp16_mul(c_uint16(a_val), c_uint16(b_val), 0)  # 0 = RNE
     return f"{result:04x}"
 
 
