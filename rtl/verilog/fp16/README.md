@@ -9,7 +9,7 @@ This directory contains synthesizable Verilog RTL for 16-bit (half-precision) fl
 * fp16_invsqrt.v
 * fp16_mul_add.v
 * fp16_mul_sub.v
-* fp16_mul.v
+* (fp16_mul.v: moved to parameterized ../fp/fp_mul.v)
 * fp16_recip.v
 * fp16_sqrt.v
 * fp32_to_fp16.v

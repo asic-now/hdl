@@ -22,7 +22,7 @@ MAKEFLAGS += --no-builtin-rules
 RESULTS ?= results.log
 
 DUT    ?= fp_add
-DUTS   ?= fp_add fp_classify
+DUTS   ?= fp_add fp_classify fp_mul
 
 TEST   ?= combined_test
 TESTS  ?= random_test special_cases_test combined_test

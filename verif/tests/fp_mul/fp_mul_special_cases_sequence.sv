@@ -1,4 +1,4 @@
-// verif/tests/fp_add/fp_add_special_cases_sequence.sv
+// verif/tests/fp_mul/fp_mul_special_cases_sequence.sv
 // A directed sequence that generates transactions for special FP values.
 
 `include "uvm_macros.svh"
@@ -6,13 +6,13 @@
 `include "fp16_inc.vh"
 `include "fp_macros.svh"
 
-class fp_add_special_cases_sequence #(
+class fp_mul_special_cases_sequence #(
     parameter int WIDTH = 16
 ) extends uvm_sequence #(fp_transaction2 #(WIDTH));
 
-    `uvm_object_param_utils(fp_add_special_cases_sequence #(WIDTH))
+    `uvm_object_param_utils(fp_mul_special_cases_sequence #(WIDTH))
 
-    function new(string name = "fp_add_special_cases_sequence");
+    function new(string name = "fp_mul_special_cases_sequence");
         super.new(name);
     endfunction
 

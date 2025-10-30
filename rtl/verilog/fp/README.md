@@ -9,7 +9,7 @@ This directory contains synthesizable Verilog RTL for floating-point operations 
 * fp_invsqrt.v      - TODO
 * fp_mul_add.v      - TODO
 * fp_mul_sub.v      - TODO
-* fp_mul.v          - TODO
+* fp_mul.v
 * fp_recip.v        - TODO
 * fp_sqrt.v         - TODO
 * fp32_to_fp16.v    - TODO

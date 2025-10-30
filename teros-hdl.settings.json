@@ -106,7 +106,7 @@
         },
         "vivado": {
             "vhdl_arguments": "",
-            "verilog_arguments": "-i rtl/verilog/lib -i verif/lib -i verif/tests/fp_add -i verif/tests/fp_classify"
+            "verilog_arguments": "-i rtl/verilog/lib -i verif/lib -i verif/tests/fp_add -i verif/tests/fp_classify -i verif/tests/fp_mul"
         },
         "vsg": {
             "arguments": ""

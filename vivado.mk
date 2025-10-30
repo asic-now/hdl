@@ -1,3 +1,5 @@
+# TODO: (when needed) Update to include all testbanches (similar to dsim.mk)
+
 # Makefile for compiling and running the UVM testbench using Xilinx Vivado.
 #
 # Assumes this Makefile is in the project root, with 'rtl/' and 'verif/' subdirectories.

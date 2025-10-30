@@ -19,4 +19,5 @@
 # and all DUT RTL files used in the testbench, but not the common / library files.
 -F ../verif/tests/fp_add/filelist.txt
 -F ../verif/tests/fp_classify/filelist.txt
+-F ../verif/tests/fp_mul/filelist.txt
 -F ../verif/tests/lib/filelist.txt

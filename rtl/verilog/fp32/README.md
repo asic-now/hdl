@@ -9,7 +9,7 @@ This directory contains synthesizable Verilog RTL for 32-bit (single-precision) 
 * fp32_invsqrt.v
 * fp32_mul_add.v
 * fp32_mul_sub.v
-* fp32_mul.v
+* (fp32_mul.v: moved to parameterized ../fp/fp_mul.v)
 * fp32_recip.v
 * fp32_sqrt.v
 * fp32_to_int32.v

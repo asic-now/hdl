@@ -1,3 +1,5 @@
+# TODO: (when needed) Update to include all testbanches (similar to dsim.mk)
+
 # Makefile for compiling and running the testbench.
 #
 # NOTE: This Makefile is configured for Icarus Verilog (`iverilog`).

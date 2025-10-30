@@ -1,3 +1,5 @@
+# TODO: (when needed) Update to include all testbanches (similar to dsim.mk)
+
 # Makefile for compiling and running the UVM testbench for the FP16 Adder.
 #
 # Assumes this Makefile is in the project root, with 'rtl/' and 'verif/' subdirectories.

@@ -2,13 +2,13 @@
 //
 // Verilog RTL for a parameterized floating-point adder.
 //
-// This module is a 3-stage pipelined adder for IEEE 754 floating-point numbers.
+// This module is a pipelined adder for IEEE 754 floating-point numbers.
 // It can be configured for different precisions (e.g., fp16, fp32, fp64) by
 // setting the WIDTH parameter.
 //
 // Features:
 // - Parameterized for various precisions.
-// - 3-stage pipelined architecture for improved clock frequency.
+// - pipelined architecture for improved clock frequency.
 // - Handles normalized and denormalized numbers.
 // - Handles special cases: NaN, Infinity, and Zero.
 // - Implements GRS rounding for improved accuracy.

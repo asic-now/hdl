@@ -202,6 +202,99 @@ simulations:
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
 
+  - name: fp_mul_random 16
+    options: |-
+      -top work.fp_mul_tb_top
+      -uvm 1.2
+      -defparam WIDTH=16
+      +UVM_TESTNAME=fp_mul_random_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_mul_special 16
+    options: |-
+      -top work.fp_mul_tb_top
+      -uvm 1.2
+      -defparam WIDTH=16
+      +UVM_TESTNAME=fp_mul_special_cases_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_mul_all 16
+    options: |-
+      -top work.fp_mul_tb_top
+      -uvm 1.2
+      -defparam WIDTH=16
+      +UVM_TESTNAME=fp_mul_combined_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+
+  - name: fp_mul_random 32
+    options: |-
+      -top work.fp_mul_tb_top
+      -uvm 1.2
+      -defparam WIDTH=32
+      +UVM_TESTNAME=fp_mul_random_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_mul_special 32
+    options: |-
+      -top work.fp_mul_tb_top
+      -uvm 1.2
+      -defparam WIDTH=32
+      +UVM_TESTNAME=fp_mul_special_cases_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_mul_all 32
+    options: |-
+      -uvm 1.2
+      -top work.fp_mul_tb_top
+      -defparam WIDTH=32
+      +UVM_TESTNAME=fp_mul_combined_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+
+  - name: fp_mul_random 64
+    options: |-
+      -top work.fp_mul_tb_top
+      -uvm 1.2
+      -defparam WIDTH=64
+      +UVM_TESTNAME=fp_mul_random_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_mul_special 64
+    options: |-
+      -top work.fp_mul_tb_top
+      -uvm 1.2
+      -defparam WIDTH=64
+      +UVM_TESTNAME=fp_mul_special_cases_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+  - name: fp_mul_all 64
+    options: |-
+      -uvm 1.2
+      -top work.fp_mul_tb_top
+      -defparam WIDTH=64
+      +UVM_TESTNAME=fp_mul_combined_test
+      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+
 source_files:
   - language: verilog
     path: filelist.txt
@@ -212,6 +305,7 @@ source_files:
       +incdir+../verif/lib
       +incdir+../verif/tests/fp_add
       +incdir+../verif/tests/fp_classify
+      +incdir+../verif/tests/fp_mul
     file_list: relative-to-file
 library_search_paths:
   - $STD_LIBS\ieee93
