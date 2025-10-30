@@ -46,7 +46,7 @@ static float fp16_to_float(uint16_t h) {
 }
 
 // Converts a 32-bit single-precision float to a 16-bit half-precision float
-static uint16_t float_to_fp16(float f) {
+static uint16_t float_to_fp16_works_for_add(float f) {
     float_conv conv;
     conv.f = f;
     uint32_t x = conv.u;
@@ -76,6 +76,53 @@ static uint16_t float_to_fp16(float f) {
     }
 
     return (sign << 15) | (half_exp << 10) | half_mant;
+}
+
+static uint16_t float_to_fp16(float f) {
+    // This implementation correctly handles rounding (Round to Nearest, Ties to Even)
+    // and underflow to denormalized numbers.
+    float_conv conv;
+    conv.f = f;
+    uint32_t x = conv.u;
+
+    uint16_t sign = (x >> 16) & 0x8000;
+    int32_t  exp  = (x >> 23) & 0xff;
+    int32_t  mant = x & 0x7fffff;
+
+    if (exp == 0xff) { // NaN or Infinity
+        mant = (mant != 0) ? 0x0200 : 0; // Set qNaN bit if mantissa is non-zero
+        return sign | 0x7c00 | mant;
+    }
+
+    // Re-bias exponent from float32 to float16
+    exp = exp - 127 + 15;
+
+    if (exp >= 0x1f) { // Overflow to Infinity
+        return sign | 0x7c00;
+    }
+
+    if (exp <= 0) { // Underflow to denormalized or zero
+        if (exp < -10) { // Result is too small, flush to zero
+            return sign;
+        }
+        // Create denormalized value
+        mant = (mant | 0x800000) >> (1 - exp);
+        // Rounding
+        if ((mant & 0x1000) || ((mant & 0x2000) && (mant & 1))) {
+            mant += 0x2000;
+        }
+        return sign | (mant >> 13);
+    } else {
+        // Normalized number with rounding
+        // Add half LSB for rounding, handle tie-to-even
+        mant = mant + 0x1000; // Add half-LSB
+        if (mant & 0x800000) { // Handle overflow from rounding
+            mant = 0;
+            exp += 1;
+            if (exp == 0x1f) return sign | 0x7c00; // Rounded up to Inf
+        }
+        return sign | (exp << 10) | (mant >> 13);
+    }
 }
 
 // C model function to be exported

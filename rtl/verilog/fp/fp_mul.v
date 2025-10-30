@@ -34,7 +34,7 @@ module fp_mul #(
     localparam EXP_W            = (WIDTH == 64) ?   11 : (WIDTH == 32) ?    8 : (WIDTH == 16) ?    5 : 0; // IEEE-754
     localparam EXP_BIAS         = (WIDTH == 64) ? 1023 : (WIDTH == 32) ?  127 : (WIDTH == 16) ?   15 : 0; // IEEE-754
     localparam PRECISION_BITS   = (WIDTH == 64) ?    5 : (WIDTH == 32) ?    5 : (WIDTH == 16) ?   14 : 0; // Select mantissa precision for accurate rounding
-    localparam [2:0] round_mode = (WIDTH == 64) ? `RNE : (WIDTH == 32) ? `RNE : (WIDTH == 16) ? `RTZ : `RNE;
+    localparam [2:0] round_mode = (WIDTH == 64) ? `RNE : (WIDTH == 32) ? `RNE : (WIDTH == 16) ? `RNE : `RNE;
 
     localparam MANT_W       = WIDTH - 1 - EXP_W;
     localparam SIGN_POS     = WIDTH - 1;
