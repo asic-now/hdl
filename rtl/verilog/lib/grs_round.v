@@ -8,7 +8,7 @@
 //   OUTPUT_WIDTH - The bit width of the final rounded value_out.
 //
 
-`include "grs_round.vh" // Defines Rounding Modes
+`include "grs_round.vh"  // \`RNE, etc.
 
 module grs_round #(
     parameter INPUT_WIDTH  = 28,
@@ -21,32 +21,21 @@ module grs_round #(
 );
 
     // --- 1. Calculate Truncation and GRS Bits from Input Value ---
-    localparam SHIFT_AMOUNT = INPUT_WIDTH - OUTPUT_WIDTH;
+    localparam signed SHIFT_AMOUNT = INPUT_WIDTH - OUTPUT_WIDTH;
 
-    wire [OUTPUT_WIDTH-1:0] base_mantissa;
-    assign base_mantissa = value_in[INPUT_WIDTH-1 : SHIFT_AMOUNT];
-
-    wire lsb;
-    assign lsb = base_mantissa[0];
-
-    wire [SHIFT_AMOUNT-1:0] truncated_bits;
-    assign truncated_bits = value_in[SHIFT_AMOUNT-1 : 0];
+    wire lsb = (SHIFT_AMOUNT >= 0) ? value_in[SHIFT_AMOUNT - 0] : 1'b0;
 
     // Guard bit: The most significant bit of the truncated portion.
-    wire g;
-    assign g = (SHIFT_AMOUNT > 0) ? truncated_bits[SHIFT_AMOUNT - 1] : 1'b0;
+    wire g   = (SHIFT_AMOUNT >= 1) ? value_in[SHIFT_AMOUNT - 1] : 1'b0;
 
     // Round bit: The bit immediately to the right of the Guard bit.
-    wire r;
-    assign r = (SHIFT_AMOUNT > 1) ? truncated_bits[SHIFT_AMOUNT - 2] : 1'b0;
+    wire r   = (SHIFT_AMOUNT >= 2) ? value_in[SHIFT_AMOUNT - 2] : 1'b0;
 
     // Sticky bit: The logical OR of all bits to the right of the Round bit.
-    wire s;
-    assign s = (SHIFT_AMOUNT > 2) ? |(truncated_bits[SHIFT_AMOUNT - 3 : 0]) : 1'b0;
+    wire s   = (SHIFT_AMOUNT >= 3) ? |(value_in[SHIFT_AMOUNT - 3 : 0]) : 1'b0;
     
     // Inexact bit: True if any truncated bit is non-zero. Simplifies logic.
-    wire inexact;
-    assign inexact = (g | r | s);
+    wire inexact = (g | r | s);
 
     // --- 2. Combinatorial Rounding Decision Logic ---
     reg do_increment;
@@ -56,7 +45,7 @@ module grs_round #(
         case (mode)
             // RNE: Round up if > 0.5 LSB, or exactly 0.5 LSB and LSB is 1 (to make it even).
             // This is compactly expressed as G & (L | R | S).
-            `RNE: do_increment = g & (lsb | r | s);
+            `RNE: do_increment = g & (r | s | lsb);
 
             // RTZ: Always truncate. Never increment.
             `RTZ: do_increment = 1'b0;

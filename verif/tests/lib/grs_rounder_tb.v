@@ -1,7 +1,8 @@
 // verif/tests/lib/grs_rounder_tb.vh
 
-`timescale 1ns / 1ps
-`include "grs_round.vh" // Defines Rounding Modes
+// `timescale 1ns / 1ps
+
+`include "grs_round.vh"  // \`RNE, etc.
 
 module grs_rounder_tb;
 
@@ -68,11 +69,13 @@ module grs_rounder_tb;
         // --- Test Cases for RPI (Towards +Inf) ---
         test_case(8'b0101_0001, 1'b0, `RPI, 4'b0110, 1'b0, "RPI: Positive, inexact -> round up");
         test_case(8'b0101_0001, 1'b1, `RPI, 4'b0101, 1'b0, "RPI: Negative, inexact -> truncate");
+        test_case(8'b0101_0100, 1'b0, `RPI, 4'b0110, 1'b0, "RPI: Positive, inexact (r=1) -> round up");
         test_case(8'b0101_0000, 1'b0, `RPI, 4'b0101, 1'b0, "RPI: Positive, exact -> no change");
 
         // --- Test Cases for RNI (Towards -Inf) ---
         test_case(8'b0101_0001, 1'b0, `RNI, 4'b0101, 1'b0, "RNI: Positive, inexact -> truncate");
         test_case(8'b0101_0001, 1'b1, `RNI, 4'b0110, 1'b0, "RNI: Negative, inexact -> round up");
+        test_case(8'b0101_0100, 1'b1, `RNI, 4'b0110, 1'b0, "RNI: Negative, inexact (r=1) -> round up");
 
         // --- Test Cases for RNA (Ties Away from Zero) ---
         test_case(8'b0010_1000, 1'b0, `RNA, 4'b0011, 1'b0, "RNA: Tie away from zero");

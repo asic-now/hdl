@@ -1,7 +1,8 @@
 // verif/tests/lib/grs_round_tb.vh
 
-`timescale 1ns / 1ps
-`include "grs_round.vh" // Defines Rounding Modes
+// `timescale 1ns / 1ps
+
+`include "grs_round.vh"  // \`RNE, etc.
 
 module grs_round_tb;
 
@@ -68,11 +69,13 @@ module grs_round_tb;
         // RPI (Round Towards +Inf)
         test_case(8'b0101_0000, 0, `RPI, 0, "RPI: Pos, Exact");
         test_case(8'b0101_0001, 0, `RPI, 1, "RPI: Pos, Inexact");
+        test_case(8'b0101_0100, 0, `RPI, 1, "RPI: Pos, Inexact (r=1)");
         test_case(8'b0101_0001, 1, `RPI, 0, "RPI: Neg, Inexact");
 
         // RNI (Round Towards -Inf)
         test_case(8'b0101_0000, 1, `RNI, 0, "RNI: Neg, Exact");
-        test_case(8'b0101_0001, 1, `RNI, 1, "RNI: Neg, Inexact");
+        test_case(8'b0101_0001, 1, `RNI, 1, "RNI: Neg, Inexact (s=1)");
+        test_case(8'b0101_0100, 1, `RNI, 1, "RNI: Neg, Inexact (r=1)");
         test_case(8'b0101_0001, 0, `RNI, 0, "RNI: Pos, Inexact");
 
         // RNA (Round to Nearest, Ties Away from Zero)

@@ -5,6 +5,9 @@
 import uvm_pkg::*;
 import fp_add_pkg::*; // Import the DUT-specific test package
 
+`include "common_inc.vh"
+`include "grs_round.vh"  // \`RNE, etc.
+
 module fp_add_tb_top;
     // The WIDTH parameter is passed from the compile command line (e.g., -g WIDTH=16)
     parameter int WIDTH = 16;
@@ -22,6 +25,7 @@ module fp_add_tb_top;
         .rst_n(dut_if.rst_n),
         .a(dut_if.a),
         .b(dut_if.b),
+        .rm(dut_if.rm),
         .result(dut_if.result)
     );
     `VERIF_GET_DUT_PIPELINE(dut)

@@ -22,6 +22,7 @@ module fp_mul_tb_top;
         .rst_n(dut_if.rst_n),
         .a(dut_if.a),
         .b(dut_if.b),
+        .rm(dut_if.rm),
         .result(dut_if.result)
     );
     `VERIF_GET_DUT_PIPELINE(dut)

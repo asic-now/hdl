@@ -15,6 +15,14 @@ typedef union {
     uint64_t u;
 } double_conv;
 
+// Rounding modes matching the Python model and SystemVerilog `grs_round_e` enum
+#define RNE 0  // Round to Nearest, Ties to Even
+#define RTZ 1  // Round Towards Zero
+#define RPI 2  // Round Towards Positive Infinity
+#define RNI 3  // Round Towards Negative Infinity
+#define RNA 4  // Round to Nearest, Ties Away from Zero
+
+
 // Define the output struct using C bit-fields to ensure a memory layout
 // identical to the SystemVerilog 'struct packed'. The total size is 10 bits.
 // The order is reversed from the SV declaration to match how C compilers

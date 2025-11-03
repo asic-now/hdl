@@ -15,7 +15,7 @@
 //   - 3'b100: RNA (Round to Nearest, Ties Away from Zero)
 //
 
-`include "grs_round.vh" // Defines Rounding Modes
+`include "grs_round.vh"  // \`RNE, etc.
 
 module grs_rounder #(
     parameter INPUT_WIDTH  = 28,

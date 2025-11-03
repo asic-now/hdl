@@ -22,7 +22,7 @@ static float u32_to_float(uint32_t u) {
 }
 
 // Converts a C float to its 32-bit integer representation
-static uint32_t float_to_u32(float f, const int rounding_mode) {
+static uint32_t float_to_u32(float f, const int rm) {
     // TODO: Implement rounding modes
     float_conv conv;
     conv.f = f;
@@ -81,37 +81,37 @@ void c_fp32_classify(const uint32_t in, fp_classify_outputs_s* out) {
 }
 
 // The exported DPI-C function that will be called from SystemVerilog
-uint32_t c_fp32_add(uint32_t a, uint32_t b, const int rounding_mode) {
+uint32_t c_fp32_add(uint32_t a, uint32_t b, const int rm) {
     float fa = u32_to_float(a);
     float fb = u32_to_float(b);
     float fresult = fa + fb;
-    return float_to_u32(fresult, rounding_mode);
+    return float_to_u32(fresult, rm);
 }
 
 // Multiply two fp32 numbers
-uint32_t c_fp32_mul(uint32_t a, uint32_t b, const int rounding_mode) {
+uint32_t c_fp32_mul(uint32_t a, uint32_t b, const int rm) {
     float fa = u32_to_float(a);
     float fb = u32_to_float(b);
-    return float_to_u32(fa * fb, rounding_mode);
+    return float_to_u32(fa * fb, rm);
 }
 
 // Divide two fp32 numbers
-uint32_t c_fp32_div(uint32_t a, uint32_t b, const int rounding_mode) {
+uint32_t c_fp32_div(uint32_t a, uint32_t b, const int rm) {
     float fa = u32_to_float(a);
     float fb = u32_to_float(b);
-    return float_to_u32(fa / fb, rounding_mode);
+    return float_to_u32(fa / fb, rm);
 }
 
 // Fused multiply-add
-uint32_t c_fp32_mul_add(uint32_t a, uint32_t b, uint32_t c, const int rounding_mode) {
+uint32_t c_fp32_mul_add(uint32_t a, uint32_t b, uint32_t c, const int rm) {
     float fa = u32_to_float(a);
     float fb = u32_to_float(b);
     float fc = u32_to_float(c);
-    return float_to_u32(fmaf(fa, fb, fc), rounding_mode);
+    return float_to_u32(fmaf(fa, fb, fc), rm);
 }
 
 // Square root
-uint32_t c_fp32_sqrt(uint32_t a, const int rounding_mode) {
+uint32_t c_fp32_sqrt(uint32_t a, const int rm) {
     float fa = u32_to_float(a);
-    return float_to_u32(sqrtf(fa), rounding_mode);
+    return float_to_u32(sqrtf(fa), rm);
 }

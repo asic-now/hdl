@@ -99,5 +99,16 @@
             "args": [],
             "console": "integratedTerminal"
         },
+
+        {
+            "name": "parse_simlog.py log.run1",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "scripts/parse_simlog.py",
+            "args": [
+                "${workspaceFolder}/log.run1",
+            ],
+            "console": "integratedTerminal"
+        },
     ]
 }

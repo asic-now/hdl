@@ -4,8 +4,8 @@
 `include "uvm_macros.svh"
 
 `include "fp16_inc.vh"
-`include "grs_round.vh"
 `include "fp_macros.svh"
+`include "grs_round.vh"  // \`RNE, etc.
 
 class fp_mul_special_cases_sequence #(
     parameter int WIDTH = 16
@@ -48,7 +48,7 @@ class fp_mul_special_cases_sequence #(
                 `uvm_do_special_case("req", req, {
                     req.inputs[0] == special_values[i];
                     req.inputs[1] == special_values[j];
-                    req.rounding_mode == `RNE; // Keep rounding mode constant for special cases
+                    req.rm == `RNE; // Keep rounding mode constant for special cases
                 })
             end
         end
@@ -59,12 +59,12 @@ class fp_mul_special_cases_sequence #(
                 `uvm_do_special_case("req", req, {
                     req.inputs[0] == special_values[i];
                     req.inputs[1] == normal_values[j];
-                    req.rounding_mode == `RNE;
+                    req.rm == `RNE;
                 })
                 `uvm_do_special_case("req", req, {
                     req.inputs[0] == normal_values[j];
                     req.inputs[1] == special_values[i];
-                    req.rounding_mode == `RNE;
+                    req.rm == `RNE;
                 })
             end
         end

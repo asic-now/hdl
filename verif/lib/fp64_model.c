@@ -22,7 +22,7 @@ static double u64_to_double(uint64_t u) {
 }
 
 // Converts a C double to its 64-bit integer representation
-static uint64_t double_to_u64(double d, const int rounding_mode) {
+static uint64_t double_to_u64(double d, const int rm) {
     // TODO: Implement rounding modes
     double_conv conv;
     conv.d = d;
@@ -81,37 +81,37 @@ void c_fp64_classify(const uint64_t in, fp_classify_outputs_s* out) {
 }
 
 // The exported DPI-C function that will be called from SystemVerilog
-uint64_t c_fp64_add(uint64_t a, uint64_t b, const int rounding_mode) {
+uint64_t c_fp64_add(uint64_t a, uint64_t b, const int rm) {
     double da = u64_to_double(a);
     double db = u64_to_double(b);
     double dresult = da + db;
-    return double_to_u64(dresult, rounding_mode);
+    return double_to_u64(dresult, rm);
 }
 
 // Multiply two fp64 numbers
-uint64_t c_fp64_mul(uint64_t a, uint64_t b, const int rounding_mode) {
+uint64_t c_fp64_mul(uint64_t a, uint64_t b, const int rm) {
     double da = u64_to_double(a);
     double db = u64_to_double(b);
-    return double_to_u64(da * db, rounding_mode);
+    return double_to_u64(da * db, rm);
 }
 
 // Divide two fp64 numbers
-uint64_t c_fp64_div(uint64_t a, uint64_t b, const int rounding_mode) {
+uint64_t c_fp64_div(uint64_t a, uint64_t b, const int rm) {
     double da = u64_to_double(a);
     double db = u64_to_double(b);
-    return double_to_u64(da / db, rounding_mode);
+    return double_to_u64(da / db, rm);
 }
 
 // Fused multiply-add
-uint64_t c_fp64_mul_add(uint64_t a, uint64_t b, uint64_t c, const int rounding_mode) {
+uint64_t c_fp64_mul_add(uint64_t a, uint64_t b, uint64_t c, const int rm) {
     double da = u64_to_double(a);
     double db = u64_to_double(b);
     double dc = u64_to_double(c);
-    return double_to_u64(fma(da, db, dc), rounding_mode);
+    return double_to_u64(fma(da, db, dc), rm);
 }
 
 // Square root
-uint64_t c_fp64_sqrt(uint64_t a, const int rounding_mode) {
+uint64_t c_fp64_sqrt(uint64_t a, const int rm) {
     double da = u64_to_double(a);
-    return double_to_u64(sqrt(da), rounding_mode);
+    return double_to_u64(sqrt(da), rm);
 }

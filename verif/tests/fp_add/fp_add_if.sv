@@ -10,7 +10,7 @@ interface fp_add_if #(
     // DUT Inputs
     logic [WIDTH-1:0] a;
     logic [WIDTH-1:0] b;
-    logic [2:0]       rounding_mode;
+    logic [2:0]       rm;
 
     // DUT Outputs
     logic [WIDTH-1:0] result;
@@ -18,13 +18,13 @@ interface fp_add_if #(
     // Clocking block for the driver
     clocking driver_cb @(posedge clk);
         default input #1step output #1ns;
-        output a, b, rounding_mode;
+        output a, b, rm;
     endclocking
 
     // Clocking block for the monitor
     clocking monitor_cb @(posedge clk);
         default input #1step output #1ns;
-        input a, b, rounding_mode, result;
+        input a, b, rm, result;
     endclocking
 
     // Modport for the driver

@@ -14,7 +14,7 @@
 // - TODO: (when needed) Implements GRS rounding for improved accuracy.
 
 `include "common_inc.vh"
-`include "grs_round.vh" // Defines Rounding Modes
+`include "grs_round.vh"  // \`RNE, etc.
 
 module fp_mul #(
     parameter WIDTH  = 16
@@ -24,7 +24,7 @@ module fp_mul #(
 
     input  [WIDTH-1:0] a,
     input  [WIDTH-1:0] b,
-    input  [2:0]       rounding_mode_i, // See grs_rounder.v for modes
+    input  [2:0]       rm, // Rounding mode (see grs_rounder.v for modes)
 
     output [WIDTH-1:0] result
 );
@@ -124,7 +124,7 @@ module fp_mul #(
     reg [MANT_W:0]         s1_mant_b_q;
     reg                    s1_special_case_q;
     reg [WIDTH-1:0]        s1_special_result_q;
-    reg [2:0]              s1_rounding_mode_q;
+    reg [2:0]              s1_rm_q;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s1_exp_sum_q        <= '0;
@@ -133,7 +133,7 @@ module fp_mul #(
             s1_mant_b_q         <= '0;
             s1_special_case_q   <= 1'b0;
             s1_special_result_q <= P_ZERO;
-            s1_rounding_mode_q  <= `RNE;
+            s1_rm_q             <= `RNE;
         end else begin
             s1_exp_sum_q        <= s1_exp_sum_d;
             s1_sign_q           <= s1_sign_d;
@@ -141,7 +141,7 @@ module fp_mul #(
             s1_mant_b_q         <= s1_mant_b_d;
             s1_special_case_q   <= s1_special_case_d;
             s1_special_result_q <= s1_special_result_d;
-            s1_rounding_mode_q  <= rounding_mode_i;
+            s1_rm_q             <= rm;
         end
     end
 
@@ -158,7 +158,7 @@ module fp_mul #(
     reg        [2*MANT_W+1:0] s2_mant_product_q;
     reg                       s2_special_case_q;
     reg        [WIDTH-1:0]    s2_special_result_q;
-    reg        [2:0]          s2_rounding_mode_q;
+    reg        [2:0]          s2_rm_q;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s2_exp_q            <= '0;
@@ -166,14 +166,14 @@ module fp_mul #(
             s2_mant_product_q   <= '0;
             s2_special_case_q   <= 1'b0;
             s2_special_result_q <= P_ZERO;
-            s2_rounding_mode_q  <= `RNE;
+            s2_rm_q             <= `RNE;
         end else begin
             s2_exp_q            <= s1_exp_sum_q;
             s2_sign_q           <= s1_sign_q;
             s2_mant_product_q   <= s2_mant_product_d;
             s2_special_case_q   <= s1_special_case_q;
             s2_special_result_q <= s1_special_result_q;
-            s2_rounding_mode_q  <= s1_rounding_mode_q;
+            s2_rm_q             <= s1_rm_q;
         end
     end
 
@@ -204,7 +204,7 @@ module fp_mul #(
     reg        [2*MANT_W:0]  s3_mant_q;
     reg                      s3_special_case_q;
     reg        [WIDTH-1:0]   s3_special_result_q;
-    reg        [2:0]         s3_rounding_mode_q;
+    reg        [2:0]         s3_rm_q;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             s3_exp_q            <= '0;
@@ -212,14 +212,14 @@ module fp_mul #(
             s3_mant_q           <= '0;
             s3_special_case_q   <= 1'b0;
             s3_special_result_q <= P_ZERO;
-            s3_rounding_mode_q  <= `RNE;
+            s3_rm_q             <= `RNE;
         end else begin
             s3_exp_q            <= s3_exp_d;
             s3_sign_q           <= s2_sign_q;
             s3_mant_q           <= s3_mant_d;
             s3_special_case_q   <= s2_special_case_q;
             s3_special_result_q <= s2_special_result_q;
-            s3_rounding_mode_q  <= s2_rounding_mode_q;
+            s3_rm_q             <= s2_rm_q;
         end
     end
 
@@ -243,7 +243,7 @@ module fp_mul #(
     ) u_rounder (
         .value_in(mant_to_round),
         .sign_in(s3_sign_q),
-        .mode(s3_rounding_mode_q),
+        .mode(s3_rm_q),
         .value_out(rounded_mant_w_implicit),
         .overflow_out(rounder_overflow)
     );

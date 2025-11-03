@@ -21,7 +21,7 @@ class fp_mul_monitor #(
             trans = fp_transaction2 #(WIDTH)::type_id::create("trans_input");
             trans.inputs[0] = vif.monitor_cb.a;
             trans.inputs[1] = vif.monitor_cb.b;
-            trans.rounding_mode = vif.monitor_cb.rounding_mode;
+            trans.rm = vif.monitor_cb.rm;
         end else begin
             trans = null;
         end
