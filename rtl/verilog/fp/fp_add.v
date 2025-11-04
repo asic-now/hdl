@@ -108,7 +108,6 @@ module fp_add #(
     reg         [EXP_W-1:0]     s1_larger_exp_q;
     reg                         s1_result_sign_q;
     reg                         s1_op_is_sub_q;
-    reg                         s1_neg_zero_q;
     reg         [ALIGN_MANT_W-1:0] s1_mant_a_q;  // Extended mantissa for alignment
     reg         [ALIGN_MANT_W-1:0] s1_mant_b_q;
     reg                         s1_special_case_q;
@@ -119,7 +118,6 @@ module fp_add #(
             s1_larger_exp_q     <= 1'b0;
             s1_result_sign_q    <= 1'b0;
             s1_op_is_sub_q      <= 1'b0;
-            s1_neg_zero_q       <= 1'b0;
             s1_mant_a_q         <= 0;
             s1_mant_b_q         <= 0;
             s1_special_case_q   <= 1'b0;
@@ -134,7 +132,6 @@ module fp_add #(
             s1_larger_exp_q  <= larger_exp_in_d;
             s1_result_sign_q <= larger_sign_d;
             s1_op_is_sub_q   <= (sign_a != sign_b);
-            s1_neg_zero_q    <= (is_zero_a && is_zero_b && sign_a && sign_b);
             s1_rm_q          <= rm;
 
             // Handle special cases - bypass the main logic
@@ -150,6 +147,10 @@ module fp_add #(
             end else if (is_inf_b) begin
                 s1_special_case_q <= 1'b1;
                 s1_special_result_q <= b;
+            end else if (is_zero_a && is_zero_b) begin
+                // Per IEEE 754-2008, +0 + -0 = +0, but -0 + -0 = -0
+                s1_special_case_q <= 1'b1;
+                s1_special_result_q <= (sign_a && sign_b) ? N_ZERO : P_ZERO;
             end else if (is_zero_a) begin
                 s1_special_case_q <= 1'b1;
                 s1_special_result_q <= b;
@@ -166,7 +167,6 @@ module fp_add #(
     reg  [EXP_W-1:0]          s2_exp_q;
     reg                       s2_sign_q;
     reg  [1+ALIGN_MANT_W-1:0] s2_mant_q;  // 1 bit for carry
-    reg                       s2_neg_zero_q;
     reg                       s2_special_case_q;
     reg  [WIDTH-1:0]          s2_special_result_q;
     reg  [2:0]                s2_rm_q;
@@ -175,25 +175,18 @@ module fp_add #(
             s2_exp_q            <= EXP_ALL_ZEROS;
             s2_sign_q           <= 1'b0;
             s2_mant_q           <= '0;
-            s2_neg_zero_q       <= 1'b0;
             s2_special_case_q   <= 1'b0;
             s2_special_result_q <= P_ZERO;
             s2_rm_q             <= `RNE;
         end else begin
             s2_exp_q            <= s1_larger_exp_q;
-            s2_neg_zero_q       <= s1_neg_zero_q;
             s2_special_case_q   <= s1_special_case_q;
             s2_special_result_q <= s1_special_result_q;
             s2_rm_q             <= s1_rm_q;
 
             if (s1_op_is_sub_q) begin
-                if (s1_mant_a_q >= s1_mant_b_q) begin
-                    s2_mant_q <= {1'b0, s1_mant_a_q} - {1'b0, s1_mant_b_q};
-                    s2_sign_q <= s1_result_sign_q;
-                end else begin
-                    s2_mant_q <= {1'b0, s1_mant_b_q} - {1'b0, s1_mant_a_q};
-                    s2_sign_q <= ~s1_result_sign_q;
-                end
+                s2_mant_q <= {1'b0, s1_mant_a_q} - {1'b0, s1_mant_b_q};
+                s2_sign_q <= s1_result_sign_q;
             end else begin
                 s2_mant_q <= {1'b0, s1_mant_a_q} + {1'b0, s1_mant_b_q};
                 s2_sign_q <= s1_result_sign_q;
@@ -229,15 +222,13 @@ module fp_add #(
         // The implicit '1' for a normalized number should be at bit ALIGN_MANT_W-1.
         // The denormalized implicit '0' is also at this position (for denorm to norm)
         shift_val = (ALIGN_MANT_W-1) - msb_pos;
-        if (s2_mant_q != 0) begin
-            // Apply the shift and update the exponent
-            if (shift_val > 0) begin
-                final_mant = s2_mant_q << shift_val;
-            end else begin
-                final_mant = s2_mant_q >> (-shift_val);
-            end
-            final_exp = {1'b0, s2_exp_q} - shift_val;
+        // Apply the shift and update the exponent
+        if (shift_val > 0) begin
+            final_mant = s2_mant_q << shift_val;
+        end else begin
+            final_mant = s2_mant_q >> (-shift_val);
         end
+        final_exp = {1'b0, s2_exp_q} - shift_val;
 
     end
 
@@ -248,7 +239,6 @@ module fp_add #(
     reg         [ALIGN_MANT_W-1:0]   s3_final_mant;
     reg  signed [EXP_W:0]            s3_final_exp;
     reg                       s3_mant_zero_q;
-    reg                       s3_neg_zero_q;
     reg  [2:0]                s3_rm_q;
 
     always @(posedge clk or negedge rst_n) begin
@@ -267,7 +257,6 @@ module fp_add #(
             s3_final_mant        <= final_mant;
             s3_final_exp         <= final_exp;
             s3_mant_zero_q       <= (s2_mant_q == 0);
-            s3_neg_zero_q        <= s2_neg_zero_q;
             s3_rm_q              <= s2_rm_q;
         end
     end
@@ -303,15 +292,16 @@ module fp_add #(
             final_exp_rounded = s3_final_exp + rounder_overflow;
 
             // The final mantissa is the output of the rounder, dropping the implicit bit
-            out_mant = rounded_mant_w_implicit[MANT_W-1:0];
+            out_mant = rounder_overflow ? rounded_mant_w_implicit[MANT_W:1] : rounded_mant_w_implicit[MANT_W-1:0];
 
             // Check for overflow/underflow on final exponent
-            if (final_exp_rounded >= EXP_ALL_ONES) begin // Overflow -> Infinity
+            if (final_exp_rounded >= $signed({1'b0,EXP_ALL_ONES})) begin // Overflow -> Infinity
                 out_exp = EXP_ALL_ONES;
                 out_mant = MANT_ALL_ZEROS;
             end else if (final_exp_rounded <= 0) begin // Underflow -> Denormalized or Zero
                 // Note: This implementation flushes to zero on underflow,
                 // a simplified approach to avoid complex denormalization.
+                // TODO: (when needed) Implement denormal values result
                 out_exp = EXP_ALL_ZEROS;
                 out_mant = MANT_ALL_ZEROS;
             end else begin
@@ -329,13 +319,7 @@ module fp_add #(
             if (s3_special_case_q) begin
                 result_q <= s3_special_result_q;
             end else begin
-                // Handle the sign of zero
-                if (out_exp == EXP_ALL_ZEROS && out_mant == MANT_ALL_ZEROS) begin
-                    // Per IEEE 754-2008, +0 + -0 = +0 and -0 + -0 = -0
-                    result_q <= s3_neg_zero_q ? N_ZERO : P_ZERO;
-                end else begin
-                    result_q <= {s3_sign_q, out_exp, out_mant};
-                end
+                result_q <= {s3_sign_q, out_exp, out_mant};
             end
         end
     end

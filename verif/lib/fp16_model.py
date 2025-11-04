@@ -215,6 +215,61 @@ def round_fp64_to_fp16(val: np.float64, rm: int) -> np.float16:
     return np.frombuffer(result_bytes, dtype=np.float16)[0]
 
 
+def grs_round(
+    value_in: int, sign_in: int, mode: int, input_width: int, output_width: int
+) -> int:
+    """
+    Implements the GRS rounding decision logic, mirroring the Verilog grs_round module.
+
+    Args:
+        value_in (int): The unrounded input value (e.g., a mantissa).
+        sign_in (int): The sign of the number (0 for positive, 1 for negative).
+        mode (int): The rounding mode (RNE, RTZ, etc.).
+        input_width (int): The bit width of value_in.
+        output_width (int): The desired bit width of the rounded value.
+
+    Returns:
+        int: 1 if the value should be incremented, 0 otherwise.
+    """
+    shift_amount = input_width - output_width
+
+    # If there are no bits to truncate, no rounding is needed.
+    if shift_amount <= 0:
+        return value_in
+
+    # LSB of the part that will be kept
+    lsb = (value_in >> shift_amount) & 1
+
+    # Guard bit: The most significant bit of the truncated portion.
+    g = (value_in >> (shift_amount - 1)) & 1 if shift_amount >= 1 else 0
+
+    # Round bit: The bit immediately to the right of the Guard bit.
+    r = (value_in >> (shift_amount - 2)) & 1 if shift_amount >= 2 else 0
+
+    # Sticky bit: The logical OR of all bits to the right of the Round bit.
+    if shift_amount >= 3:
+        mask = (1 << (shift_amount - 2)) - 1
+        s = 1 if (value_in & mask) != 0 else 0
+    else:
+        s = 0
+
+    inexact = g | r | s
+    increment = 0
+
+    if mode == RNE:  # Round to Nearest, Ties to Even
+        increment = g & (r | s | lsb)
+    elif mode == RTZ:  # Round Towards Zero
+        increment = 0
+    elif mode == RPI:  # Round Towards Positive Infinity
+        increment = (1 - sign_in) & inexact
+    elif mode == RNI:  # Round Towards Negative Infinity
+        increment = sign_in & inexact
+    elif mode == RNA:  # Round to Nearest, Ties Away from Zero
+        increment = g
+
+    return increment
+
+
 def fp16_add32(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
     """
     Add two IEEE 754 binary16 (fp16) numbers given as hex strings.
@@ -242,7 +297,7 @@ def fp16_add32(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
     return fp16_result(c)
 
 
-def fp16_add(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
+def fp16_add16(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
     """
     Add two IEEE 754 binary16 (fp16) numbers given as hex strings.
 
@@ -267,6 +322,157 @@ def fp16_add(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
 
     print(f"DEBUG: a = {a_fp16}, b = {b_fp16}, c = {c}")
     return fp16_result(c)
+
+def fp16_add(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
+    return fp16_add_ex(a_hex, b_hex, rm, 32)  # Default to 32-bit precision
+
+
+def fp16_add_ex(
+    a_hex: str, b_hex: str, rm: int = RNE, precision_bits: int = 32
+) -> Dict[str, str]:
+    """
+    Adds two fp16 numbers using a configurable intermediate precision,
+    and uses the GRS rounding function. This is a bit-accurate model of fp_add.v.
+
+    Args:
+        a_hex (str): First fp16 operand as a hex string.
+        b_hex (str): Second fp16 operand as a hex string.
+        rm (int): The rounding mode to use.
+        precision_bits (int): The number of extra bits for intermediate precision.
+
+    Returns:
+        Dict[str, str]: The result in multiple formats.
+    """
+    # FP16 constants
+    EXP_W, MANT_W, EXP_BIAS = 5, 10, 15
+
+    # Unpack inputs
+    a_int, b_int = int(a_hex, 16), int(b_hex, 16)
+    sign_a, exp_a, mant_a = (a_int >> 15) & 1, (a_int >> 10) & 0x1F, a_int & 0x3FF
+    sign_b, exp_b, mant_b = (b_int >> 15) & 1, (b_int >> 10) & 0x1F, b_int & 0x3FF
+
+    # Handle special cases (NaN, Inf, Zero)
+    is_zero_a = exp_a == 0 and mant_a == 0
+    is_zero_b = exp_b == 0 and mant_b == 0
+    is_inf_a = exp_a == 31 and mant_a == 0
+    is_inf_b = exp_b == 31 and mant_b == 0
+    is_nan_a = exp_a == 31 and mant_a != 0
+    is_nan_b = exp_b == 31 and mant_b != 0
+
+    if is_nan_a or is_nan_b:
+        return fp16_result(np.float16(np.nan))
+    if is_inf_a and is_inf_b and sign_a != sign_b:
+        return fp16_result(np.float16(np.nan))
+    if is_inf_a:
+        return fp16_result(fp16_parse_hex(a_hex))
+    if is_inf_b:
+        return fp16_result(fp16_parse_hex(b_hex))
+    if is_zero_a and is_zero_b:
+        # +0 + -0 = +0 (RNE), but -0 + -0 = -0
+        res_sign = sign_a & sign_b
+        c = np.float16("-0.0") if res_sign else np.float16("0.0")
+        return fp16_result(c)
+    if is_zero_a:
+        return fp16_result(fp16_parse_hex(b_hex))
+    if is_zero_b:
+        return fp16_result(fp16_parse_hex(a_hex))
+
+    # Add implicit bit (1 for normal, 0 for denormal)
+    full_mant_a = ((exp_a != 0) << MANT_W) | mant_a
+    full_mant_b = ((exp_b != 0) << MANT_W) | mant_b
+
+    # Effective exponents (denormals have exp=1 for calculation)
+    eff_exp_a = exp_a if exp_a != 0 else 1
+    eff_exp_b = exp_b if exp_b != 0 else 1
+
+    # Align mantissas
+    align_mant_w = MANT_W + 1 + precision_bits
+    mant_a_aligned = full_mant_a << precision_bits
+    mant_b_aligned = full_mant_b << precision_bits
+
+    exp_diff = eff_exp_a - eff_exp_b
+    if exp_diff > 0:
+        mant_b_aligned >>= exp_diff
+        res_exp = eff_exp_a
+    else:
+        mant_a_aligned >>= -exp_diff
+        res_exp = eff_exp_b
+
+    # Add or Subtract
+    op_is_sub = sign_a != sign_b
+    if op_is_sub:
+        if mant_a_aligned >= mant_b_aligned:
+            res_mant = mant_a_aligned - mant_b_aligned
+            res_sign = sign_a
+        else:
+            res_mant = mant_b_aligned - mant_a_aligned
+            res_sign = sign_b
+    else:
+        res_mant = mant_a_aligned + mant_b_aligned
+        res_sign = sign_a
+
+    if res_mant == 0:
+        c = np.float16("-0.0") if rm == RNI and op_is_sub else np.float16("0.0")
+        return fp16_result(c)
+
+    # Normalize
+    # Find MSB position
+    if res_mant > 0:
+        msb_pos = res_mant.bit_length() - 1
+    else:
+        msb_pos = -1
+
+    # Normalized position for implicit bit is at align_mant_w - 1
+    norm_pos = align_mant_w - 1
+    shift = norm_pos - msb_pos
+
+    if shift > 0:
+        res_mant <<= shift
+    else:
+        res_mant >>= -shift
+
+    res_exp -= shift
+
+    # Rounding
+    # The implicit bit is at align_mant_w-1, mantissa is below it.
+    # We want to round to MANT_W bits.
+    # The input to the rounder is the mantissa without the implicit bit.
+    rounder_input_width = align_mant_w - 1
+    rounder_output_width = MANT_W
+    rounder_input = res_mant & ((1 << rounder_input_width) - 1)
+
+    increment = grs_round(
+        rounder_input, res_sign, rm, rounder_input_width, rounder_output_width
+    )
+
+    rounded_mant_no_implicit = (
+        rounder_input >> (rounder_input_width - rounder_output_width)
+    ) + increment
+
+    # Check for mantissa overflow from rounding
+    if rounded_mant_no_implicit >> MANT_W:
+        res_exp += 1
+        rounded_mant_no_implicit >>= 1
+
+    final_mant = rounded_mant_no_implicit & ((1 << MANT_W) - 1)
+
+    # Final checks for overflow/underflow
+    if res_exp >= 31:  # Overflow to infinity
+        final_exp = 31
+        final_mant = 0
+    elif res_exp <= 0:  # Underflow to denormal or zero
+        # Simplified: flush to zero. A full model would create denormals.
+        # TODO: (when needed) Implement denormal values result
+        final_exp = 0
+        final_mant = 0
+    else:
+        final_exp = res_exp
+
+    # Pack final result
+    result_int = (res_sign << 15) | (final_exp << 10) | final_mant
+    c = np.frombuffer(result_int.to_bytes(2, "little"), dtype=np.float16)[0]
+    return fp16_result(c)
+
 
 def fp16_mul(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
     """

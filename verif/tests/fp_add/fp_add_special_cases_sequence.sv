@@ -25,7 +25,8 @@ class fp_add_special_cases_sequence #(
         // Define a queue of normal values to test
         normal_values = {
             fp_lib_pkg::float_to_fp(42.0, WIDTH),
-            fp_lib_pkg::float_to_fp(-1.25, WIDTH)
+            fp_lib_pkg::float_to_fp(-1.25, WIDTH),
+            'h899c, 'h0974
         };
 
         // Define a queue of special values to test
@@ -65,6 +66,21 @@ class fp_add_special_cases_sequence #(
                     req.inputs[0] == normal_values[j];
                     req.inputs[1] == special_values[i];
                     req.rm == `RNE;
+                })
+            end
+        end
+
+        foreach (normal_values[i]) begin
+            foreach (normal_values[j]) begin
+                `uvm_do_special_case("req", req, {
+                    req.inputs[0] == normal_values[i];
+                    req.inputs[1] == normal_values[j];
+                    req.rm == `RNE; // Keep rounding mode constant for special cases
+                })
+                `uvm_do_special_case("req", req, {
+                    req.inputs[0] == normal_values[j];
+                    req.inputs[1] == normal_values[i];
+                    req.rm == `RNE; // Keep rounding mode constant for special cases
                 })
             end
         end

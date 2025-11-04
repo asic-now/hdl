@@ -286,8 +286,216 @@ void c_fp16_classify(const uint16_t in, fp_classify_outputs_s* out) {
     }
 }
 
+// Helper function for GRS rounding logic, mirroring Python's grs_round
+static int grs_round_c(uint64_t value_in, int sign_in, int mode, int input_width, int output_width) {
+    int shift_amount = input_width - output_width;
+
+    if (shift_amount <= 0) {
+        return value_in;
+    }
+
+    // LSB of the part that will be kept (bit at position 'shift_amount')
+    int lsb = (value_in >> shift_amount) & 1;
+
+    // Guard bit: The most significant bit of the truncated portion (bit at position 'shift_amount - 1')
+    int g = (shift_amount >= 1) ? (value_in >> (shift_amount - 1)) & 1 : 0;
+
+    // Round bit: The bit immediately to the right of the Guard bit (bit at position 'shift_amount - 2')
+    int r = (shift_amount >= 2) ? (value_in >> (shift_amount - 2)) & 1 : 0;
+
+    // Sticky bit: The logical OR of all bits to the right of the Round bit.
+    int s = 0;
+    if (shift_amount >= 3) {
+        // Mask for bits from 0 to shift_amount - 3
+        uint64_t mask = (1ULL << (shift_amount - 2)) - 1;
+        s = (value_in & mask) != 0;
+    }
+
+    int inexact = g | r | s;
+    int increment = 0;
+
+    switch (mode) {
+        case RNE: // Round to Nearest, Ties to Even
+            increment = g & (r | s | lsb);
+            break;
+        case RTZ: // Round Towards Zero
+            increment = 0;
+            break;
+        case RPI: // Round Towards Positive Infinity
+            increment = (!sign_in) & inexact;
+            break;
+        case RNI: // Round Towards Negative Infinity
+            increment = sign_in & inexact;
+            break;
+        case RNA: // Round to Nearest, Ties Away from Zero
+            increment = g;
+            break;
+        default:
+            increment = 0; // Default to RTZ for unknown modes
+            break;
+    }
+    return increment;
+}
+
 // The exported DPI-C function that will be called from SystemVerilog
-uint16_t c_fp16_add32(uint16_t a, uint16_t b, const int rm) {
+// This is a bit-accurate model of fp_add.v for fp16, with configurable intermediate precision.
+uint16_t c_fp16_add_ex(uint16_t a_val, uint16_t b_val, const int rm, const int precision_bits) {
+    // FP16 constants
+    const int EXP_W = 5;
+    const int MANT_W = 10;
+    // const int EXP_BIAS = 15; // Not directly used in this bit-accurate logic
+
+    // Unpack inputs
+    int sign_a = (a_val >> 15) & 1;
+    int exp_a = (a_val >> 10) & 0x1F;
+    uint16_t mant_a = a_val & 0x3FF;
+
+    int sign_b = (b_val >> 15) & 1;
+    int exp_b = (b_val >> 10) & 0x1F;
+    uint16_t mant_b = b_val & 0x3FF;
+
+    // Handle special cases (NaN, Inf, Zero)
+    int is_nan_a = (exp_a == 0x1F && mant_a != 0);
+    int is_inf_a = (exp_a == 0x1F && mant_a == 0);
+    int is_zero_a = (exp_a == 0x00 && mant_a == 0);
+
+    int is_nan_b = (exp_b == 0x1F && mant_b != 0);
+    int is_inf_b = (exp_b == 0x1F && mant_b == 0);
+    int is_zero_b = (exp_b == 0x00 && mant_b == 0);
+
+    if (is_nan_a || is_nan_b) {
+        return 0x7E00; // Canonical qNaN
+    }
+    if (is_inf_a && is_inf_b && sign_a != sign_b) {
+        return 0x7E00; // Inf - Inf = NaN
+    }
+    if (is_inf_a) {
+        return a_val;
+    }
+    if (is_inf_b) {
+        return b_val;
+    }
+    if (is_zero_a && is_zero_b) {
+        // +0 + -0 = +0 (RNE), but -0 + -0 = -0
+        return (sign_a && sign_b) ? 0x8000 : 0x0000;
+    }
+    if (is_zero_a) {
+        return b_val;
+    }
+    if (is_zero_b) {
+        return a_val;
+    }
+
+    // Add implicit bit (1 for normal, 0 for denormal)
+    uint64_t full_mant_a = ((uint64_t)(exp_a != 0) << MANT_W) | mant_a;
+    uint64_t full_mant_b = ((uint64_t)(exp_b != 0) << MANT_W) | mant_b;
+
+    // Effective exponents (denormals have exp=1 for calculation)
+    int eff_exp_a = (exp_a != 0) ? exp_a : 1;
+    int eff_exp_b = (exp_b != 0) ? exp_b : 1;
+
+    // Align mantissas
+    int align_mant_w = MANT_W + 1 + precision_bits; // e.g., 10 + 1 + 32 = 43 for fp16
+    uint64_t mant_a_aligned = full_mant_a << precision_bits;
+    uint64_t mant_b_aligned = full_mant_b << precision_bits;
+
+    int res_exp;
+    int exp_diff = eff_exp_a - eff_exp_b;
+    if (exp_diff > 0) {
+        mant_b_aligned >>= exp_diff;
+        res_exp = eff_exp_a;
+    } else {
+        mant_a_aligned >>= -exp_diff;
+        res_exp = eff_exp_b;
+    }
+
+    // Add or Subtract
+    int op_is_sub = sign_a != sign_b;
+    uint64_t res_mant;
+    int res_sign;
+
+    if (op_is_sub) {
+        if (mant_a_aligned >= mant_b_aligned) {
+            res_mant = mant_a_aligned - mant_b_aligned;
+            res_sign = sign_a;
+        } else {
+            res_mant = mant_b_aligned - mant_a_aligned;
+            res_sign = sign_b; // Sign of the larger magnitude operand
+        }
+    } else {
+        res_mant = mant_a_aligned + mant_b_aligned;
+        res_sign = sign_a; // Sign is the same as operands
+    }
+
+    if (res_mant == 0) {
+        // Result is exact zero. Handle signed zero for RNI mode if it was a subtraction.
+        return (rm == RNI && op_is_sub) ? 0x8000 : 0x0000;
+    }
+
+    // Normalize
+    int msb_pos = 0;
+    if (res_mant > 0) {
+        // Equivalent to Python's bit_length() - 1 for non-zero values
+        // __builtin_clzll counts leading zeros for unsigned long long (64-bit)
+        msb_pos = (sizeof(uint64_t) * 8 - 1) - __builtin_clzll(res_mant);
+    }
+
+    // Normalized position for implicit bit is at align_mant_w - 1
+    int norm_pos = align_mant_w - 1;
+    int shift = norm_pos - msb_pos;
+
+    if (shift > 0) {
+        res_mant <<= shift;
+    } else {
+        res_mant >>= -shift;
+    }
+    res_exp -= shift;
+
+    // Rounding
+    // The implicit bit is at align_mant_w-1, mantissa is below it.
+    // We want to round to MANT_W bits.
+    // The input to the rounder is the mantissa without the implicit bit.
+    int rounder_input_width = align_mant_w - 1; // Bits from 0 to align_mant_w-2
+    int rounder_output_width = MANT_W; // 10 bits for FP16
+
+    // Extract the portion of res_mant that goes into the rounder
+    // This is the mantissa *after* the implicit bit, extended by precision_bits
+    uint64_t rounder_input = res_mant & ((1ULL << rounder_input_width) - 1);
+
+    int increment = grs_round_c(rounder_input, res_sign, rm, rounder_input_width, rounder_output_width);
+
+    uint64_t rounded_mant_no_implicit = (rounder_input >> (rounder_input_width - rounder_output_width)) + increment;
+
+    // Check for mantissa overflow from rounding
+    if ((rounded_mant_no_implicit >> MANT_W) != 0) { // If bit MANT_W is set (i.e., 1 << MANT_W)
+        res_exp += 1;
+        rounded_mant_no_implicit >>= 1; // Shift right to keep MANT_W bits
+    }
+
+    uint16_t final_mant = rounded_mant_no_implicit & ((1 << MANT_W) - 1); // Extract MANT_W bits
+
+    // Final checks for overflow/underflow
+    uint16_t final_exp;
+    if (res_exp >= 0x1F) { // Overflow to infinity
+        final_exp = 0x1F;
+        final_mant = 0;
+    } else if (res_exp <= 0) { // Underflow to denormal or zero
+        // Simplified: flush to zero. A full model would create denormals.
+        // TODO: (when needed) Implement denormal values result
+        final_exp = 0;
+        final_mant = 0;
+    } else {
+        final_exp = res_exp;
+    }
+
+    // Pack final result
+    uint16_t result_int = (res_sign << 15) | (final_exp << 10) | final_mant;
+    return result_int;
+}
+
+// The exported DPI-C function that will be called from SystemVerilog
+// This version uses float (32-bit) for intermediate calculations.
+uint16_t c_fp16_add_float_intermediate(uint16_t a, uint16_t b, const int rm) {
     float fa = fp16_to_float(a);
     float fb = fp16_to_float(b);
     float fresult = fa + fb;
@@ -295,11 +503,18 @@ uint16_t c_fp16_add32(uint16_t a, uint16_t b, const int rm) {
 }
 
 // The exported DPI-C function that will be called from SystemVerilog
-uint16_t c_fp16_add(uint16_t a, uint16_t b, const int rm) {
+// This version uses double (64-bit) for intermediate calculations.
+uint16_t c_fp16_add_double_intermediate(uint16_t a, uint16_t b, const int rm) {
+    // Convert fp16 to double, perform addition, then convert back to fp16
     double da = (double)fp16_to_float(a);
     double db = (double)fp16_to_float(b);
     double dresult = da + db;
     return double_to_fp16(dresult, rm);
+}
+
+// Default c_fp16_add to use the bit-accurate model with 32 precision bits
+uint16_t c_fp16_add(uint16_t a, uint16_t b, const int rm) {
+    return c_fp16_add_ex(a, b, rm, 32);
 }
 
 // Multiply two fp16 numbers: c = a * b

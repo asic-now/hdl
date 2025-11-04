@@ -262,10 +262,11 @@ special_values = [
     "fe00",  # -qNaN (canonical)
 ]
 
-def get_add_test_uvm_cases(rm: str) -> list:
+def get_add_test_uvm_cases(_rm: str) -> list:
     """Generate a list of test cases for fp16_add."""
     add_test_cases = [
         # From failing fp_add test: UVM_ERROR
+        ("899c", "0974", None, None, "rpi"),
         ("12d4", "f7e2", None, None, "rpi"),  # DUT=0xf7e1, MODEL=0xf7e2 | Canonical: DUT=0xf7e1, MODEL=0xf7e2
         # ("e3e0", "063e", None, None, "rtz"),  # DUT=0xe3e0, MODEL=0xe3df | Canonical: DUT=0xe3e0, MODEL=0xe3df
         # ("761f", "e2d1", None, None, "rne"),  # DUT=0x75e8, MODEL=0x75e9 | Canonical: DUT=0x75e8, MODEL=0x75e9
@@ -430,6 +431,7 @@ def main():
     rm_results = {}
     # for rm in ["rne", "rtz", "rpi", "rni", "rna"]:
     for rm in ["rpi"]:
+        add_cases, mul_cases = [], []
         # add_cases = get_add_test_uvm_cases(rm)
         # mul_cases = get_mul_test_cases_failed(rm)
 
