@@ -78,6 +78,80 @@ static uint16_t float_to_fp16_works_for_add(float f) {
     return (sign << 15) | (half_exp << 10) | half_mant;
 }
 
+static uint16_t double_to_fp16(double d, const int rm) {
+    double_conv conv;
+    conv.d = d;
+    uint64_t x = conv.u;
+
+    uint16_t sign_bit = (x >> 48) & 0x8000;
+    int32_t  exp_64   = (x >> 52) & 0x7ff;
+    uint64_t mant_64  = x & 0x000FFFFFFFFFFFFFULL;
+
+    if (exp_64 == 0x7ff) { // NaN or Infinity
+        uint16_t mant_16 = (mant_64 != 0) ? 0x0200 : 0; // Set qNaN bit if mantissa is non-zero
+        return sign_bit | 0x7c00 | mant_16;
+    }
+
+    // Re-bias exponent from float64 to float16
+    int32_t exp_16 = exp_64 - 1023 + 15;
+
+    if (exp_16 >= 0x1f) { // Overflow
+        if (rm == RNI) return 0xfbff; // Max normal neg number
+        if (rm == RTZ && sign_bit) return 0xfbff; // Max normal neg number
+        return sign_bit | 0x7c00; // Infinity
+    }
+
+    if (exp_16 <= 0) { // Underflow to denormalized or zero
+        if (exp_16 < -10) { // Result is too small, flush to zero
+            if (rm == RPI && !sign_bit) return 0x0001; // Smallest denormal
+            if (rm == RNI && sign_bit) return 0x8001; // Smallest denormal
+            return sign_bit;
+        }
+        // Create denormalized value
+        uint64_t mant = (mant_64 | (1ULL << 52)) >> (1 - exp_16);
+        uint64_t lsb     = (mant >> 42) & 1;
+        uint64_t guard   = (mant >> 41) & 1;
+        uint64_t sticky  = (mant & ((1ULL << 41) - 1)) != 0;
+        uint16_t mant_16 = mant >> 42;
+
+        if ((rm == RNE && guard && (sticky || lsb)) ||
+            (rm == RNA && guard) ||
+            (rm == RPI && !sign_bit && (guard || sticky)) ||
+            (rm == RNI && sign_bit && (guard || sticky))) {
+            mant_16++;
+        }
+        return sign_bit | mant_16;
+    }
+
+    // Normalized number
+    uint64_t lsb    = (mant_64 >> 42) & 1;
+    uint64_t guard  = (mant_64 >> 41) & 1;
+    uint64_t sticky = (mant_64 & ((1ULL << 41) - 1)) != 0;
+    uint16_t mant_16 = mant_64 >> 42;
+
+    int round_up = 0;
+    switch (rm) {
+        case RNE: if (guard && (sticky || lsb)) round_up = 1; break;
+        case RTZ: break;
+        case RPI: if (!sign_bit && (guard || sticky)) round_up = 1; break;
+        case RNI: if (sign_bit && (guard || sticky)) round_up = 1; break;
+        case RNA: if (guard) round_up = 1; break;
+    }
+
+    if (round_up) {
+        mant_16++;
+        if (mant_16 >= 0x0400) { // Mantissa overflow
+            mant_16 = 0;
+            exp_16++;
+            if (exp_16 >= 0x1f) { // Exponent overflow to infinity
+                return sign_bit | 0x7c00;
+            }
+        }
+    }
+
+    return sign_bit | (exp_16 << 10) | mant_16;
+}
+
 static uint16_t float_to_fp16(float f, const int rm) {
     float_conv conv;
     conv.f = f;
@@ -213,11 +287,19 @@ void c_fp16_classify(const uint16_t in, fp_classify_outputs_s* out) {
 }
 
 // The exported DPI-C function that will be called from SystemVerilog
-uint16_t c_fp16_add(uint16_t a, uint16_t b, const int rm) {
+uint16_t c_fp16_add32(uint16_t a, uint16_t b, const int rm) {
     float fa = fp16_to_float(a);
     float fb = fp16_to_float(b);
     float fresult = fa + fb;
     return float_to_fp16(fresult, rm);
+}
+
+// The exported DPI-C function that will be called from SystemVerilog
+uint16_t c_fp16_add(uint16_t a, uint16_t b, const int rm) {
+    double da = (double)fp16_to_float(a);
+    double db = (double)fp16_to_float(b);
+    double dresult = da + db;
+    return double_to_fp16(dresult, rm);
 }
 
 // Multiply two fp16 numbers: c = a * b

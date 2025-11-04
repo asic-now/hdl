@@ -52,7 +52,7 @@ def fp16_result(c) -> Dict[str, str]:
     }
 
 
-def round_float32_to_float16(val: np.float32, rm: int) -> np.float16:
+def round_fp32_to_fp16(val: np.float32, rm: int) -> np.float16:
     """
     Rounds a float32 value to float16 with a specified rounding mode,
     using bit-accurate logic per IEEE 754.
@@ -142,7 +142,80 @@ def round_float32_to_float16(val: np.float32, rm: int) -> np.float16:
     return np.frombuffer(result_bytes, dtype=np.float16)[0]
 
 
-def fp16_add(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
+def round_fp64_to_fp16(val: np.float64, rm: int) -> np.float16:
+    """
+    Rounds a float64 value to float16 with a specified rounding mode,
+    using bit-accurate logic per IEEE 754.
+    """
+    f64_bytes = val.tobytes()
+    x = int.from_bytes(f64_bytes, "little")
+
+    sign_bit = (x >> 48) & 0x8000  # Shift to fp16 sign position
+    exp_64 = (x >> 52) & 0x7FF
+    mant_64 = x & 0xFFFFFFFFFFFFF
+
+    if exp_64 == 0x7FF:  # NaN or Infinity
+        mant_16 = 0x0200 if mant_64 != 0 else 0
+        result_int = sign_bit | 0x7C00 | mant_16
+    else:
+        exp_16 = exp_64 - 1023 + 15
+
+        if exp_16 >= 0x1F:  # Overflow
+            if rm == RNI:
+                result_int = 0xFBFF  # Max normal neg number
+            elif rm == RTZ and sign_bit:
+                result_int = 0xFBFF  # Max normal neg number
+            else:
+                result_int = sign_bit | 0x7C00  # Infinity
+        elif exp_16 <= 0:  # Underflow to denormalized or zero
+            if exp_16 < -10:  # Result is too small, flush to zero
+                if rm == RPI and not sign_bit:
+                    result_int = 0x0001  # Smallest denormal
+                elif rm == RNI and sign_bit:
+                    result_int = 0x8001  # Smallest denormal
+                else:
+                    result_int = sign_bit
+            else:
+                # Create denormalized value
+                mant = (mant_64 | (1 << 52)) >> (1 - exp_16)
+                lsb = (mant >> 42) & 1
+                g = (mant >> 41) & 1
+                sticky = (mant & ((1 << 41) - 1)) != 0
+                mant_16 = mant >> 42
+
+                if (
+                    (rm == RNE and g and (sticky or lsb))
+                    or (rm == RNA and g)
+                    or (rm == RPI and not sign_bit and (g or sticky))
+                    or (rm == RNI and sign_bit and (g or sticky))
+                ):
+                    mant_16 += 1
+                result_int = sign_bit | mant_16
+        else:
+            # Normalized number
+            lsb = (mant_64 >> 42) & 1
+            g = (mant_64 >> 41) & 1
+            sticky = (mant_64 & ((1 << 41) - 1)) != 0
+            mant_16 = mant_64 >> 42
+
+            if (
+                (rm == RNE and g and (sticky or lsb))
+                or (rm == RNA and g)
+                or (rm == RPI and not sign_bit and (g or sticky))
+                or (rm == RNI and sign_bit and (g or sticky))
+            ):
+                mant_16 += 1
+                if mant_16 >= 0x0400:  # Mantissa overflow
+                    mant_16 = 0
+                    exp_16 += 1
+
+            result_int = sign_bit | (exp_16 << 10) | mant_16
+
+    result_bytes = result_int.to_bytes(2, "little")
+    return np.frombuffer(result_bytes, dtype=np.float16)[0]
+
+
+def fp16_add32(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
     """
     Add two IEEE 754 binary16 (fp16) numbers given as hex strings.
 
@@ -163,7 +236,34 @@ def fp16_add(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
     result_f32 = np.float32(a_fp16) + np.float32(b_fp16)
 
     # Round the result to fp16 using the specified mode
-    c = round_float32_to_float16(result_f32, rm)
+    c = round_fp32_to_fp16(result_f32, rm)
+
+    print(f"DEBUG: a = {a_fp16}, b = {b_fp16}, c = {c}")
+    return fp16_result(c)
+
+
+def fp16_add(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
+    """
+    Add two IEEE 754 binary16 (fp16) numbers given as hex strings.
+
+    Parameters:
+        a_hex (str): First 16-bit half-precision floating-point value as a hex string (e.g. 'c540').
+        b_hex (str): Second 16-bit half-precision floating-point value as a hex string.
+        rm (int): The rounding mode to use, matching grs_round.vh.
+
+    Returns:
+        Dict[str, str]: Result in multiple formats (fp16 string, hex, bin, dec, oct).
+    """
+
+    # Convert hex strings to fp16
+    a_fp16 = fp16_parse_hex(a_hex)
+    b_fp16 = fp16_parse_hex(b_hex)
+
+    # Perform operation in higher precision (float64) to have bits for rounding
+    result_f64 = np.float64(a_fp16) + np.float64(b_fp16)
+
+    # Round the result to fp16 using the specified mode
+    c = round_fp64_to_fp16(result_f64, rm)
 
     print(f"DEBUG: a = {a_fp16}, b = {b_fp16}, c = {c}")
     return fp16_result(c)
@@ -187,7 +287,7 @@ def fp16_mul(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
     # Perform operation in higher precision (float32)
     result_f32 = np.float32(a_fp16) * np.float32(b_fp16)
     # Round the result to fp16 using the specified mode
-    c = round_float32_to_float16(result_f32, rm)
+    c = round_fp32_to_fp16(result_f32, rm)
     return fp16_result(c)
 
 def fp16_print(numbers: List[str]) -> None:

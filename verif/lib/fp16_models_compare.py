@@ -430,11 +430,11 @@ def main():
     rm_results = {}
     # for rm in ["rne", "rtz", "rpi", "rni", "rna"]:
     for rm in ["rpi"]:
-        add_cases = get_add_test_uvm_cases(rm)
+        # add_cases = get_add_test_uvm_cases(rm)
         # mul_cases = get_mul_test_cases_failed(rm)
 
-        # add_cases = get_add_test_cases(rm, random_count)
-        mul_cases = [] # get_mul_test_cases(rm, random_count)
+        add_cases = get_add_test_cases(rm, random_count)
+        mul_cases = get_mul_test_cases(rm, random_count)
 
         res_add, total_add = run_add_tests(add_cases)
         res_mul, total_mul = run_mul_tests(mul_cases)
