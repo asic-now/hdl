@@ -92,10 +92,10 @@
         },
 
         {
-            "name": "fp16_models_compare.py",
+            "name": "fp_models_compare.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "verif/lib/fp16_models_compare.py",
+            "program": "verif/lib/fp_models_compare.py",
             "args": [],
             "console": "integratedTerminal"
         },

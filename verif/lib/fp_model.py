@@ -10,7 +10,7 @@ and outputs the result in multiple formats.
 # verif/lib/fp_model.py
 
 import argparse
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -344,14 +344,20 @@ def fp16_add16(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
 
 
 def fp16_add(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
+    """Add two fp16 numbers of a given width."""
     return fp_add_ex(a_hex, b_hex, 16, 32, rm)  # Default to 32-bit precision
+
+
+def fp_add(a_hex: str, b_hex: str, width: int, rm: int = RNE) -> Dict[str, str]:
+    """Add two fp numbers of a given width."""
+    return fp_add_ex(a_hex, b_hex, width, 32, rm)
 
 
 def fp_add_ex(
     a_hex: str,
     b_hex: str,
     width: int,  # TODO: Implement parameterized width
-    precision_bits: int = 32,
+    precision_bits: Optional[int] = None,
     rm: int = RNE,
 ) -> Dict[str, str]:
     """
@@ -367,16 +373,16 @@ def fp_add_ex(
     Returns:
         Dict[str, str]: The result in multiple formats.
     """
-    # FP constants
+    # FP constants (match RTL code)
     WIDTH = width
-    PRECISION_BITS = precision_bits
-    EXP_W, EXP_BIAS, np_type = {
-        16: (5, 15, np.float16),
-        32: (8, 127, np.float32),
-        64: (11, 1023, np.float64),
-    }[width]
+    EXP_W, EXP_BIAS, default_precision, np_type = {
+        16: (5, 15, 32, np.float16),
+        32: (8, 127, 7, np.float32),
+        64: (11, 1023, 7, np.float64),
+    }[WIDTH]
+    PRECISION_BITS = precision_bits or default_precision
 
-    MANT_W = width - 1 - EXP_W
+    MANT_W = WIDTH - 1 - EXP_W
     SIGN_POS = WIDTH - 1
     EXP_POS = MANT_W
     ALIGN_MANT_W = MANT_W + 1 + PRECISION_BITS  # For alignment shift
@@ -388,8 +394,16 @@ def fp_add_ex(
 
     # Unpack inputs
     a_int, b_int = int(a_hex, 16), int(b_hex, 16)
-    sign_a, exp_a, mant_a = ((a_int >> SIGN_POS) & 1, (a_int >> MANT_W) & ((1 << EXP_W) - 1), a_int & ((1 << MANT_W) - 1))
-    sign_b, exp_b, mant_b = ((b_int >> SIGN_POS) & 1, (b_int >> MANT_W) & ((1 << EXP_W) - 1), b_int & ((1 << MANT_W) - 1))
+    sign_a, exp_a, mant_a = (
+        (a_int >> SIGN_POS) & 1,
+        (a_int >> MANT_W) & ((1 << EXP_W) - 1),
+        a_int & ((1 << MANT_W) - 1),
+    )
+    sign_b, exp_b, mant_b = (
+        (b_int >> SIGN_POS) & 1,
+        (b_int >> MANT_W) & ((1 << EXP_W) - 1),
+        b_int & ((1 << MANT_W) - 1),
+    )
 
     # Handle special cases (NaN, Inf, Zero)
     is_zero_a = exp_a == EXP_ALL_ZEROS and mant_a == MANT_ALL_ZEROS
@@ -403,36 +417,36 @@ def fp_add_ex(
         # Return canonical quiet NaN
         qnan_val = (EXP_ALL_ONES << MANT_W) | (1 << (MANT_W - 1))
         return fp_result(
-            width,
-            np.frombuffer(qnan_val.to_bytes(width // 8, "little"), dtype=np_type)[0],
+            WIDTH,
+            np.frombuffer(qnan_val.to_bytes(WIDTH // 8, "little"), dtype=np_type)[0],
         )
     if is_inf_a and is_inf_b and sign_a != sign_b:
         # Inf - Inf = NaN
         qnan_val = (EXP_ALL_ONES << MANT_W) | (1 << (MANT_W - 1))
         return fp_result(
-            width,
-            np.frombuffer(qnan_val.to_bytes(width // 8, "little"), dtype=np_type)[0],
+            WIDTH,
+            np.frombuffer(qnan_val.to_bytes(WIDTH // 8, "little"), dtype=np_type)[0],
         )
     if is_inf_a:
         return fp_result(
-            width, np.frombuffer(a_int.to_bytes(width // 8, "little"), dtype=np_type)[0]
+            WIDTH, np.frombuffer(a_int.to_bytes(WIDTH // 8, "little"), dtype=np_type)[0]
         )
     if is_inf_b:
         return fp_result(
-            width, np.frombuffer(b_int.to_bytes(width // 8, "little"), dtype=np_type)[0]
+            WIDTH, np.frombuffer(b_int.to_bytes(WIDTH // 8, "little"), dtype=np_type)[0]
         )
     if is_zero_a and is_zero_b:
         # +0 + -0 = +0 (RNE), but -0 + -0 = -0
         res_sign = sign_a & sign_b
         c = np_type("-0.0") if res_sign else np_type("0.0")
-        return fp_result(width, c)
+        return fp_result(WIDTH, c)
     if is_zero_a:
         return fp_result(
-            width, np.frombuffer(b_int.to_bytes(width // 8, "little"), dtype=np_type)[0]
+            WIDTH, np.frombuffer(b_int.to_bytes(WIDTH // 8, "little"), dtype=np_type)[0]
         )
     if is_zero_b:
         return fp_result(
-            width, np.frombuffer(a_int.to_bytes(width // 8, "little"), dtype=np_type)[0]
+            WIDTH, np.frombuffer(a_int.to_bytes(WIDTH // 8, "little"), dtype=np_type)[0]
         )
 
     # Add implicit bit (1 for normal, 0 for denormal)
@@ -470,7 +484,7 @@ def fp_add_ex(
 
     if res_mant == 0:
         c = np_type("-0.0") if rm == RNI and op_is_sub else np_type("0.0")
-        return fp_result(width, c)
+        return fp_result(WIDTH, c)
 
     # Normalize
     # Find MSB position
@@ -527,8 +541,8 @@ def fp_add_ex(
 
     # Pack final result
     result_int = (res_sign << SIGN_POS) | (final_exp << MANT_W) | final_mant
-    c = np.frombuffer(result_int.to_bytes(width // 8, "little"), dtype=np_type)[0]
-    return fp_result(width, c)
+    c = np.frombuffer(result_int.to_bytes(WIDTH // 8, "little"), dtype=np_type)[0]
+    return fp_result(WIDTH, c)
 
 
 def fp16_mul(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
@@ -552,6 +566,15 @@ def fp16_mul(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
     # Round the result to fp16 using the specified mode
     c = round_fp32_to_fp16(result_f32, rm)
     return fp16_result(c)
+
+
+def fp_mul(a_hex: str, b_hex: str, width: int, rm: int = RNE) -> Dict[str, str]:
+    """Multiply two fp numbers of a given width."""
+    # TODO: Implement bit-accurate model like fp_add_ex
+    if width == 16:
+        return fp16_mul(a_hex, b_hex, rm)
+    else:
+        raise ValueError(f"Unsupported width: {width}")
 
 
 def fp16_print(numbers: List[str]) -> None:
@@ -675,9 +698,9 @@ def main() -> None:
         b_hex = to_hex_str(args.b)
         rm = ROUNDING_MODES[args.round]
         if args.command == "add":
-            result = fp16_add(a_hex, b_hex, rm)
+            result = fp_add(a_hex, b_hex, int(args.width), rm)
         else:
-            result = fp16_mul(a_hex, b_hex, rm)
+            result = fp_mul(a_hex, b_hex, int(args.width), rm)
         # Only print result in matching format, with no markup
         print(prefix + result[fmt])
     elif args.command == "print":
