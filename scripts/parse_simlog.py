@@ -16,7 +16,7 @@ project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
 
-from verif.lib.fp16_model import parse_fp16_value
+from verif.lib.fp_model import parse_fp16_value
 
 
 def process_log_file(log_path: Path) -> None:

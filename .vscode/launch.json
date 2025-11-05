@@ -81,12 +81,12 @@
         },
 
         {
-            "name": "fp16_model.py add 0xc540 0x2cab",
+            "name": "fp_model.py add 16 0xc540 0x2cab",
             "type": "debugpy",
             "request": "launch",
-            "program": "verif/lib/fp16_model.py",
+            "program": "verif/lib/fp_model.py",
             "args": [
-                "add", "0xc540", "0x2cab",
+                "add", "16", "0xc540", "0x2cab",
             ],
             "console": "integratedTerminal"
         },

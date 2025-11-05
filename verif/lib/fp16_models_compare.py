@@ -13,7 +13,7 @@ import os
 import random
 from typing import Optional, Tuple
 
-from fp16_model import ROUNDING_MODES, fp16_add, fp16_mul, fp16_print
+from fp_model import ROUNDING_MODES, fp16_add, fp16_mul, fp16_print
 
 
 def get_lib_path():
