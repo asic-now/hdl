@@ -25,46 +25,12 @@ RNA = 4  # Round to Nearest, Ties Away from Zero
 ROUNDING_MODES = {"rne": RNE, "rtz": RTZ, "rpi": RPI, "rni": RNI, "rna": RNA}
 
 
-def fp16_parse_hex(hex_str: str) -> np.float16:
-    """Convert hexadecimal string to 2-byte big-endian fp16 value."""
-    a_bytes = int(hex_str, 16).to_bytes(2, "little")
-    a = np.frombuffer(a_bytes, dtype=np.float16)[0]
+def fp_parse_hex(width: int, hex_str: str) -> np.float16:
+    """Convert hexadecimal string to a big-endian fp value with a given width."""
+    a_bytes = int(hex_str, 16).to_bytes(width // 8, "little")
+    np_w = {16: np.float16, 32: np.float32, 64: np.float64}[width]
+    a = np.frombuffer(a_bytes, dtype=np_w)[0]
     return a
-
-
-def fp32_parse_hex(hex_str: str) -> np.float32:
-    """Convert hexadecimal string to 4-byte big-endian fp32 value."""
-    a_bytes = int(hex_str, 16).to_bytes(4, "little")
-    a = np.frombuffer(a_bytes, dtype=np.float32)[0]
-    return a
-
-
-def fp64_parse_hex(hex_str: str) -> np.float64:
-    """Convert hexadecimal string to 8-byte big-endian fp64 value."""
-    a_bytes = int(hex_str, 16).to_bytes(8, "little")
-    a = np.frombuffer(a_bytes, dtype=np.float64)[0]
-    return a
-
-
-def fp16_to_hex(fp16_val: np.float16) -> str:
-    """Convert fp16 value to 2-byte big-endian hexadecimal string."""
-    # c_bytes = np.array([fp16_val], dtype=np.float16).tobytes()
-    c_bytes = fp16_val.tobytes()
-    c_int = int.from_bytes(c_bytes, "little")
-    return f"{c_int:04x}"
-
-
-def fp16_result(c) -> Dict[str, str]:
-    """Convert result to hex, binary, decimal, octal."""
-    c_bytes = c.tobytes()
-    c_int = int.from_bytes(c_bytes, "little")
-    return {
-        "fp16": str(c),
-        "hex": f"{c_int:04x}",
-        "bin": f"{c_int:016b}",
-        "dec": str(c_int),
-        "oct": f"{c_int:06o}",
-    }
 
 
 def fp_result(width: int, c) -> Dict[str, str]:
@@ -501,76 +467,12 @@ def grs_round(
     return increment
 
 
-def fp16_add32(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
-    """
-    Add two IEEE 754 binary16 (fp16) numbers given as hex strings.
-
-    Parameters:
-        a_hex (str): First 16-bit half-precision floating-point value as a hex string (e.g. 'c540').
-        b_hex (str): Second 16-bit half-precision floating-point value as a hex string.
-        rm (int): The rounding mode to use, matching grs_round.vh.
-
-    Returns:
-        Dict[str, str]: Result in multiple formats (fp16 string, hex, bin, dec, oct).
-    """
-
-    # Convert hex strings to fp16
-    a_fp16 = fp16_parse_hex(a_hex)
-    b_fp16 = fp16_parse_hex(b_hex)
-
-    # Perform operation in higher precision (float32) to have bits for rounding
-    result_f32 = np.float32(a_fp16) + np.float32(b_fp16)
-
-    # Round the result to fp16 using the specified mode
-    c = round_fp32_to_fp16(result_f32, rm)
-
-    print(f"DEBUG: a = {a_fp16}, b = {b_fp16}, c = {c}")
-    return fp_result(16, c)
-
-
-def fp16_add16(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
-    """
-    Add two IEEE 754 binary16 (fp16) numbers given as hex strings.
-
-    Parameters:
-        a_hex (str): First 16-bit half-precision floating-point value as a hex string (e.g. 'c540').
-        b_hex (str): Second 16-bit half-precision floating-point value as a hex string.
-        rm (int): The rounding mode to use, matching grs_round.vh.
-
-    Returns:
-        Dict[str, str]: Result in multiple formats (fp16 string, hex, bin, dec, oct).
-    """
-
-    # Convert hex strings to fp16
-    a_fp16 = fp16_parse_hex(a_hex)
-    b_fp16 = fp16_parse_hex(b_hex)
-
-    # Perform operation in higher precision (float64) to have bits for rounding
-    result_f64 = np.float64(a_fp16) + np.float64(b_fp16)
-
-    # Round the result to fp16 using the specified mode
-    c = round_fp64_to_fp16(result_f64, rm)
-
-    print(f"DEBUG: a = {a_fp16}, b = {b_fp16}, c = {c}")
-    return fp16_result(c)
-
-
-def fp16_add(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
-    """Add two fp16 numbers of a given width."""
-    return fp_add_ex(a_hex, b_hex, 16, 32, rm)  # Default to 32-bit precision
-
-
-def fp_add(a_hex: str, b_hex: str, width: int, rm: int = RNE) -> Dict[str, str]:
-    """Add two fp numbers of a given width."""
-    return fp_add_ex(a_hex, b_hex, width, 32, rm)
-
-
-def fp_add_ex(
+def fp_add(
     a_hex: str,
     b_hex: str,
-    width: int,  # TODO: Implement parameterized width
-    precision_bits: Optional[int] = None,
+    width: int,
     rm: int = RNE,
+    precision_bits: Optional[int] = None,
 ) -> Dict[str, str]:
     """
     Adds two fp numbers using a configurable intermediate precision,
@@ -580,8 +482,8 @@ def fp_add_ex(
         a_hex (str): First fp operand as a hex string.
         b_hex (str): Second fp operand as a hex string.
         width (int): The bit width of the operands (16, 32, or 64).
-        precision_bits (int): The number of extra bits for intermediate precision.
         rm (int): The rounding mode to use.
+        precision_bits (int): The number of extra bits for intermediate precision (if provided, overrides default chosen by width value).
 
     Returns:
         Dict[str, str]: The result in multiple formats.
@@ -772,13 +674,13 @@ def fp16_mul(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
     """
 
     # Convert hex strings to fp16
-    a_fp16 = fp16_parse_hex(a_hex)
-    b_fp16 = fp16_parse_hex(b_hex)
+    a_fp16 = fp_parse_hex(16, a_hex)
+    b_fp16 = fp_parse_hex(16, b_hex)
     # Perform operation in higher precision (float32)
     result_f32 = np.float32(a_fp16) * np.float32(b_fp16)
     # Round the result to fp16 using the specified mode
     c = round_fp32_to_fp16(result_f32, rm)
-    return fp16_result(c)
+    return fp_result(16, c)
 
 
 def fp32_mul(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
@@ -795,8 +697,8 @@ def fp32_mul(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
     """
 
     # Convert hex strings to fp32
-    a_fp32 = fp32_parse_hex(a_hex)
-    b_fp32 = fp32_parse_hex(b_hex)
+    a_fp32 = fp_parse_hex(32, a_hex)
+    b_fp32 = fp_parse_hex(32, b_hex)
     # Perform operation in higher precision (float32)
     result_f64 = np.float64(a_fp32) * np.float64(b_fp32)
     # Round the result to fp32 using the specified mode
@@ -817,8 +719,8 @@ def fp64_mul(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
         Dict[str, str]: Result in multiple formats (fp32 string, hex, bin, dec, oct).
     """
     # Convert hex strings to fp64
-    a_fp64 = fp64_parse_hex(a_hex)
-    b_fp64 = fp64_parse_hex(b_hex)
+    a_fp64 = fp_parse_hex(64, a_hex)
+    b_fp64 = fp_parse_hex(64, b_hex)
 
     # Handle special cases (inf, nan) before converting to Decimal
     if not np.isfinite(a_fp64) or not np.isfinite(b_fp64):
@@ -842,7 +744,7 @@ def fp64_mul(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
 
 def fp_mul(a_hex: str, b_hex: str, width: int, rm: int = RNE) -> Dict[str, str]:
     """Multiply two fp numbers of a given width."""
-    # TODO: Implement bit-accurate model like fp_add_ex
+    # TODO: Implement bit-accurate model like fp_add
     if width == 16:
         return fp16_mul(a_hex, b_hex, rm)
     elif width == 32:
@@ -851,25 +753,6 @@ def fp_mul(a_hex: str, b_hex: str, width: int, rm: int = RNE) -> Dict[str, str]:
         return fp64_mul(a_hex, b_hex, rm)
     else:
         raise ValueError(f"Unsupported width: {width}")
-
-
-def fp16_print(numbers: List[str]) -> None:
-    """
-    Print IEEE 754 binary16 (fp16) numbers in float/scientific format.
-
-    Accepts numbers in hex, bin, dec, or octal format.
-
-    Parameters:
-        numbers (List[str]): List of fp16 numbers as string in any format.
-
-    Prints:
-        Each number in float and scientific (exponential) notation.
-    """
-    fp_print(16, numbers)
-    # for num_str in numbers:
-    #     val = parse_fp16_value(num_str)
-    #     # Print as float and scientific
-    #     print(f"{num_str} -> {val:.7f}\t{val:.7e}")
 
 
 def fp_print(width: int, numbers: List[str]) -> None:
@@ -888,7 +771,8 @@ def fp_print(width: int, numbers: List[str]) -> None:
     for num_str in numbers:
         val = parse_fp_value(width, num_str)
         # Print as float and scientific
-        print(f"{num_str} -> {val:.7f}\t{val:.7e}")
+        d = {16: 5, 32: 10, 64: 18}[width]
+        print(f"{num_str} -> {val:.{d}f}\t{val:.{d}e}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -997,18 +881,19 @@ def main() -> None:
     """
     args = parse_args()
     if args.command in ("add", "mul"):
+        args.width = int(args.width)
         fmt, prefix = detect_format(args.a)
         a_hex = to_hex_str(args.width, args.a)
         b_hex = to_hex_str(args.width, args.b)
         rm = ROUNDING_MODES[args.round]
         if args.command == "add":
-            result = fp_add(a_hex, b_hex, int(args.width), rm)
+            result = fp_add(a_hex, b_hex, args.width, rm)
         else:
-            result = fp_mul(a_hex, b_hex, int(args.width), rm)
+            result = fp_mul(a_hex, b_hex, args.width, rm)
         # Only print result in matching format, with no markup
         print(prefix + result[fmt])
     elif args.command == "print":
-        fp_print(args.width, args.numbers)
+        fp_print(int(args.width), args.numbers)
     else:
         raise ValueError(f"Invalid command {args.command}")
 

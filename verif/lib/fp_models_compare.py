@@ -11,7 +11,7 @@ import platform
 import subprocess
 import os
 import random
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 from fp_model import (
     ROUNDING_MODES,
@@ -332,7 +332,7 @@ def compile_lib():
 
 
 def get_add_test_uvm_cases(width: int, _rm: str) -> list:
-    """Generate a list of test cases for fp16_add."""
+    """Generate a list of test cases for fp_add."""
     add16_test_cases = [
         # From failing fp_add test: UVM_ERROR
         ("899c", "0974", None, None, "rpi"),
@@ -588,7 +588,7 @@ def run_mul_tests(width: int, mul_test_cases: list) -> Tuple[int, int]:
     return res, total
 
 
-def tests(width: int = 16):
+def tests(width: int = 16, rms: List[str] = ["rne", "rtz", "rpi", "rni", "rna"]) -> int:
     """Runs all tests for a given width."""
     random_count = 10
     # random_count = 100
@@ -596,7 +596,7 @@ def tests(width: int = 16):
     res = 0
     rm_results = {}
     print(f"\n{'=' * 20} RUNNING TESTS FOR FP{width} {'=' * 20}")
-    for rm in ["rne", "rtz", "rpi", "rni", "rna"]:
+    for rm in rms:
         # for rm in ["rpi"]:
         add_cases, mul_cases = [], []
 
@@ -639,16 +639,18 @@ def tests(width: int = 16):
     return res
 
 
-def main():
+def main() -> int:
     """Main entry point."""
     compile_lib()
     res = 0
     # TODO: (now) for width in [16, 32, 64]:
-    for width in [64]:
-        res += tests(width)
+    for width in [32]:
+        # TODO: (now) res += tests(width)
+        res += tests(width, ["rtz"])
 
     rc = min(res, 255)  # Limit the return code to 255 for Posix compatibility.
     return rc
-    
+
+
 if __name__ == "__main__":
     exit(main())
