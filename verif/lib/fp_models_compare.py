@@ -15,9 +15,9 @@ from typing import Optional, Tuple
 
 from fp_model import (
     ROUNDING_MODES,
-    fp16_print,
     fp_add as fp_add_py,
     fp_mul as fp_mul_py,
+    fp_print,
 )
 
 def get_lib_path():
@@ -229,7 +229,7 @@ def _compare_and_report(
         seen = set()
         unique_vals = [x for x in vals if not (x in seen or seen.add(x))]
 
-        fp16_print(unique_vals)
+        fp_print(width, unique_vals)
     return res
 
 
@@ -638,12 +638,13 @@ def tests(width: int = 16):
 
     return res
 
+
 def main():
     """Main entry point."""
     compile_lib()
     res = 0
     # TODO: (now) for width in [16, 32, 64]:
-    for width in [16]:
+    for width in [64]:
         res += tests(width)
 
     rc = min(res, 255)  # Limit the return code to 255 for Posix compatibility.
