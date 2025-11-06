@@ -506,18 +506,21 @@ def fp_add(
     EXP_ALL_ONES = (1 << EXP_W) - 1
     EXP_ALL_ZEROS = 0
     MANT_ALL_ZEROS = 0
+    MANT_ALL_ONES = (1 << MANT_W) - 1
+    EXP_MASK = EXP_ALL_ONES
+    MANT_MASK = MANT_ALL_ONES
 
     # Unpack inputs
     a_int, b_int = int(a_hex, 16), int(b_hex, 16)
     sign_a, exp_a, mant_a = (
         (a_int >> SIGN_POS) & 1,
-        (a_int >> MANT_W) & ((1 << EXP_W) - 1),
-        a_int & ((1 << MANT_W) - 1),
+        (a_int >> MANT_W) & EXP_MASK,
+        a_int & MANT_MASK,
     )
     sign_b, exp_b, mant_b = (
         (b_int >> SIGN_POS) & 1,
-        (b_int >> MANT_W) & ((1 << EXP_W) - 1),
-        b_int & ((1 << MANT_W) - 1),
+        (b_int >> MANT_W) & EXP_MASK,
+        b_int & MANT_MASK,
     )
 
     # Handle special cases (NaN, Inf, Zero)
@@ -609,8 +612,7 @@ def fp_add(
         msb_pos = -1
 
     # Normalized position for implicit bit is at ALIGN_MANT_W - 1
-    norm_pos = ALIGN_MANT_W - 1
-    shift = norm_pos - msb_pos
+    shift = ALIGN_MANT_W - 1 - msb_pos
 
     if shift > 0:
         res_mant <<= shift
@@ -872,8 +874,10 @@ def parse_fp_value(width: int, arg: str) -> float:
     float_val = np.frombuffer(bytes_val, dtype=np_type)[0]
     return float(float_val)
 
+
 def parse_fp16_value(arg: str) -> float:
     return parse_fp_value(16, arg)
+
 
 def main() -> None:
     """

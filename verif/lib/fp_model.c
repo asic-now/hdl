@@ -75,7 +75,7 @@ static uint16_t double_to_fp16(double d, const int rm) {
             return sign_bit;
         }
         // Create denormalized value
-        uint64_t mant = (mant_64 | (1ULL << 52)) >> (1 - exp_16);
+        uint64_t mant = (mant_64 | (1ULL << 52)) >> (1 - exp_16); // TODO: (when needed) >>is clamped in C, should check shift amount vs. 64 bits
         uint64_t lsb     = (mant >> 42) & 1;
         uint64_t guard   = (mant >> 41) & 1;
         uint64_t sticky  = (mant & ((1ULL << 41) - 1)) != 0;
@@ -153,7 +153,7 @@ static uint16_t float_to_fp16(float f, const int rm) {
             return sign_bit;
         }
         // Create denormalized value
-        uint32_t mant = (mant_32 | 0x800000) >> (1 - exp_16);
+        uint32_t mant = (mant_32 | 0x800000) >> (1 - exp_16); // TODO: (when needed) >>is clamped in C, should check shift amount vs. 64 bits
         uint32_t lsb     =  mant & 0x2000;
         uint32_t guard   =  mant & 0x1000;
         // uint32_t r       =  mant & 0x1000;
@@ -258,17 +258,17 @@ static int grs_round_c(uint64_t value_in, int sign_in, int mode, int input_width
     int shift_amount = input_width - output_width;
 
     if (shift_amount <= 0) {
-        return value_in;
+        return 0;
     }
 
     // LSB of the part that will be kept (bit at position 'shift_amount')
-    int lsb = (value_in >> shift_amount) & 1;
+    int lsb = (value_in >> shift_amount) & 1; // TODO: (when needed) >>is clamped in C, should check shift amount vs. 64 bits
 
     // Guard bit: The most significant bit of the truncated portion (bit at position 'shift_amount - 1')
-    int g = (shift_amount >= 1) ? (value_in >> (shift_amount - 1)) & 1 : 0;
+    int g = (shift_amount >= 1) ? (value_in >> (shift_amount - 1)) & 1 : 0; // TODO: (when needed) >>is clamped in C, should check shift amount vs. 64 bits
 
     // Round bit: The bit immediately to the right of the Guard bit (bit at position 'shift_amount - 2')
-    int r = (shift_amount >= 2) ? (value_in >> (shift_amount - 2)) & 1 : 0;
+    int r = (shift_amount >= 2) ? (value_in >> (shift_amount - 2)) & 1 : 0; // TODO: (when needed) >>is clamped in C, should check shift amount vs. 64 bits
 
     // Sticky bit: The logical OR of all bits to the right of the Round bit.
     int s = 0;
@@ -308,20 +308,22 @@ static int grs_round_c(uint64_t value_in, int sign_in, int mode, int input_width
 // This is a bit-accurate model of fp_add.v for parameterized fp, with configurable intermediate precision.
 uint64_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int rm, const int precision_bits) {
     // FP constants based on width
-    int EXP_W, MANT_W;
-    // const int EXP_BIAS = 15; // Not directly used in this bit-accurate logic
+    int EXP_W;
+    // const int EXP_BIAS = 15, 127, 1023; // Not directly used in this bit-accurate logic
     switch (width) {
         case 64: EXP_W = 11; break;
         case 32: EXP_W =  8; break;
         case 16:
         default: EXP_W =  5; break;
     }
-    MANT_W = width - 1 - EXP_W;
+    const int MANT_W = width - 1 - EXP_W;
 
     const int SIGN_POS = width - 1;
-    const uint64_t EXP_MASK = (1ULL << EXP_W) - 1;
-    const uint64_t MANT_MASK = (1ULL << MANT_W) - 1;
-    const uint64_t EXP_ALL_ONES = EXP_MASK;
+    const int ALIGN_MANT_W = MANT_W + 1 + precision_bits;
+    const uint64_t EXP_ALL_ONES = (1ULL << EXP_W) - 1;
+    const uint64_t MANT_ALL_ONES = (1ULL << MANT_W) - 1;
+    const uint64_t MANT_MASK = MANT_ALL_ONES;
+    const uint64_t EXP_MASK = EXP_ALL_ONES;
 
     // Unpack inputs
     int sign_a = (a_val >> SIGN_POS) & 1;
@@ -329,7 +331,7 @@ uint64_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
     uint64_t mant_a = a_val & MANT_MASK;
 
     int sign_b = (b_val >> SIGN_POS) & 1;
-    int exp_b = (b_val >> MANT_W) & EXP_MASK;
+    unsigned int exp_b = (b_val >> MANT_W) & EXP_MASK;
     uint64_t mant_b = b_val & MANT_MASK;
 
     // Handle special cases (NaN, Inf, Zero)
@@ -375,17 +377,25 @@ uint64_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
     unsigned int eff_exp_b = (exp_b != 0) ? exp_b : 1;
 
     // Align mantissas
-    int align_mant_w = MANT_W + 1 + precision_bits;
-    uint64_t mant_a_aligned = full_mant_a << precision_bits; // TODO: (when needed) Could overflow for large width and precision_bits
+    uint64_t mant_a_aligned = full_mant_a << precision_bits; // TODO: (when needed) Could overflow for (MANT_W+1+precision_bits > 64)
     uint64_t mant_b_aligned = full_mant_b << precision_bits;
 
     int res_exp;
     int exp_diff = eff_exp_a - eff_exp_b;
     if (exp_diff > 0) {
-        mant_b_aligned >>= exp_diff;
+        // In C, shift operations for more bits than operand are undefined.
+        if (exp_diff > sizeof(uint64_t) * 8 - 1) { // Overflow
+            mant_b_aligned = 0;
+        } else {
+            mant_b_aligned >>= exp_diff;
+        }
         res_exp = eff_exp_a;
     } else {
-        mant_a_aligned >>= -exp_diff;
+        if (-exp_diff > sizeof(uint64_t) * 8 + 1) { // Overflow
+            mant_a_aligned = 0;
+        } else {
+            mant_a_aligned >>= -exp_diff;
+        }
         res_exp = eff_exp_b;
     }
 
@@ -413,16 +423,15 @@ uint64_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
     }
 
     // Normalize
-    int msb_pos = 0;
+    int msb_pos = -1;
     if (res_mant > 0) {
         // Equivalent to Python's bit_length() - 1 for non-zero values
         // __builtin_clzll counts leading zeros for unsigned long long (64-bit)
         msb_pos = (sizeof(uint64_t) * 8 - 1) - __builtin_clzll(res_mant);
     }
 
-    // Normalized position for implicit bit is at align_mant_w - 1
-    int norm_pos = align_mant_w - 1;
-    int shift = norm_pos - msb_pos;
+    // Normalized position for implicit bit is at ALIGN_MANT_W - 1
+    int shift = ALIGN_MANT_W - 1 - msb_pos;
 
     if (shift > 0) {
         res_mant <<= shift;
@@ -432,10 +441,10 @@ uint64_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
     res_exp -= shift;
 
     // Rounding
-    // The implicit bit is at align_mant_w-1, mantissa is below it.
+    // The implicit bit is at ALIGN_MANT_W-1, mantissa is below it.
     // We want to round to MANT_W bits.
     // The input to the rounder is the mantissa without the implicit bit.
-    int rounder_input_width = align_mant_w - 1; // Bits from 0 to align_mant_w-2
+    int rounder_input_width = ALIGN_MANT_W - 1; // Bits from 0 to ALIGN_MANT_W-2
     int rounder_output_width = MANT_W;
 
     // Extract the portion of res_mant that goes into the rounder
