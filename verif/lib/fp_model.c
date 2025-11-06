@@ -305,36 +305,49 @@ static int grs_round_c(uint64_t value_in, int sign_in, int mode, int input_width
 }
 
 // The exported DPI-C function that will be called from SystemVerilog
-// This is a bit-accurate model of fp_add.v for fp16, with configurable intermediate precision.
-uint16_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int rm, const int precision_bits) {
-    // FP16 constants
-    const int EXP_W = 5;
-    const int MANT_W = 10;
+// This is a bit-accurate model of fp_add.v for parameterized fp, with configurable intermediate precision.
+uint64_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int rm, const int precision_bits) {
+    // FP constants based on width
+    int EXP_W, MANT_W;
     // const int EXP_BIAS = 15; // Not directly used in this bit-accurate logic
+    switch (width) {
+        case 64: EXP_W = 11; break;
+        case 32: EXP_W =  8; break;
+        case 16:
+        default: EXP_W =  5; break;
+    }
+    MANT_W = width - 1 - EXP_W;
+
+    const int SIGN_POS = width - 1;
+    const uint64_t EXP_MASK = (1ULL << EXP_W) - 1;
+    const uint64_t MANT_MASK = (1ULL << MANT_W) - 1;
+    const uint64_t EXP_ALL_ONES = EXP_MASK;
 
     // Unpack inputs
-    int sign_a = (a_val >> 15) & 1;
-    int exp_a = (a_val >> 10) & 0x1F;
-    uint16_t mant_a = a_val & 0x3FF;
+    int sign_a = (a_val >> SIGN_POS) & 1;
+    unsigned int exp_a = (a_val >> MANT_W) & EXP_MASK;
+    uint64_t mant_a = a_val & MANT_MASK;
 
-    int sign_b = (b_val >> 15) & 1;
-    int exp_b = (b_val >> 10) & 0x1F;
-    uint16_t mant_b = b_val & 0x3FF;
+    int sign_b = (b_val >> SIGN_POS) & 1;
+    int exp_b = (b_val >> MANT_W) & EXP_MASK;
+    uint64_t mant_b = b_val & MANT_MASK;
 
     // Handle special cases (NaN, Inf, Zero)
-    int is_nan_a = (exp_a == 0x1F && mant_a != 0);
-    int is_inf_a = (exp_a == 0x1F && mant_a == 0);
-    int is_zero_a = (exp_a == 0x00 && mant_a == 0);
+    int is_nan_a = (exp_a == EXP_ALL_ONES && mant_a != 0);
+    int is_inf_a = (exp_a == EXP_ALL_ONES && mant_a == 0);
+    int is_zero_a = (exp_a == 0 && mant_a == 0);
 
-    int is_nan_b = (exp_b == 0x1F && mant_b != 0);
-    int is_inf_b = (exp_b == 0x1F && mant_b == 0);
-    int is_zero_b = (exp_b == 0x00 && mant_b == 0);
+    int is_nan_b = (exp_b == EXP_ALL_ONES && mant_b != 0);
+    int is_inf_b = (exp_b == EXP_ALL_ONES && mant_b == 0);
+    int is_zero_b = (exp_b == 0 && mant_b == 0);
 
     if (is_nan_a || is_nan_b) {
-        return 0x7E00; // Canonical qNaN
+        // Return canonical qNaN
+        return ((uint64_t)EXP_ALL_ONES << MANT_W) | (1ULL << (MANT_W - 1));
     }
     if (is_inf_a && is_inf_b && sign_a != sign_b) {
-        return 0x7E00; // Inf - Inf = NaN
+        // Inf - Inf = NaN
+        return ((uint64_t)EXP_ALL_ONES << MANT_W) | (1ULL << (MANT_W - 1));
     }
     if (is_inf_a) {
         return a_val;
@@ -344,7 +357,7 @@ uint16_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
     }
     if (is_zero_a && is_zero_b) {
         // +0 + -0 = +0 (RNE), but -0 + -0 = -0
-        return (sign_a && sign_b) ? 0x8000 : 0x0000;
+        return ((uint64_t)(sign_a & sign_b) << SIGN_POS);
     }
     if (is_zero_a) {
         return b_val;
@@ -358,12 +371,12 @@ uint16_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
     uint64_t full_mant_b = ((uint64_t)(exp_b != 0) << MANT_W) | mant_b;
 
     // Effective exponents (denormals have exp=1 for calculation)
-    int eff_exp_a = (exp_a != 0) ? exp_a : 1;
-    int eff_exp_b = (exp_b != 0) ? exp_b : 1;
+    unsigned int eff_exp_a = (exp_a != 0) ? exp_a : 1;
+    unsigned int eff_exp_b = (exp_b != 0) ? exp_b : 1;
 
     // Align mantissas
-    int align_mant_w = MANT_W + 1 + precision_bits; // e.g., 10 + 1 + 32 = 43 for fp16
-    uint64_t mant_a_aligned = full_mant_a << precision_bits;
+    int align_mant_w = MANT_W + 1 + precision_bits;
+    uint64_t mant_a_aligned = full_mant_a << precision_bits; // TODO: (when needed) Could overflow for large width and precision_bits
     uint64_t mant_b_aligned = full_mant_b << precision_bits;
 
     int res_exp;
@@ -396,7 +409,7 @@ uint16_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
 
     if (res_mant == 0) {
         // Result is exact zero. Handle signed zero for RNI mode if it was a subtraction.
-        return (rm == RNI && op_is_sub) ? 0x8000 : 0x0000;
+        return (rm == RNI && op_is_sub) ? (1ULL << SIGN_POS) : 0;
     }
 
     // Normalize
@@ -423,7 +436,7 @@ uint16_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
     // We want to round to MANT_W bits.
     // The input to the rounder is the mantissa without the implicit bit.
     int rounder_input_width = align_mant_w - 1; // Bits from 0 to align_mant_w-2
-    int rounder_output_width = MANT_W; // 10 bits for FP16
+    int rounder_output_width = MANT_W;
 
     // Extract the portion of res_mant that goes into the rounder
     // This is the mantissa *after* the implicit bit, extended by precision_bits
@@ -439,12 +452,12 @@ uint16_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
         rounded_mant_no_implicit >>= 1; // Shift right to keep MANT_W bits
     }
 
-    uint16_t final_mant = rounded_mant_no_implicit & ((1 << MANT_W) - 1); // Extract MANT_W bits
+    uint64_t final_mant = rounded_mant_no_implicit & MANT_MASK; // Extract MANT_W bits
 
     // Final checks for overflow/underflow
-    uint16_t final_exp;
-    if (res_exp >= 0x1F) { // Overflow to infinity
-        final_exp = 0x1F;
+    uint64_t final_exp;
+    if (res_exp >= (int)EXP_ALL_ONES) { // Overflow to infinity
+        final_exp = EXP_ALL_ONES;
         final_mant = 0;
     } else if (res_exp <= 0) { // Underflow to denormal or zero
         // Simplified: flush to zero. A full model would create denormals.
@@ -456,20 +469,31 @@ uint16_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
     }
 
     // Pack final result
-    uint16_t result_int = (res_sign << 15) | (final_exp << 10) | final_mant;
+    uint64_t result_int = ((uint64_t)res_sign << SIGN_POS) | (final_exp << MANT_W) | final_mant;
     return result_int;
 }
 
-// Default c_fp16_add to use the bit-accurate model with 32 precision bits
-uint16_t c_fp_add(uint64_t a, uint64_t b, const int width, const int rm) {
-    int precision_bits = 32;
+
+// Bit-accurate fp_add model with default precision_bits
+uint64_t c_fp_add(uint64_t a, uint64_t b, const int width, const int rm) {
+    int precision_bits;
+    switch (width) { 
+        case 64: precision_bits = 7; break;
+        case 32: precision_bits = 7; break;
+        case 16:
+        default: precision_bits = 32; break;
+    }
     return c_fp_add_ex(a, b, width, rm, precision_bits);
 }
 
 // Multiply two fp16 numbers: c = a * b
-uint16_t c_fp_mul(uint64_t a, uint64_t b, const int width, const int rm) {
-    float fa = fp16_to_float(a);
-    float fb = fp16_to_float(b);
-    float fc = fa * fb;
-    return float_to_fp16(fc, rm);
+uint64_t c_fp_mul(uint64_t a, uint64_t b, const int width, const int rm) {
+    // if (width == 16) {
+    //     return c_fp16_mul(a, b, rm);
+    // } else if (width == 32) {
+    //     return c_fp32_mul(a, b, rm);
+    // } else if (width == 64) {
+    //     return c_fp64_mul(a, b, rm);
+    // }
+    return 0; // Should not happen
 }
