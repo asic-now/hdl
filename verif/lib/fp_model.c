@@ -210,7 +210,7 @@ static uint16_t float_to_fp16(float f, const int rm) {
 }
 
 // C model function to be exported
-void c_fp16_classify(const uint16_t in, fp_classify_outputs_s* out) {
+void c_fp_classify(const uint64_t in, const int width, fp_classify_outputs_s* out) {
     // Unpack the 16-bit input
     uint8_t  sign = (in >> 15) & 0x1;
     uint8_t  exp  = (in >> 10) & 0x1F;
@@ -306,7 +306,7 @@ static int grs_round_c(uint64_t value_in, int sign_in, int mode, int input_width
 
 // The exported DPI-C function that will be called from SystemVerilog
 // This is a bit-accurate model of fp_add.v for fp16, with configurable intermediate precision.
-uint16_t c_fp16_add_ex(uint16_t a_val, uint16_t b_val, const int rm, const int precision_bits) {
+uint16_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int rm, const int precision_bits) {
     // FP16 constants
     const int EXP_W = 5;
     const int MANT_W = 10;
@@ -460,88 +460,16 @@ uint16_t c_fp16_add_ex(uint16_t a_val, uint16_t b_val, const int rm, const int p
     return result_int;
 }
 
-// The exported DPI-C function that will be called from SystemVerilog
-// This version uses float (32-bit) for intermediate calculations.
-uint16_t c_fp16_add_float_intermediate(uint16_t a, uint16_t b, const int rm) {
-    float fa = fp16_to_float(a);
-    float fb = fp16_to_float(b);
-    float fresult = fa + fb;
-    return float_to_fp16(fresult, rm);
-}
-
-// The exported DPI-C function that will be called from SystemVerilog
-// This version uses double (64-bit) for intermediate calculations.
-uint16_t c_fp16_add_double_intermediate(uint16_t a, uint16_t b, const int rm) {
-    // Convert fp16 to double, perform addition, then convert back to fp16
-    double da = (double)fp16_to_float(a);
-    double db = (double)fp16_to_float(b);
-    double dresult = da + db;
-    return double_to_fp16(dresult, rm);
-}
-
 // Default c_fp16_add to use the bit-accurate model with 32 precision bits
-uint16_t c_fp16_add(uint16_t a, uint16_t b, const int rm) {
-    return c_fp16_add_ex(a, b, rm, 32);
+uint16_t c_fp_add(uint64_t a, uint64_t b, const int width, const int rm) {
+    int precision_bits = 32;
+    return c_fp_add_ex(a, b, width, rm, precision_bits);
 }
 
 // Multiply two fp16 numbers: c = a * b
-uint16_t c_fp16_mul(uint16_t a, uint16_t b, const int rm) {
+uint16_t c_fp_mul(uint64_t a, uint64_t b, const int width, const int rm) {
     float fa = fp16_to_float(a);
     float fb = fp16_to_float(b);
     float fc = fa * fb;
-    return float_to_fp16(fc, rm);
-}
-
-// Divide two fp16 numbers: c = a / b
-uint16_t c_fp16_div(uint16_t a, uint16_t b, const int rm) {
-    float fa = fp16_to_float(a);
-    float fb = fp16_to_float(b);
-    float fc = fa / fb;
-    return float_to_fp16(fc, rm);
-}
-
-// Fused multiply-add: c = a * b + c
-uint16_t c_fp16_mul_add(uint16_t a, uint16_t b, uint16_t c, const int rm) {
-    float fa = fp16_to_float(a);
-    float fb = fp16_to_float(b);
-    float fc = fp16_to_float(c);
-    return float_to_fp16(fa * fb + fc, rm);
-}
-
-// Fused multiply-subtract: c = a * b - c
-uint16_t c_fp16_mul_sub(uint16_t a, uint16_t b, uint16_t c, const int rm) {
-    float fa = fp16_to_float(a);
-    float fb = fp16_to_float(b);
-    float fc = fp16_to_float(c);
-    return float_to_fp16(fa * fb - fc, rm);
-}
-
-// Reciprocal: c = 1.0 / a
-uint16_t c_fp16_recip(uint16_t a, const int rm) {
-    float fa = fp16_to_float(a);
-    float fc = 1.0f / fa;
-    return float_to_fp16(fc, rm);
-}
-
-// Compare: -1 if a < b, 0 if a == b, 1 if a > b
-int c_fp16_cmp(uint16_t a, uint16_t b) {
-    float fa = fp16_to_float(a);
-    float fb = fp16_to_float(b);
-    if (fa < fb) return -1;
-    if (fa > fb) return 1;
-    return 0;
-}
-
-// Inverse square root: c = 1.0 / sqrt(a)
-uint16_t c_fp16_invsqrt(uint16_t a, const int rm) {
-    float fa = fp16_to_float(a);
-    float fc = 1.0f / sqrtf(fa);
-    return float_to_fp16(fc, rm);
-}
-
-// Square root: c = sqrt(a)
-uint16_t c_fp16_sqrt(uint16_t a, const int rm) {
-    float fa = fp16_to_float(a);
-    float fc = sqrtf(fa);
     return float_to_fp16(fc, rm);
 }

@@ -20,6 +20,7 @@ from fp_model import (
     fp_print,
 )
 
+
 def get_lib_path():
     """Get the path to the shared library"""
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -137,6 +138,7 @@ def get_special_fp_hex(width: int, name: str) -> str:
         "-snan": (1 << (w - 1)) | (((1 << e) - 1) << m) | 1,
     }
     return f"{vals[name]:0{w // 4}x}"
+
 
 def canonicalize_fp_hex(width: int, hex_val: str) -> str:
     """
@@ -301,6 +303,7 @@ def compile_lib():
 
     # TODO: (when needed) Add DSim's include path for OS and installed version.
     c_src_paths = [
+        os.path.join(workspace_root, "verif", "lib", "fp_model.c"),
         os.path.join(workspace_root, "verif", "lib", "fp16_model.c"),
         os.path.join(workspace_root, "verif", "lib", "fp32_model.c"),
         os.path.join(workspace_root, "verif", "lib", "fp64_model.c"),
@@ -336,7 +339,13 @@ def get_add_test_uvm_cases(width: int, _rm: str) -> list:
     add16_test_cases = [
         # From failing fp_add test: UVM_ERROR
         ("899c", "0974", None, None, "rpi"),
-        ("12d4", "f7e2", None, None, "rpi"),  # DUT=0xf7e1, MODEL=0xf7e2 | Canonical: DUT=0xf7e1, MODEL=0xf7e2
+        (
+            "12d4",
+            "f7e2",
+            None,
+            None,
+            "rpi",
+        ),  # DUT=0xf7e1, MODEL=0xf7e2 | Canonical: DUT=0xf7e1, MODEL=0xf7e2
         # ("e3e0", "063e", None, None, "rtz"),  # DUT=0xe3e0, MODEL=0xe3df | Canonical: DUT=0xe3e0, MODEL=0xe3df
         # ("761f", "e2d1", None, None, "rne"),  # DUT=0x75e8, MODEL=0x75e9 | Canonical: DUT=0x75e8, MODEL=0x75e9
         # ("e0be", "11b7", None, None, "rne"),  # DUT=0xe0be, MODEL=0xe0bd | Canonical: DUT=0xe0be, MODEL=0xe0bd
@@ -645,8 +654,9 @@ def main() -> int:
     res = 0
     # TODO: (now) for width in [16, 32, 64]:
     for width in [32]:
-        # TODO: (now) res += tests(width)
-        res += tests(width, ["rtz"])
+        # TODO: (now)
+        res += tests(width)
+        # res += tests(width, ["rtz"])
 
     rc = min(res, 255)  # Limit the return code to 255 for Posix compatibility.
     return rc

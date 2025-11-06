@@ -24,7 +24,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=16
       +UVM_TESTNAME=fp_classify_random_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -34,7 +34,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=16
       +UVM_TESTNAME=fp_classify_special_cases_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -44,7 +44,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=16
       +UVM_TESTNAME=fp_classify_combined_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -54,7 +54,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=32
       +UVM_TESTNAME=fp_classify_random_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -64,7 +64,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=32
       +UVM_TESTNAME=fp_classify_special_cases_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -74,7 +74,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=32
       +UVM_TESTNAME=fp_classify_combined_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -84,7 +84,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=64
       +UVM_TESTNAME=fp_classify_random_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -94,7 +94,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=64
       +UVM_TESTNAME=fp_classify_special_cases_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -104,7 +104,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=64
       +UVM_TESTNAME=fp_classify_combined_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -115,7 +115,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=16
       +UVM_TESTNAME=fp_add_random_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -125,7 +125,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=16
       +UVM_TESTNAME=fp_add_special_cases_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -135,7 +135,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=16
       +UVM_TESTNAME=fp_add_combined_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -146,7 +146,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=32
       +UVM_TESTNAME=fp_add_random_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -156,7 +156,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=32
       +UVM_TESTNAME=fp_add_special_cases_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -166,7 +166,7 @@ simulations:
       -top work.fp_add_tb_top
       -defparam WIDTH=32
       +UVM_TESTNAME=fp_add_combined_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -177,7 +177,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=64
       +UVM_TESTNAME=fp_add_random_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -187,7 +187,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=64
       +UVM_TESTNAME=fp_add_special_cases_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -197,7 +197,7 @@ simulations:
       -top work.fp_add_tb_top
       -defparam WIDTH=64
       +UVM_TESTNAME=fp_add_combined_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -208,7 +208,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=16
       +UVM_TESTNAME=fp_mul_random_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -218,7 +218,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=16
       +UVM_TESTNAME=fp_mul_special_cases_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -228,7 +228,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=16
       +UVM_TESTNAME=fp_mul_combined_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -239,7 +239,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=32
       +UVM_TESTNAME=fp_mul_random_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -249,7 +249,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=32
       +UVM_TESTNAME=fp_mul_special_cases_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -259,7 +259,7 @@ simulations:
       -top work.fp_mul_tb_top
       -defparam WIDTH=32
       +UVM_TESTNAME=fp_mul_combined_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -270,7 +270,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=64
       +UVM_TESTNAME=fp_mul_random_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -280,7 +280,7 @@ simulations:
       -uvm 1.2
       -defparam WIDTH=64
       +UVM_TESTNAME=fp_mul_special_cases_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
@@ -290,7 +290,7 @@ simulations:
       -top work.fp_mul_tb_top
       -defparam WIDTH=64
       +UVM_TESTNAME=fp_mul_combined_test
-      +acc+b ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif

@@ -31,7 +31,7 @@ WIDTH  ?= 16
 WIDTHS ?= 16 32 64
 
 SRC_FILES_LIST   ?= verif/filelist.libs.txt
-C_MODEL_FILES    ?= verif/lib/fp16_model.c verif/lib/fp32_model.c verif/lib/fp64_model.c verif/lib/fp_dpi_utils.c
+C_MODEL_FILES    ?= verif/lib/fp_model.c verif/lib/fp16_model.c verif/lib/fp32_model.c verif/lib/fp64_model.c verif/lib/fp_dpi_utils.c
 
 # Set DUTS to a single test if DUT is provided on the command line
 ifeq ($(origin DUT), command line)

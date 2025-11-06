@@ -91,7 +91,31 @@ files:
     logical_name: verif/lib
     is_manual: true
     source_type: none
+  - name: verif\lib\fp_model.c
+    file_type: none
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/lib
+    is_manual: true
+    source_type: none
   - name: verif\lib\fp16_model.c
+    file_type: none
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/lib
+    is_manual: true
+    source_type: none
+  - name: verif\lib\fp32_model.c
+    file_type: none
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/lib
+    is_manual: true
+    source_type: none
+  - name: verif\lib\fp64_model.c
     file_type: none
     file_version: !<tag:yaml.org,2002:js/undefined> ''
     is_include_file: false
