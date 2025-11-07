@@ -72,3 +72,5 @@ My journey with Gemini continues to be a partnership of complementary strengths.
 However, the "final 20%"—the critical thinking, the deep mathematical insight, the systematic debugging, and the nuanced understanding of hardware behavior—remains firmly in the human domain. As the floating-point library grows, this division of labor becomes not just efficient, but essential. The vibe is still there, but now it's backed by rigorous, human-engineered logic.
 
 The next step: tackling more complex operations and refining the verification environment further.
+
+ #verilog #rtl #vibecoding #OpenSource #ASIC #AI
