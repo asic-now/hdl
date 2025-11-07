@@ -8,16 +8,18 @@ Compares C model to Python model.
 import ctypes
 from ctypes import CDLL, c_uint16, c_uint32, c_uint64
 import platform
+from datetime import datetime
 import subprocess
 import os
 import random
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from fp_model import (
     ROUNDING_MODES,
     fp_add as fp_add_py,
     fp_mul as fp_mul_py,
     fp_print,
+    parse_fp_value,
 )
 
 
@@ -181,6 +183,19 @@ def canonicalize_fp_hex(width: int, hex_val: str) -> str:
     return hex_val
 
 
+def _get_fp_values(width: int, hex_values: List[str]) -> Dict[str, float]:
+    """Convert a list of hex strings to a dictionary of their float values."""
+    fp_vals = {}
+    for hex_val in set(hex_values):
+        try:
+            # Add "0x" prefix if missing, as parse_fp_value expects it for hex
+            prefixed_hex = hex_val if hex_val.startswith("0x") else f"0x{hex_val}"
+            fp_vals[hex_val] = parse_fp_value(width, prefixed_hex)
+        except (ValueError, TypeError):
+            fp_vals[hex_val] = float("nan")  # Represent unparseable values as NaN
+    return fp_vals
+
+
 def _compare_and_report(
     op_name: str,
     a_hex: str,
@@ -191,13 +206,14 @@ def _compare_and_report(
     c_py_expected: Optional[str],
     c_c_expected: Optional[str],
     rm_str: str,
-) -> int:
+) -> Optional[Dict[str, Any]]:
     """Shared scoreboard function to compare results and report status."""
     c_result_canon = canonicalize_fp_hex(width, c_result)
     py_result_canon = canonicalize_fp_hex(width, py_result)
 
     exp_py = ""
     exp_c = ""
+    failure_details = None
     s = "PASS"
     res = 0
 
@@ -225,6 +241,37 @@ def _compare_and_report(
     )
 
     if s != "PASS":
+        all_hex_values = [
+            a_hex,
+            b_hex,
+            py_result,
+            c_result,
+            py_result_canon,
+            c_result_canon,
+        ]
+        if c_py_expected:
+            all_hex_values.append(c_py_expected)
+        if c_c_expected:
+            all_hex_values.append(c_c_expected)
+
+        failure_details = {
+            "op": op_name,
+            "width": width,
+            "rm": rm_str,
+            "inputs": {"a_hex": a_hex, "b_hex": b_hex},
+            "outputs": {"py_hex": py_result, "c_hex": c_result},
+            "canon_outputs": {
+                "py_hex_canon": py_result_canon,
+                "c_hex_canon": c_result_canon,
+            },
+            "expected": {
+                "py_expected": c_py_expected,
+                "c_expected": c_c_expected,
+            },
+            "fp_values": _get_fp_values(width, all_hex_values),
+        }
+
+        # Print immediate feedback to console
         vals = [
             "0x" + a_hex,
             "0x" + b_hex,
@@ -241,7 +288,7 @@ def _compare_and_report(
         unique_vals = [x for x in vals if not (x in seen or seen.add(x))]
 
         fp_print(width, unique_vals)
-    return res
+    return failure_details
 
 
 def compare_fp_add(
@@ -251,7 +298,7 @@ def compare_fp_add(
     c_py: Optional[str],
     c_c: Optional[str],
     rm_str: str,
-) -> int:
+) -> Optional[Dict[str, Any]]:
     """
     Compare C and Python fp_add implementations and print results.
 
@@ -278,7 +325,7 @@ def compare_fp_mul(
     c_py: Optional[str],
     c_c: Optional[str],
     rm_str: str,
-) -> int:
+) -> Optional[Dict[str, Any]]:
     """
     Compare C and Python fp_mul implementations and print results.
 
@@ -478,10 +525,10 @@ def get_add_test_cases(width: int, rm: str, random_count: int) -> list:
     return add_test_cases
 
 
-def run_add_tests(width: int, add_test_cases: list) -> Tuple[int, int]:
-    """Run a list of test cases for fp_add."""
+def run_add_tests(width: int, add_test_cases: list) -> Tuple[List[Dict[str, Any]], int]:
+    """Run a list of test cases for fp_add, returning failures."""
     total = 0
-    res = 0
+    failures = []
 
     for a, b, c_py, c_c, rm_str in add_test_cases:
         exp_str = ""
@@ -490,13 +537,15 @@ def run_add_tests(width: int, add_test_cases: list) -> Tuple[int, int]:
         if c_c:
             exp_str += f"=0x{c_c}/* C */"
         print(f"\nTesting: fp{width}_add(0x{a}, 0x{b}, {rm_str}){exp_str}")
-        res += compare_fp_add(a, b, width, c_py, c_c, rm_str)
+        failure = compare_fp_add(a, b, width, c_py, c_c, rm_str)
+        if failure:
+            failures.append(failure)
         total += 1
-    if res:
-        print(f"FAIL ADD Test: {res} failed of {total} test cases.")
+    if failures:
+        print(f"FAIL ADD Test: {len(failures)} failed of {total} test cases.")
     else:
         print(f"PASS ADD Test: All {total} test cases passed.")
-    return res, total
+    return failures, total
 
 
 def get_mul_test_cases_failed(width: int, rm: str) -> list:
@@ -589,29 +638,33 @@ def get_mul_test_cases(width: int, rm: str, random_count: int) -> list:
     return mul_test_cases
 
 
-def run_mul_tests(width: int, mul_test_cases: list) -> Tuple[int, int]:
-    """Run a list of test cases for fp_mul."""
+def run_mul_tests(width: int, mul_test_cases: list) -> Tuple[List[Dict[str, Any]], int]:
+    """Run a list of test cases for fp_mul, returning failures."""
     total = 0
-    res = 0
+    failures = []
 
     for a, b, c_py, c_c, rm_str in mul_test_cases:
         print(f"\nTesting: fp{width}_mul(0x{a}, 0x{b}, {rm_str})")
-        res += compare_fp_mul(a, b, width, c_py, c_c, rm_str)
+        failure = compare_fp_mul(a, b, width, c_py, c_c, rm_str)
+        if failure:
+            failures.append(failure)
         total += 1
 
-    if res:
-        print(f"FAIL MUL Test: {res} failed of {total} test cases.")
+    if failures:
+        print(f"FAIL MUL Test: {len(failures)} failed of {total} test cases.")
     else:
         print(f"PASS MUL Test: All {total} test cases passed.")
-    return res, total
+    return failures, total
 
 
-def tests(width: int = 16, rms: List[str] = ["rne", "rtz", "rpi", "rni", "rna"]) -> int:
+def tests(width: int = 16, rms: Optional[List[str]] = None) -> List[Dict[str, Any]]:
     """Runs all tests for a given width."""
+    if not rms:
+        rms = [str(rm) for rm in ROUNDING_MODES.keys()]
     random_count = 10
     # random_count = 100
     # random_count = 1000
-    res = 0
+    all_failures = []
     rm_results = {}
     print(f"\n{'=' * 20} RUNNING TESTS FOR FP{width} {'=' * 20}")
     for rm in rms:
@@ -626,10 +679,11 @@ def tests(width: int = 16, rms: List[str] = ["rne", "rtz", "rpi", "rni", "rna"])
         add_cases.extend(get_add_test_cases(width, rm, random_count))
         # mul_cases.extend(get_mul_test_cases(width, rm, random_count))
 
-        res_add, total_add = run_add_tests(width, add_cases)
-        res_mul, total_mul = run_mul_tests(width, mul_cases)
-        res += res_add + res_mul
-        rm_results[rm] = (res_add, total_add, res_mul, total_mul)
+        add_failures, total_add = run_add_tests(width, add_cases)
+        mul_failures, total_mul = run_mul_tests(width, mul_cases)
+        all_failures.extend(add_failures)
+        all_failures.extend(mul_failures)
+        rm_results[rm] = (len(add_failures), total_add, len(mul_failures), total_mul)
 
     # Print summary table
     print(f"\nFP{width} Comparison Summary")
@@ -654,20 +708,66 @@ def tests(width: int = 16, rms: List[str] = ["rne", "rtz", "rpi", "rni", "rna"])
         row = sep.join([f"{f:<{col_widths[i]}}" for i, f in enumerate(row_data)])
         print(row)
 
-    return res
+    return all_failures
+
+
+def write_failure_log(failures: List[Dict[str, Any]]):
+    """Writes a detailed log of all failed test cases."""
+    if not failures:
+        return
+
+    log_filename = f"fp_model_comparison_failures_{datetime.now():%Y%m%d_%H%M%S}.log"
+    print(f"\nWriting {len(failures)} failures to '{log_filename}'...")
+
+    with open(log_filename, "w", encoding="utf-8") as f:
+        f.write(
+            f"Floating-Point Model Comparison Failure Summary\n"
+            f"Timestamp: {datetime.now().isoformat()}\n"
+            f"Total Failures: {len(failures)}\n"
+        )
+        f.write("=" * 80 + "\n")
+
+        for i, fail in enumerate(failures, 1):
+            fp_vals = fail["fp_values"]
+            f.write(f"\n--- Failure {i} of {len(failures)} ---\n")
+            f.write(f"Operation: fp{fail['width']}_{fail['op']} (RM: {fail['rm']})\n")
+
+            # Inputs
+            a, b = fail["inputs"]["a_hex"], fail["inputs"]["b_hex"]
+            f.write(f"  Input A : 0x{a:<16} ({fp_vals.get(a)})\n")
+            f.write(f"  Input B : 0x{b:<16} ({fp_vals.get(b)})\n")
+
+            # Outputs
+            py_hex, c_hex = fail["outputs"]["py_hex"], fail["outputs"]["c_hex"]
+            f.write(f"  Py Model: 0x{py_hex:<16} ({fp_vals.get(py_hex)})\n")
+            f.write(f"  C Model : 0x{c_hex:<16} ({fp_vals.get(c_hex)})\n")
+
+            # Canonical Outputs
+            py_canon, c_canon = (
+                fail["canon_outputs"]["py_hex_canon"],
+                fail["canon_outputs"]["c_hex_canon"],
+            )
+            if py_canon != py_hex or c_canon != c_hex:
+                f.write("  Canonical Outputs:\n")
+                f.write(f"    Py Canon: 0x{py_canon:<14} ({fp_vals.get(py_canon)})\n")
+                f.write(f"    C Canon : 0x{c_canon:<14} ({fp_vals.get(c_canon)})\n")
+
+        f.write("\n" + "=" * 80 + "\nEnd of Log\n")
 
 
 def main() -> int:
     """Main entry point."""
+    # rms = ROUNDING_MODES.keys()
+    rms = None
+    # rms = ["rne"]
     compile_lib()
-    res_all = 0
+    all_failures = []
     results = {}
     for width in [16, 32, 64]:
         # for width in [64]:
-        res = tests(width)
-        results[width] = res
-        # res = tests(width, ["rne"])
-        res_all += res
+        width_failures = tests(width, rms)
+        results[width] = len(width_failures)
+        all_failures.extend(width_failures)
 
     print()
     print("Final Summary:")
@@ -675,11 +775,15 @@ def main() -> int:
     for width, res in results.items():  # print results for each width separately:
         print(f"{'FAIL' if res else 'PASS'} : FP{width} {res} errors")
     print("-" * 100)
-    print(f"{'FAIL' if res_all else 'PASS'} : TOTAL {res_all} errors")
+    total_errors = len(all_failures)
+    print(f"{'FAIL' if total_errors else 'PASS'} : TOTAL {total_errors} errors")
     print("-" * 100)
     print()
 
-    rc = min(res_all, 255)  # Limit the return code to 255 for Posix compatibility.
+    if all_failures:
+        write_failure_log(all_failures)
+
+    rc = min(total_errors, 255)  # Limit the return code for Posix compatibility.
     return rc
 
 
