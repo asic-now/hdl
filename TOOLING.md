@@ -13,13 +13,15 @@ make -f dsim.mk
 You can get fancy with the command, e.g. running from verif directory, only one DUT, add time measurement for the whole run and capture log:
 
 ```bash
-(time make -C ../ -f dsim.mk DUT=fp_classify 2>&1 | tee ../log.run
+# In bash:
+(time make -C ../ -f dsim.mk DUT=fp_classify) 2>&1 | tee ../log.run
 ```
 
 To include time measurement in PowerShell (DSim Studio terminal in Windows VSCode), use `Measure-Command`:
 
 ```powershell
-(Measure-Command {make -C ../ -f dsim.mk DUT=fp_classify}) 2>&1 | tee ../log.run
+# In PowerShell:
+Measure-Command {make -C ../ -f dsim.mk DUT=fp_classify 2>&1 | Tee-Object ../log.run} | Tee-Object ../log.run -Append
 ```
 
 You can specify DUT, PRECISION, TEST, and select target compile, run or all (all simulates all tests for DUT/PRECISION).
