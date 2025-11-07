@@ -211,15 +211,31 @@ static uint16_t float_to_fp16(float f, const int rm) {
 
 // C model function to be exported
 void c_fp_classify(const uint64_t in, const int width, fp_classify_outputs_s* out) {
-    // Unpack the 16-bit input
-    uint8_t  sign = (in >> 15) & 0x1;
-    uint8_t  exp  = (in >> 10) & 0x1F;
-    uint16_t mant = in & 0x3FF;
+    // FP constants based on width
+    int EXP_W;
+    switch (width) {
+        case 64: EXP_W = 11; break;
+        case 32: EXP_W =  8; break;
+        case 16:
+        default: EXP_W =  5; break;
+    }
+    const int MANT_W = width - 1 - EXP_W;
 
-    // Intermediate checks based on IEEE 754 for FP16
-    int exp_is_all_ones  = (exp == 0x1F);
-    int exp_is_all_zeros = (exp == 0x00);
-    int mant_is_zero     = (mant == 0x000);
+    const int SIGN_POS = width - 1;
+    const uint64_t EXP_ALL_ONES = (1ULL << EXP_W) - 1;
+    const uint64_t MANT_ALL_ONES = (1ULL << MANT_W) - 1;
+    const uint64_t MANT_MASK = MANT_ALL_ONES;
+    const uint64_t EXP_MASK = EXP_ALL_ONES;
+    const uint64_t QNAN_MSB_MASK = 1ULL << (MANT_W - 1);
+
+    // Unpack inputs
+    int sign = (in >> SIGN_POS) & 1;
+    unsigned int exp = (in >> MANT_W) & EXP_MASK;
+    uint64_t mant = in & MANT_MASK;
+
+    int exp_is_all_ones  = (exp == EXP_MASK);
+    int exp_is_all_zeros = (exp == 0);
+    int mant_is_zero     = (mant == 0);
 
     int is_nan      = exp_is_all_ones && !mant_is_zero;
     int is_inf      = exp_is_all_ones && mant_is_zero;
@@ -232,7 +248,7 @@ void c_fp_classify(const uint64_t in, const int width, fp_classify_outputs_s* ou
 
     // Determine NaN type
     if (is_nan) {
-        if (mant & 0x200) { // MSB of mantissa for FP16
+        if (mant & QNAN_MSB_MASK) {
             out->is_qnan = 1;
         } else {
             out->is_snan = 1;

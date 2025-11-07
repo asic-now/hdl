@@ -514,12 +514,12 @@ def fp_add(
     a_int, b_int = int(a_hex, 16), int(b_hex, 16)
     sign_a, exp_a, mant_a = (
         (a_int >> SIGN_POS) & 1,
-        (a_int >> MANT_W) & EXP_MASK,
+        (a_int >> EXP_POS) & EXP_MASK,
         a_int & MANT_MASK,
     )
     sign_b, exp_b, mant_b = (
         (b_int >> SIGN_POS) & 1,
-        (b_int >> MANT_W) & EXP_MASK,
+        (b_int >> EXP_POS) & EXP_MASK,
         b_int & MANT_MASK,
     )
 
@@ -746,7 +746,7 @@ def fp64_mul(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
 
 def fp_mul(a_hex: str, b_hex: str, width: int, rm: int = RNE) -> Dict[str, str]:
     """Multiply two fp numbers of a given width."""
-    # TODO: Implement bit-accurate model like fp_add
+    # TODO: (now) Implement bit-accurate model like fp_add
     if width == 16:
         return fp16_mul(a_hex, b_hex, rm)
     elif width == 32:

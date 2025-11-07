@@ -13,9 +13,7 @@ import uvm_pkg::*;
 // bit [31:0] : int unsigned      : uint32_t
 // bit [63:0] : longint unsigned  : uint64_t
 // C struct* maps to SV output struct
-import "DPI-C" context function void c_fp16_classify(input shortint unsigned in, output fp_classify_outputs_s out_s);
-import "DPI-C" context function void c_fp32_classify(input int      unsigned in, output fp_classify_outputs_s out_s);
-import "DPI-C" context function void c_fp64_classify(input longint  unsigned in, output fp_classify_outputs_s out_s);
+import "DPI-C" context function void c_fp_classify(input longint  unsigned in, input int width, output fp_classify_outputs_s out_s);
 
 class fp_classify_model #(
     parameter int WIDTH = 16
@@ -31,12 +29,7 @@ class fp_classify_model #(
     virtual function void predict(fp_classify_transaction #(WIDTH) trans_in, ref fp_classify_transaction #(WIDTH) trans_out);
         trans_out = new trans_in;
         // Call the imported C function to get the golden result
-        case (WIDTH)
-            16: c_fp16_classify(trans_in.inputs[0], trans_out.result);
-            32: c_fp32_classify(trans_in.inputs[0], trans_out.result);
-            64: c_fp64_classify(trans_in.inputs[0], trans_out.result);
-            default: `uvm_fatal("MODEL", $sformatf("Unsupported WIDTH %0d", WIDTH))
-        endcase
+        c_fp_classify(trans_in.inputs[0], WIDTH, trans_out.result);
     endfunction
 
 endclass
