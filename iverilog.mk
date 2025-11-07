@@ -1,4 +1,4 @@
-# TODO: (when needed) Update to include all testbanches (similar to dsim.mk)
+# TODO: (when needed) Update to include all testbenches (similar to dsim.mk)
 
 # Makefile for compiling and running the testbench.
 #
