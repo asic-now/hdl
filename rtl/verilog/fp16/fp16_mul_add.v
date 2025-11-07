@@ -83,7 +83,7 @@ module fp16_mul_add (
             s1_is_nan_c <= 0; s1_is_inf_c <= 0; s1_is_zero_c <= 0;
         end else begin
             // Product (a*b) preliminary calculations
-            s1_product_exp_sum <= effective_exp_a + effective_exp_b - 15;
+            s1_product_exp_sum <= {1'b0, effective_exp_a} + {1'b0, effective_exp_b} - 15;
             s1_product_sign <= sign_a ^ sign_b;
             s1_mant_a <= full_mant_a;
             s1_mant_b <= full_mant_b;
@@ -149,7 +149,9 @@ module fp16_mul_add (
             s2_sign_c <= s1_sign_c;
             s2_exp_c <= s1_exp_c;
             s2_mant_c <= s1_mant_c;
-            s2_is_nan_c <= s1_is_nan_c; s2_is_inf_c <= s1_is_inf_c; s2_is_zero_c <= s1_is_zero_c;
+            s2_is_nan_c <= s1_is_nan_c;
+            s2_is_inf_c <= s1_is_inf_c;
+            s2_is_zero_c <= s1_is_zero_c;
 
             // Evaluate special cases for the product (a*b)
             s2_prop_is_nan <= s1_is_nan_a || s1_is_nan_b || (s1_is_inf_a && s1_is_zero_b) || (s1_is_zero_a && s1_is_inf_b);
