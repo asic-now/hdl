@@ -12,9 +12,7 @@ import uvm_pkg::*;
 // bit [15:0] : shortint unsigned : uint16_t
 // bit [31:0] : int unsigned      : uint32_t
 // bit [63:0] : longint unsigned  : uint64_t
-import "DPI-C" function shortint unsigned c_fp16_mul(shortint unsigned a, shortint unsigned b, int rm);
-import "DPI-C" function int unsigned      c_fp32_mul(int      unsigned a, int      unsigned b, int rm);
-import "DPI-C" function longint unsigned  c_fp64_mul(longint  unsigned a, longint  unsigned b, int rm);
+import "DPI-C" function longint unsigned  c_fp_mul(longint  unsigned a, longint  unsigned b, int width, int rm);
 
 class fp_mul_model #(
     parameter int WIDTH = 16
@@ -30,12 +28,7 @@ class fp_mul_model #(
     virtual function void predict(fp_transaction2 #(WIDTH) trans_in, ref fp_transaction2 #(WIDTH) trans_out);
         trans_out = new trans_in;
         // Call the imported C function to get the golden result
-        case (WIDTH)
-            16: trans_out.result = c_fp16_mul(trans_in.inputs[0], trans_in.inputs[1], trans_in.rm);
-            32: trans_out.result = c_fp32_mul(trans_in.inputs[0], trans_in.inputs[1], trans_in.rm);
-            64: trans_out.result = c_fp64_mul(trans_in.inputs[0], trans_in.inputs[1], trans_in.rm);
-            default: `uvm_fatal("MODEL", $sformatf("Unsupported WIDTH %0d", WIDTH))
-        endcase
+        trans_out.result = c_fp_mul(trans_in.inputs[0], trans_in.inputs[1], WIDTH, trans_in.rm);
     endfunction
 
 endclass

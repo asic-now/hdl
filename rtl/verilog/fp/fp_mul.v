@@ -33,12 +33,10 @@ module fp_mul #(
     // Derived parameters for convenience
     localparam EXP_W            = (WIDTH == 64) ?   11 : (WIDTH == 32) ?    8 : (WIDTH == 16) ?    5 : 0; // IEEE-754
     localparam EXP_BIAS         = (WIDTH == 64) ? 1023 : (WIDTH == 32) ?  127 : (WIDTH == 16) ?   15 : 0; // IEEE-754
-    localparam PRECISION_BITS   = (WIDTH == 64) ?    5 : (WIDTH == 32) ?    5 : (WIDTH == 16) ?   14 : 0; // Select mantissa precision for accurate rounding
 
     localparam MANT_W       = WIDTH - 1 - EXP_W;
     localparam SIGN_POS     = WIDTH - 1;
     localparam EXP_POS      = MANT_W;
-    localparam ALIGN_MANT_W = MANT_W + 1 + PRECISION_BITS; // For alignment shift
 
     // Constants for special values
     localparam [ EXP_W-1:0] EXP_ALL_ONES   = { EXP_W{1'b1}};

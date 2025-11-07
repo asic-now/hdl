@@ -36,13 +36,6 @@ static uint64_t double_to_u64(double d, const int rm) {
     return conv.u;
 }
 
-// Multiply two fp64 numbers
-uint64_t c_fp64_mul(uint64_t a, uint64_t b, const int rm) {
-    double da = u64_to_double(a);
-    double db = u64_to_double(b);
-    return double_to_u64(da * db, rm);
-}
-
 // Divide two fp64 numbers
 uint64_t c_fp64_div(uint64_t a, uint64_t b, const int rm) {
     double da = u64_to_double(a);

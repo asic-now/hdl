@@ -520,14 +520,107 @@ uint64_t c_fp_add(uint64_t a, uint64_t b, const int width, const int rm) {
     return c_fp_add_ex(a, b, width, rm, precision_bits);
 }
 
-// Multiply two fp16 numbers: c = a * b
-uint64_t c_fp_mul(uint64_t a, uint64_t b, const int width, const int rm) {
-    // if (width == 16) {
-    //     return c_fp16_mul(a, b, rm);
-    // } else if (width == 32) {
-    //     return c_fp32_mul(a, b, rm);
-    // } else if (width == 64) {
-    //     return c_fp64_mul(a, b, rm);
-    // }
-    return 0; // Should not happen
+// Bit-accurate fp_mul model
+uint64_t c_fp_mul(uint64_t a_val, uint64_t b_val, const int width, const int rm) {
+    // FP constants based on width
+    int EXP_W, EXP_BIAS;
+    switch (width) {
+        case 64: EXP_W = 11; EXP_BIAS = 1023; break;
+        case 32: EXP_W =  8; EXP_BIAS =  127; break;
+        case 16:
+        default: EXP_W =  5; EXP_BIAS =   15; break;
+    }
+    const int MANT_W = width - 1 - EXP_W;
+    const int SIGN_POS = width - 1;
+
+    const uint64_t EXP_ALL_ONES = (1ULL << EXP_W) - 1;
+    const uint64_t MANT_MASK = (1ULL << MANT_W) - 1;
+    const uint64_t EXP_MASK = EXP_ALL_ONES;
+
+    // Unpack inputs
+    int sign_a = (a_val >> SIGN_POS) & 1;
+    unsigned int exp_a = (a_val >> MANT_W) & EXP_MASK;
+    uint64_t mant_a = a_val & MANT_MASK;
+
+    int sign_b = (b_val >> SIGN_POS) & 1;
+    unsigned int exp_b = (b_val >> MANT_W) & EXP_MASK;
+    uint64_t mant_b = b_val & MANT_MASK;
+
+    // Stage 1: Special Case Detection
+    int is_zero_a = (exp_a == 0 && mant_a == 0);
+    int is_zero_b = (exp_b == 0 && mant_b == 0);
+    int is_inf_a = (exp_a == EXP_ALL_ONES && mant_a == 0);
+    int is_inf_b = (exp_b == EXP_ALL_ONES && mant_b == 0);
+    int is_nan_a = (exp_a == EXP_ALL_ONES && mant_a != 0);
+    int is_nan_b = (exp_b == EXP_ALL_ONES && mant_b != 0);
+
+    int res_sign = sign_a ^ sign_b;
+
+    if (is_nan_a || is_nan_b) {
+        return is_nan_a ? a_val : b_val; // Propagate NaN
+    }
+    if ((is_inf_a && is_zero_b) || (is_zero_a && is_inf_b)) {
+        return (EXP_ALL_ONES << MANT_W) | (1ULL << (MANT_W - 1)); // qNaN
+    }
+    if (is_inf_a || is_inf_b) {
+        return ((uint64_t)res_sign << SIGN_POS) | (EXP_ALL_ONES << MANT_W); // +/- Infinity
+    }
+    if (is_zero_a || is_zero_b) {
+        return (uint64_t)res_sign << SIGN_POS; // +/- Zero
+    }
+
+    // Exponent sum
+    unsigned int eff_exp_a = (exp_a != 0) ? exp_a : 1;
+    unsigned int eff_exp_b = (exp_b != 0) ? exp_b : 1;
+    int exp_sum = eff_exp_a + eff_exp_b - EXP_BIAS;
+
+    // Add implicit bit
+    uint64_t full_mant_a = ((uint64_t)(exp_a != 0) << MANT_W) | mant_a;
+    uint64_t full_mant_b = ((uint64_t)(exp_b != 0) << MANT_W) | mant_b;
+
+    // Stage 2: Mantissa Multiplication
+    uint_ap_t mant_product = uint_ap_mul_u64(full_mant_a, full_mant_b); // Result is up to 2*(MANT_W+1) bits
+
+    // Stage 3: Normalize
+    int norm_exp;
+    uint_ap_t norm_mant;
+    if (uint_ap_get_bit(mant_product, 2 * MANT_W + 1)) {
+        norm_exp = exp_sum + 1;
+        norm_mant = uint_ap_rshift(mant_product, 1);
+    } else {
+        norm_exp = exp_sum;
+        norm_mant = mant_product;
+    }
+
+    // Final Stage: Round and Pack
+    int is_underflow = norm_exp <= 0;
+    uint_ap_t mant_to_round;
+    if (is_underflow) {
+        int shift_amount = 1 - norm_exp;
+        mant_to_round = uint_ap_rshift(norm_mant, shift_amount);
+    } else {
+        mant_to_round = norm_mant;
+    }
+
+    int rounder_input_width = 2 * MANT_W + 1;
+    int rounder_output_width = MANT_W + 1; // Keep implicit bit
+    int increment = grs_round_c(mant_to_round, res_sign, rm, rounder_input_width, rounder_output_width);
+    uint_ap_t rounded_mant_w_implicit = uint_ap_add_u64(uint_ap_rshift(mant_to_round, rounder_input_width - rounder_output_width), increment);
+
+    int rounder_overflow = uint_ap_get_bit(rounded_mant_w_implicit, MANT_W + 1);
+    int final_exp_rounded = norm_exp + rounder_overflow;
+
+    uint64_t out_exp, out_mant;
+    if (final_exp_rounded >= (int)EXP_ALL_ONES) { // Overflow
+        out_exp = EXP_ALL_ONES;
+        out_mant = 0;
+    } else if (is_underflow) {
+        out_exp = 0;
+        out_mant = uint_ap_to_uint64(rounded_mant_w_implicit) & MANT_MASK;
+    } else { // Normal number
+        out_exp = final_exp_rounded;
+        out_mant = uint_ap_to_uint64(rounded_mant_w_implicit) & MANT_MASK;
+    }
+
+    return ((uint64_t)res_sign << SIGN_POS) | (out_exp << MANT_W) | out_mant;
 }

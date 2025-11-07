@@ -105,4 +105,57 @@ static inline int uint_ap_is_any_bit_set_up_to(uint_ap_t val, int max_bit_idx) {
     return 0; // No set bits found in the range
 }
 
+// Helper function to multiply two uint64_t values into a uint_ap_t (128-bit result).
+// This relies on the non-standard but widely supported `unsigned __int128` type in GCC/Clang.
+static inline uint_ap_t uint_ap_mul_u64(uint64_t a, uint64_t b) {
+    unsigned __int128 product = (unsigned __int128)a * (unsigned __int128)b;
+    uint_ap_t res;
+    uint_ap_set_zero(&res);
+    res.parts[0] = (uint64_t)product;         // Lower 64 bits
+    res.parts[1] = (uint64_t)(product >> 64); // Upper 64 bits
+    return res;
+}
+
+// Helper function to right-shift a uint_ap_t value.
+static inline uint_ap_t uint_ap_rshift(uint_ap_t val, int shift) {
+    if (shift <= 0) return val;
+    // In C, shifting by a value >= the type's width is undefined behavior.
+    // We must handle this case explicitly to ensure large shifts correctly result in zero.
+    if (shift >= 128) {
+        uint_ap_t res;
+        uint_ap_set_zero(&res);
+        return res;
+    }
+    unsigned __int128 temp = ((unsigned __int128)val.parts[1] << 64) | val.parts[0];
+    temp >>= shift;
+    uint_ap_t res;
+    uint_ap_set_zero(&res);
+    res.parts[0] = (uint64_t)temp;
+    res.parts[1] = (uint64_t)(temp >> 64);
+    return res;
+}
+
+// Helper function to add a uint64_t to a uint_ap_t value.
+static inline uint_ap_t uint_ap_add_u64(uint_ap_t val, uint64_t addend) {
+    // Check for potential overflow before adding. If the upper part is already full,
+    // adding anything to the lower part that could carry will cause an overflow.
+    // This is a simplified check; a full implementation would handle carries.
+    if (val.parts[1] == 0xFFFFFFFFFFFFFFFFULL && (val.parts[0] > 0xFFFFFFFFFFFFFFFFULL - addend)) {
+        // Handle overflow case if necessary, for now, we assume it doesn't happen in this model's context
+        // or that the wrap-around behavior of `unsigned __int128` is acceptable.
+    }
+    unsigned __int128 temp = ((unsigned __int128)val.parts[1] << 64) | val.parts[0];
+    temp += addend;
+    uint_ap_t res;
+    uint_ap_set_zero(&res);
+    res.parts[0] = (uint64_t)temp;
+    res.parts[1] = (uint64_t)(temp >> 64);
+    return res;
+}
+
+// Helper function to convert a uint_ap_t to a uint64_t (truncates).
+static inline uint64_t uint_ap_to_uint64(uint_ap_t val) {
+    return val.parts[0];
+}
+
 #endif // FP_CLASSIFY_H

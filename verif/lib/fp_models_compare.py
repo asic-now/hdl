@@ -6,7 +6,7 @@ Compares C model to Python model.
 # verif/lib/fp_models_compare.py
 
 import ctypes
-from ctypes import CDLL, c_uint16, c_uint32, c_uint64
+from ctypes import CDLL, c_uint64
 import platform
 from datetime import datetime
 import subprocess
@@ -46,15 +46,6 @@ def load_libfp() -> CDLL:
         libfp.c_fp_add.restype = c_uint64
         libfp.c_fp_mul.argtypes = [c_uint64, c_uint64, ctypes.c_int, ctypes.c_int]
         libfp.c_fp_mul.restype = c_uint64
-        # FP16
-        libfp.c_fp16_mul.argtypes = [c_uint16, c_uint16, ctypes.c_int]
-        libfp.c_fp16_mul.restype = c_uint16
-        # FP32
-        libfp.c_fp32_mul.argtypes = [c_uint32, c_uint32, ctypes.c_int]
-        libfp.c_fp32_mul.restype = c_uint32
-        # FP64
-        libfp.c_fp64_mul.argtypes = [c_uint64, c_uint64, ctypes.c_int]
-        libfp.c_fp64_mul.restype = c_uint64
     return libfp
 
 
@@ -95,15 +86,9 @@ def fp_mul_c(a_hex: str, b_hex: str, width: int, rm: int) -> str:
         str: hex string representing the fp16 bit pattern result.
     """
     lib = load_libfp()
-    if width == 16:
+    if width in [16, 32, 64]:
         a_val, b_val = int(a_hex, 16), int(b_hex, 16)
-        result = lib.c_fp16_mul(c_uint16(a_val), c_uint16(b_val), rm)
-    elif width == 32:
-        a_val, b_val = int(a_hex, 16), int(b_hex, 16)
-        result = lib.c_fp32_mul(c_uint32(a_val), c_uint32(b_val), rm)
-    elif width == 64:
-        a_val, b_val = int(a_hex, 16), int(b_hex, 16)
-        result = lib.c_fp64_mul(c_uint64(a_val), c_uint64(b_val), rm)
+        result = lib.c_fp_mul(c_uint64(a_val), c_uint64(b_val), width, rm)
     else:
         raise ValueError(f"Unsupported width for C model: {width}")
 
@@ -374,7 +359,7 @@ def compile_lib():
     return result
 
 
-def get_add_test_uvm_cases(width: int, _rm: str) -> list:
+def get_add_test_cases_edges(width: int, _rm: str) -> list:
     """Generate a list of test cases for fp_add."""
     add16_test_cases = [
         # From failing fp_add test: UVM_ERROR
@@ -398,8 +383,9 @@ def get_add_test_uvm_cases(width: int, _rm: str) -> list:
         # ("965c", "8c6f", None, None, "rna"),  # DUT=0x9777, MODEL=0x9778 | Canonical: DUT=0x9777, MODEL=0x9778
         # ("6c6a", "d2d3", None, None, "rpi"),  # DUT=0x6c5c, MODEL=0x6c5d | Canonical: DUT=0x6c5c, MODEL=0x6c5d
     ]
-
-    return {16: add16_test_cases, 32: [], 64: []}[width]
+    add32_test_cases = []
+    add64_test_cases = []
+    return {16: add16_test_cases, 32: add32_test_cases, 64: add64_test_cases}[width]
 
 
 def get_add_test_cases(width: int, rm: str, random_count: int) -> list:
@@ -532,12 +518,19 @@ def run_add_tests(width: int, add_test_cases: list) -> Tuple[List[Dict[str, Any]
     return failures, total
 
 
-def get_mul_test_cases_failed(width: int, rm: str) -> list:
+def get_mul_test_cases_edges(width: int, rm: str) -> list:
     """Returns a list of known failing multiplication test cases."""
     mul16_test_cases = [
-        ("1286", "8e9c", None, None, "rne"),  # Only for fp16
+        ("1286", "8e9c", None, None, "rne"),
     ]
-    return {16: mul16_test_cases, 32: [], 64: []}[width]
+    mul32_test_cases = []
+    mul64_test_cases = [
+        ("aca49b4259f6ab48", "82159c4673d8524f", None, None, "rpi"),
+        ("367a0b2330827b72", "016c90a82cf6a25a", None, None, "rna"),
+        ("9ccd983ec139e9cd", "88097b2c7d6c6651", None, None, "rni"),
+        ("898034de9fe3b3cf", "255afe3a9b6c48cb", None, None, "rni"),
+    ]
+    return {16: mul16_test_cases, 32: mul32_test_cases, 64: mul64_test_cases}[width]
 
 
 def get_mul_test_cases(width: int, rm: str, random_count: int) -> list:
@@ -652,16 +645,13 @@ def tests(width: int = 16, rms: Optional[List[str]] = None) -> List[Dict[str, An
     rm_results = {}
     print(f"\n{'=' * 20} RUNNING TESTS FOR FP{width} {'=' * 20}")
     for rm in rms:
-        # for rm in ["rpi"]:
         add_cases, mul_cases = [], []
 
-        if width == 16:  # UVM cases are only for fp16 for now
-            add_cases.extend(get_add_test_uvm_cases(width, rm))
-
-        # mul_cases.extend(get_mul_test_cases_failed(width, rm))
-
+        add_cases.extend(get_add_test_cases_edges(width, rm))
         add_cases.extend(get_add_test_cases(width, rm, random_count))
-        # mul_cases.extend(get_mul_test_cases(width, rm, random_count))
+
+        mul_cases.extend(get_mul_test_cases_edges(width, rm))
+        mul_cases.extend(get_mul_test_cases(width, rm, random_count))
 
         add_failures, total_add = run_add_tests(width, add_cases)
         mul_failures, total_mul = run_mul_tests(width, mul_cases)
@@ -747,11 +737,12 @@ def main() -> int:
     # rms = ROUNDING_MODES.keys()
     rms = None
     # rms = ["rne"]
+    # rms = ["rpi"]
     compile_lib()
     all_failures = []
     results = {}
     for width in [16, 32, 64]:
-        # for width in [64]:
+        # for width in [16]:
         width_failures = tests(width, rms)
         results[width] = len(width_failures)
         all_failures.extend(width_failures)

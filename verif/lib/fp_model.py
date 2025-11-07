@@ -662,99 +662,161 @@ def fp_add(
     return fp_result(WIDTH, c)
 
 
-def fp16_mul(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
+def fp_mul(
+    a_hex: str,
+    b_hex: str,
+    width: int,
+    rm: int = RNE,
+) -> Dict[str, str]:
     """
-    Multiply two IEEE 754 binary16 (fp16) numbers given as hex strings.
+    Multiplies two fp numbers using bit-accurate logic.
+    This is a bit-accurate model of fp_mul.v.
 
-    Parameters:
-        a_hex (str): First 16-bit half-precision floating-point value as a hex string.
-        b_hex (str): Second 16-bit half-precision floating-point value as a hex string.
-        rm (int): The rounding mode to use, matching grs_round.vh.
+    Args:
+        a_hex (str): First fp operand as a hex string.
+        b_hex (str): Second fp operand as a hex string.
+        width (int): The bit width of the operands (16, 32, or 64).
+        rm (int): The rounding mode to use.
 
     Returns:
-        Dict[str, str]: Result in multiple formats (fp16 string, hex, bin, dec, oct).
+        Dict[str, str]: The result in multiple formats.
     """
+    # FP constants (match RTL code)
+    WIDTH = width
+    EXP_W, EXP_BIAS, np_type = {
+        16: (5, 15, np.float16),
+        32: (8, 127, np.float32),
+        64: (11, 1023, np.float64),
+    }[WIDTH]
 
-    # Convert hex strings to fp16
-    a_fp16 = fp_parse_hex(16, a_hex)
-    b_fp16 = fp_parse_hex(16, b_hex)
-    # Perform operation in higher precision (float32)
-    result_f32 = np.float32(a_fp16) * np.float32(b_fp16)
-    # Round the result to fp16 using the specified mode
-    c = round_fp32_to_fp16(result_f32, rm)
-    return fp_result(16, c)
+    MANT_W = WIDTH - 1 - EXP_W
+    SIGN_POS = WIDTH - 1
+    EXP_POS = MANT_W
 
+    # Constants for special values
+    EXP_ALL_ONES = (1 << EXP_W) - 1
+    EXP_ALL_ZEROS = 0
+    MANT_ALL_ZEROS = 0
+    MANT_MASK = (1 << MANT_W) - 1
+    EXP_MASK = EXP_ALL_ONES
 
-def fp32_mul(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
-    """
-    Multiply two IEEE 754 binary16 (fp32) numbers given as hex strings.
+    QNAN = (EXP_ALL_ONES << MANT_W) | (1 << (MANT_W - 1))
+    P_ZERO = 0
+    N_ZERO = 1 << SIGN_POS
 
-    Parameters:
-        a_hex (str): First 32-bit half-precision floating-point value as a hex string.
-        b_hex (str): Second 32-bit half-precision floating-point value as a hex string.
-        rm (int): The rounding mode to use, matching grs_round.vh.
+    # Unpack inputs
+    a_int, b_int = int(a_hex, 16), int(b_hex, 16)
+    sign_a, exp_a, mant_a = (
+        (a_int >> SIGN_POS) & 1,
+        (a_int >> EXP_POS) & EXP_MASK,
+        a_int & MANT_MASK,
+    )
+    sign_b, exp_b, mant_b = (
+        (b_int >> SIGN_POS) & 1,
+        (b_int >> EXP_POS) & EXP_MASK,
+        b_int & MANT_MASK,
+    )
 
-    Returns:
-        Dict[str, str]: Result in multiple formats (fp32 string, hex, bin, dec, oct).
-    """
+    # Stage 1: Special Case Detection
+    is_zero_a = exp_a == EXP_ALL_ZEROS and mant_a == MANT_ALL_ZEROS
+    is_zero_b = exp_b == EXP_ALL_ZEROS and mant_b == MANT_ALL_ZEROS
+    is_inf_a = exp_a == EXP_ALL_ONES and mant_a == MANT_ALL_ZEROS
+    is_inf_b = exp_b == EXP_ALL_ONES and mant_b == MANT_ALL_ZEROS
+    is_nan_a = exp_a == EXP_ALL_ONES and mant_a != MANT_ALL_ZEROS
+    is_nan_b = exp_b == EXP_ALL_ONES and mant_b != MANT_ALL_ZEROS
 
-    # Convert hex strings to fp32
-    a_fp32 = fp_parse_hex(32, a_hex)
-    b_fp32 = fp_parse_hex(32, b_hex)
-    # Perform operation in higher precision (float32)
-    result_f64 = np.float64(a_fp32) * np.float64(b_fp32)
-    # Round the result to fp32 using the specified mode
-    c = round_fp64_to_fp32(result_f64, rm)
-    return fp_result(32, c)
+    res_sign = sign_a ^ sign_b
 
+    if is_nan_a or is_nan_b:
+        # Propagate NaN, prefer a over b if both are NaN
+        special_result = a_int if is_nan_a else b_int
+        return fp_result(
+            WIDTH,
+            np.frombuffer(special_result.to_bytes(WIDTH // 8, "little"), dtype=np_type)[
+                0
+            ],
+        )
+    if (is_inf_a and is_zero_b) or (is_zero_a and is_inf_b):
+        return fp_result(
+            WIDTH, np.frombuffer(QNAN.to_bytes(WIDTH // 8, "little"), dtype=np_type)[0]
+        )
+    if is_inf_a or is_inf_b:
+        special_result = (res_sign << SIGN_POS) | (EXP_ALL_ONES << MANT_W)
+        return fp_result(
+            WIDTH,
+            np.frombuffer(special_result.to_bytes(WIDTH // 8, "little"), dtype=np_type)[
+                0
+            ],
+        )
+    if is_zero_a or is_zero_b:
+        special_result = N_ZERO if res_sign else P_ZERO
+        return fp_result(
+            WIDTH,
+            np.frombuffer(special_result.to_bytes(WIDTH // 8, "little"), dtype=np_type)[
+                0
+            ],
+        )
 
-def fp64_mul(a_hex: str, b_hex: str, rm: int = RNE) -> Dict[str, str]:
-    """
-    Multiply two IEEE 754 binary16 (fp64) numbers given as hex strings.
+    # Exponent sum
+    eff_exp_a = exp_a if exp_a != 0 else 1
+    eff_exp_b = exp_b if exp_b != 0 else 1
+    exp_sum = eff_exp_a + eff_exp_b - EXP_BIAS
 
-    Parameters:
-        a_hex (str): First 64-bit half-precision floating-point value as a hex string.
-        b_hex (str): Second 64-bit half-precision floating-point value as a hex string.
-        rm (int): The rounding mode to use, matching grs_round.vh.
+    # Add implicit bit
+    full_mant_a = ((exp_a != EXP_ALL_ZEROS) << MANT_W) | mant_a
+    full_mant_b = ((exp_b != EXP_ALL_ZEROS) << MANT_W) | mant_b
 
-    Returns:
-        Dict[str, str]: Result in multiple formats (fp32 string, hex, bin, dec, oct).
-    """
-    # Convert hex strings to fp64
-    a_fp64 = fp_parse_hex(64, a_hex)
-    b_fp64 = fp_parse_hex(64, b_hex)
+    # Stage 2: Mantissa Multiplication
+    mant_product = full_mant_a * full_mant_b
 
-    # Handle special cases (inf, nan) before converting to Decimal
-    if not np.isfinite(a_fp64) or not np.isfinite(b_fp64):
-        # Let numpy handle inf/nan multiplication, which follows IEEE 754 rules
-        c = a_fp64 * b_fp64
-        return fp_result(64, c)
-
-    # Set precision for decimal operations.
-    # float64 has 53 bits of precision. For multiplication, we need more to get
-    # an accurate result before rounding. 2 * 53 = 106 bits.
-    # Let's use a precision of 120 bits, which is ~36 decimal digits.
-    getcontext().prec = 40
-
-    # Convert to Decimal and perform operation in higher precision
-    result_decimal = Decimal(a_fp64) * Decimal(b_fp64)
-
-    # Round the result to fp64 using the specified mode
-    c = round_decimal_to_fp64(result_decimal, rm)
-    return fp_result(64, c)
-
-
-def fp_mul(a_hex: str, b_hex: str, width: int, rm: int = RNE) -> Dict[str, str]:
-    """Multiply two fp numbers of a given width."""
-    # TODO: (now) Implement bit-accurate model like fp_add
-    if width == 16:
-        return fp16_mul(a_hex, b_hex, rm)
-    elif width == 32:
-        return fp32_mul(a_hex, b_hex, rm)
-    elif width == 64:
-        return fp64_mul(a_hex, b_hex, rm)
+    # Stage 3: Normalize
+    # Product is 2*MANT_W+2 bits. Normalized position is 2*MANT_W.
+    if (mant_product >> (2 * MANT_W + 1)) & 1:
+        norm_exp = exp_sum + 1
+        norm_mant = mant_product >> 1
     else:
-        raise ValueError(f"Unsupported width: {width}")
+        norm_exp = exp_sum
+        norm_mant = mant_product
+
+    # Final Stage: Round and Pack
+    is_underflow = norm_exp <= 0
+    if is_underflow:
+        shift_amount = 1 - norm_exp
+        mant_to_round = norm_mant >> shift_amount
+    else:
+        mant_to_round = norm_mant
+
+    # Rounding
+    rounder_input_width = 2 * MANT_W + 1
+    rounder_output_width = MANT_W + 1  # Keep implicit bit
+    increment = grs_round(
+        mant_to_round, res_sign, rm, rounder_input_width, rounder_output_width
+    )
+    rounded_mant_w_implicit = (
+        mant_to_round >> (rounder_input_width - rounder_output_width)
+    ) + increment
+
+    rounder_overflow = (rounded_mant_w_implicit >> (MANT_W + 1)) & 1
+    final_exp_rounded = norm_exp + rounder_overflow
+
+    # Pack final result
+    if final_exp_rounded >= EXP_ALL_ONES:  # Overflow
+        out_exp = EXP_ALL_ONES
+        out_mant = MANT_ALL_ZEROS
+    elif is_underflow:
+        if final_exp_rounded > 0:  # Rounded back up to smallest normal
+            out_exp = 1
+            out_mant = MANT_ALL_ZEROS
+        else:
+            out_exp = EXP_ALL_ZEROS
+            out_mant = rounded_mant_w_implicit & MANT_MASK
+    else:  # Normal number
+        out_exp = final_exp_rounded
+        out_mant = rounded_mant_w_implicit & MANT_MASK
+
+    result_int = (res_sign << SIGN_POS) | (out_exp << MANT_W) | out_mant
+    c = np.frombuffer(result_int.to_bytes(WIDTH // 8, "little"), dtype=np_type)[0]
+    return fp_result(WIDTH, c)
 
 
 def fp_print(width: int, numbers: List[str]) -> None:

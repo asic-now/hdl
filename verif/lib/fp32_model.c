@@ -36,13 +36,6 @@ static uint32_t float_to_u32(float f, const int rm) {
     return conv.u;
 }
 
-// Multiply two fp32 numbers
-uint32_t c_fp32_mul(uint32_t a, uint32_t b, const int rm) {
-    float fa = u32_to_float(a);
-    float fb = u32_to_float(b);
-    return float_to_u32(fa * fb, rm);
-}
-
 // Divide two fp32 numbers
 uint32_t c_fp32_div(uint32_t a, uint32_t b, const int rm) {
     float fa = u32_to_float(a);

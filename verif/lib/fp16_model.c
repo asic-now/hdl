@@ -135,14 +135,6 @@ static uint16_t float_to_fp16(float f, const int rm) {
     return sign_bit | (exp_16 << 10) | mant_16;
 }
 
-// Multiply two fp16 numbers: c = a * b
-uint16_t c_fp16_mul(uint16_t a, uint16_t b, const int rm) {
-    float fa = fp16_to_float(a);
-    float fb = fp16_to_float(b);
-    float fc = fa * fb;
-    return float_to_fp16(fc, rm);
-}
-
 // Divide two fp16 numbers: c = a / b
 uint16_t c_fp16_div(uint16_t a, uint16_t b, const int rm) {
     float fa = fp16_to_float(a);
