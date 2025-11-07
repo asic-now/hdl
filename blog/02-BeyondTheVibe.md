@@ -73,4 +73,8 @@ However, the "final 20%"—the critical thinking, the deep mathematical insight,
 
 The next step: tackling more complex operations and refining the verification environment further.
 
+**You can find the entire library here on GitHub:**
+
+[https://github.com/asic-now/hdl](https://github.com/asic-now/hdl)
+
  #verilog #rtl #vibecoding #OpenSource #ASIC #AI
