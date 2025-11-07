@@ -47,18 +47,12 @@ def load_libfp() -> CDLL:
         libfp.c_fp_mul.argtypes = [c_uint64, c_uint64, ctypes.c_int, ctypes.c_int]
         libfp.c_fp_mul.restype = c_uint64
         # FP16
-        libfp.c_fp16_add.argtypes = [c_uint16, c_uint16, ctypes.c_int]
-        libfp.c_fp16_add.restype = c_uint16
         libfp.c_fp16_mul.argtypes = [c_uint16, c_uint16, ctypes.c_int]
         libfp.c_fp16_mul.restype = c_uint16
         # FP32
-        libfp.c_fp32_add.argtypes = [c_uint32, c_uint32, ctypes.c_int]
-        libfp.c_fp32_add.restype = c_uint32
         libfp.c_fp32_mul.argtypes = [c_uint32, c_uint32, ctypes.c_int]
         libfp.c_fp32_mul.restype = c_uint32
         # FP64
-        libfp.c_fp64_add.argtypes = [c_uint64, c_uint64, ctypes.c_int]
-        libfp.c_fp64_add.restype = c_uint64
         libfp.c_fp64_mul.argtypes = [c_uint64, c_uint64, ctypes.c_int]
         libfp.c_fp64_mul.restype = c_uint64
     return libfp
@@ -66,7 +60,7 @@ def load_libfp() -> CDLL:
 
 def fp_add_c(a_hex: str, b_hex: str, width: int, rm: int) -> str:
     """
-    Call the C c_fp16_add() function via ctypes.
+    Call the C c_fp_add() function via ctypes.
 
     Args:
         a_hex (str): hex string representing a 16-bit half-precision float bit pattern.
@@ -81,16 +75,6 @@ def fp_add_c(a_hex: str, b_hex: str, width: int, rm: int) -> str:
     if width in [16, 32, 64]:
         a_val, b_val = int(a_hex, 16), int(b_hex, 16)
         result = lib.c_fp_add(c_uint64(a_val), c_uint64(b_val), width, rm)
-
-    # elif width == 16:
-    #     a_val, b_val = int(a_hex, 16), int(b_hex, 16)
-    #     result = lib.c_fp16_add(c_uint16(a_val), c_uint16(b_val), rm)
-    # elif width == 32:
-    #     a_val, b_val = int(a_hex, 16), int(b_hex, 16)
-    #     result = lib.c_fp32_add(c_uint32(a_val), c_uint32(b_val), rm)
-    # elif width == 64:
-    #     a_val, b_val = int(a_hex, 16), int(b_hex, 16)
-    #     result = lib.c_fp64_add(c_uint64(a_val), c_uint64(b_val), rm)
     else:
         raise ValueError(f"Unsupported width for C model: {width}")
 

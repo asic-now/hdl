@@ -12,9 +12,6 @@ import uvm_pkg::*;
 // bit [15:0] : shortint unsigned : uint16_t
 // bit [31:0] : int unsigned      : uint32_t
 // bit [63:0] : longint unsigned  : uint64_t
-import "DPI-C" function shortint unsigned c_fp16_add(shortint unsigned a, shortint unsigned b, int rm);
-import "DPI-C" function int unsigned      c_fp32_add(int      unsigned a, int      unsigned b, int rm);
-import "DPI-C" function longint unsigned  c_fp64_add(longint  unsigned a, longint  unsigned b, int rm);
 import "DPI-C" function longint unsigned  c_fp_add(longint  unsigned a, longint  unsigned b, int width, int rm);
 
 class fp_add_model #(
@@ -32,12 +29,6 @@ class fp_add_model #(
         trans_out = new trans_in;
         // Call the imported C function to get the golden result
         trans_out.result = c_fp_add(trans_in.inputs[0], trans_in.inputs[1], WIDTH, trans_in.rm);
-        // case (WIDTH)
-        //     16: trans_out.result = c_fp16_add(trans_in.inputs[0], trans_in.inputs[1], trans_in.rm);
-        //     32: trans_out.result = c_fp32_add(trans_in.inputs[0], trans_in.inputs[1], trans_in.rm);
-        //     64: trans_out.result = c_fp64_add(trans_in.inputs[0], trans_in.inputs[1], trans_in.rm);
-        //     default: `uvm_fatal("MODEL", $sformatf("Unsupported WIDTH %0d", WIDTH))
-        // endcase
     endfunction
 
 endclass

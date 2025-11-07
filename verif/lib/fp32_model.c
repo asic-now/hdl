@@ -36,14 +36,6 @@ static uint32_t float_to_u32(float f, const int rm) {
     return conv.u;
 }
 
-// The exported DPI-C function that will be called from SystemVerilog
-uint32_t c_fp32_add(uint32_t a, uint32_t b, const int rm) {
-    float fa = u32_to_float(a);
-    float fb = u32_to_float(b);
-    float fresult = fa + fb;
-    return float_to_u32(fresult, rm);
-}
-
 // Multiply two fp32 numbers
 uint32_t c_fp32_mul(uint32_t a, uint32_t b, const int rm) {
     float fa = u32_to_float(a);

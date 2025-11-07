@@ -36,14 +36,6 @@ static uint64_t double_to_u64(double d, const int rm) {
     return conv.u;
 }
 
-// The exported DPI-C function that will be called from SystemVerilog
-uint64_t c_fp64_add(uint64_t a, uint64_t b, const int rm) {
-    double da = u64_to_double(a);
-    double db = u64_to_double(b);
-    double dresult = da + db;
-    return double_to_u64(dresult, rm);
-}
-
 // Multiply two fp64 numbers
 uint64_t c_fp64_mul(uint64_t a, uint64_t b, const int rm) {
     double da = u64_to_double(a);
