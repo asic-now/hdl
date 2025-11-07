@@ -254,7 +254,7 @@ void c_fp_classify(const uint64_t in, const int width, fp_classify_outputs_s* ou
 }
 
 // Helper function for GRS rounding logic, mirroring Python's grs_round
-static int grs_round_c(uint64_t value_in, int sign_in, int mode, int input_width, int output_width) {
+static int grs_round_c(uint_ap_t value_in, int sign_in, int mode, int input_width, int output_width) {
     int shift_amount = input_width - output_width;
 
     if (shift_amount <= 0) {
@@ -262,20 +262,19 @@ static int grs_round_c(uint64_t value_in, int sign_in, int mode, int input_width
     }
 
     // LSB of the part that will be kept (bit at position 'shift_amount')
-    int lsb = (value_in >> shift_amount) & 1; // TODO: (when needed) >>is clamped in C, should check shift amount vs. 64 bits
+    int lsb = uint_ap_get_bit(value_in, shift_amount);
 
     // Guard bit: The most significant bit of the truncated portion (bit at position 'shift_amount - 1')
-    int g = (shift_amount >= 1) ? (value_in >> (shift_amount - 1)) & 1 : 0; // TODO: (when needed) >>is clamped in C, should check shift amount vs. 64 bits
+    int g = (shift_amount >= 1) ? uint_ap_get_bit(value_in, shift_amount - 1) : 0;
 
     // Round bit: The bit immediately to the right of the Guard bit (bit at position 'shift_amount - 2')
-    int r = (shift_amount >= 2) ? (value_in >> (shift_amount - 2)) & 1 : 0; // TODO: (when needed) >>is clamped in C, should check shift amount vs. 64 bits
+    int r = (shift_amount >= 2) ? uint_ap_get_bit(value_in, shift_amount - 2) : 0;
 
     // Sticky bit: The logical OR of all bits to the right of the Round bit.
     int s = 0;
     if (shift_amount >= 3) {
-        // Mask for bits from 0 to shift_amount - 3
-        uint64_t mask = (1ULL << (shift_amount - 2)) - 1;
-        s = (value_in & mask) != 0;
+        // Check if any bit from 0 to (shift_amount - 3) is set.
+        s = uint_ap_is_any_bit_set_up_to(value_in, shift_amount - 3);
     }
 
     int inexact = g | r | s;
@@ -450,8 +449,10 @@ uint64_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
     // Extract the portion of res_mant that goes into the rounder
     // This is the mantissa *after* the implicit bit, extended by precision_bits
     uint64_t rounder_input = res_mant & ((1ULL << rounder_input_width) - 1);
+    // Convert to arbitrary precision type for grs_round_c
+    uint_ap_t rounder_input_ap = uint_ap_from_uint64(rounder_input);
 
-    int increment = grs_round_c(rounder_input, res_sign, rm, rounder_input_width, rounder_output_width);
+    int increment = grs_round_c(rounder_input_ap, res_sign, rm, rounder_input_width, rounder_output_width);
 
     uint64_t rounded_mant_no_implicit = (rounder_input >> (rounder_input_width - rounder_output_width)) + increment;
 

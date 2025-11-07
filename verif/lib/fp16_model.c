@@ -459,8 +459,8 @@ uint16_t c_fp16_add_ex(uint16_t a_val, uint16_t b_val, const int rm, const int p
 
     // Extract the portion of res_mant that goes into the rounder
     // This is the mantissa *after* the implicit bit, extended by precision_bits
-    // Convert to arbitrary precision type for grs_round_c
     uint64_t rounder_input = res_mant & ((1ULL << rounder_input_width) - 1);
+    // Convert to arbitrary precision type for grs_round_c
     uint_ap_t rounder_input_ap = uint_ap_from_uint64(rounder_input);
 
     int increment = grs_round_c(rounder_input_ap, res_sign, rm, rounder_input_width, rounder_output_width);
