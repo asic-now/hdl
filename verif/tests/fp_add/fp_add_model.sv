@@ -15,6 +15,7 @@ import uvm_pkg::*;
 import "DPI-C" function shortint unsigned c_fp16_add(shortint unsigned a, shortint unsigned b, int rm);
 import "DPI-C" function int unsigned      c_fp32_add(int      unsigned a, int      unsigned b, int rm);
 import "DPI-C" function longint unsigned  c_fp64_add(longint  unsigned a, longint  unsigned b, int rm);
+import "DPI-C" function longint unsigned  c_fp_add(longint  unsigned a, longint  unsigned b, int width, int rm);
 
 class fp_add_model #(
     parameter int WIDTH = 16
@@ -30,12 +31,13 @@ class fp_add_model #(
     virtual function void predict(fp_transaction2 #(WIDTH) trans_in, ref fp_transaction2 #(WIDTH) trans_out);
         trans_out = new trans_in;
         // Call the imported C function to get the golden result
-        case (WIDTH)
-            16: trans_out.result = c_fp16_add(trans_in.inputs[0], trans_in.inputs[1], trans_in.rm);
-            32: trans_out.result = c_fp32_add(trans_in.inputs[0], trans_in.inputs[1], trans_in.rm);
-            64: trans_out.result = c_fp64_add(trans_in.inputs[0], trans_in.inputs[1], trans_in.rm);
-            default: `uvm_fatal("MODEL", $sformatf("Unsupported WIDTH %0d", WIDTH))
-        endcase
+        trans_out.result = c_fp_add(trans_in.inputs[0], trans_in.inputs[1], WIDTH, trans_in.rm);
+        // case (WIDTH)
+        //     16: trans_out.result = c_fp16_add(trans_in.inputs[0], trans_in.inputs[1], trans_in.rm);
+        //     32: trans_out.result = c_fp32_add(trans_in.inputs[0], trans_in.inputs[1], trans_in.rm);
+        //     64: trans_out.result = c_fp64_add(trans_in.inputs[0], trans_in.inputs[1], trans_in.rm);
+        //     default: `uvm_fatal("MODEL", $sformatf("Unsupported WIDTH %0d", WIDTH))
+        // endcase
     endfunction
 
 endclass
