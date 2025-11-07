@@ -711,18 +711,20 @@ def tests(width: int = 16, rms: Optional[List[str]] = None) -> List[Dict[str, An
     return all_failures
 
 
-def write_failure_log(failures: List[Dict[str, Any]]):
+def write_failure_log(
+    failures: List[Dict[str, Any]], log_filename: str, start_time: datetime
+):
     """Writes a detailed log of all failed test cases."""
     if not failures:
         return
 
-    log_filename = f"fp_model_comparison_failures_{datetime.now():%Y%m%d_%H%M%S}.log"
     print(f"\nWriting {len(failures)} failures to '{log_filename}'...")
 
     with open(log_filename, "w", encoding="utf-8") as f:
+        # Use the timestamp from the start of the run, which is part of the filename
         f.write(
             f"Floating-Point Model Comparison Failure Summary\n"
-            f"Timestamp: {datetime.now().isoformat()}\n"
+            f"Timestamp: {start_time.isoformat()}\n"
             f"Total Failures: {len(failures)}\n"
         )
         f.write("=" * 80 + "\n")
@@ -757,6 +759,7 @@ def write_failure_log(failures: List[Dict[str, Any]]):
 
 def main() -> int:
     """Main entry point."""
+    start_time = datetime.now()
     # rms = ROUNDING_MODES.keys()
     rms = None
     # rms = ["rne"]
@@ -781,7 +784,8 @@ def main() -> int:
     print()
 
     if all_failures:
-        write_failure_log(all_failures)
+        log_filename = f"fp_model_comparison_failures_{start_time:%Y%m%d%H%M%S}.log"
+        write_failure_log(all_failures, log_filename, start_time)
 
     rc = min(total_errors, 255)  # Limit the return code for Posix compatibility.
     return rc
