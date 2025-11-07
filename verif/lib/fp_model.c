@@ -368,30 +368,30 @@ uint64_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
     }
 
     // Add implicit bit (1 for normal, 0 for denormal)
-    uint64_t full_mant_a = ((uint64_t)(exp_a != 0) << MANT_W) | mant_a;
-    uint64_t full_mant_b = ((uint64_t)(exp_b != 0) << MANT_W) | mant_b;
+    uint64_t full_mant_a = ((uint64_t)(exp_a != 0) << MANT_W) | mant_a;  // width=MANT_W+1
+    uint64_t full_mant_b = ((uint64_t)(exp_b != 0) << MANT_W) | mant_b;  // width=MANT_W+1
 
     // Effective exponents (denormals have exp=1 for calculation)
     unsigned int eff_exp_a = (exp_a != 0) ? exp_a : 1;
     unsigned int eff_exp_b = (exp_b != 0) ? exp_b : 1;
 
     // Align mantissas
-    uint64_t mant_a_aligned = full_mant_a << precision_bits; // TODO: (when needed) Could overflow for (MANT_W+1+precision_bits > 64)
-    uint64_t mant_b_aligned = full_mant_b << precision_bits;
+    uint64_t mant_a_aligned = full_mant_a << precision_bits;  // TODO: (when needed) Could overflow for (MANT_W+1+precision_bits > 64)
+    uint64_t mant_b_aligned = full_mant_b << precision_bits;  // width=MANT_W+1+precision_bits
 
     int res_exp;
-    int exp_diff = eff_exp_a - eff_exp_b;
+    int exp_diff = eff_exp_a - eff_exp_b; // upto 2 * 2^EXP_W
     if (exp_diff > 0) {
         // In C, shift operations for more bits than operand are undefined.
         if (exp_diff > sizeof(uint64_t) * 8 - 1) { // Overflow
-            mant_b_aligned = 0;
+            mant_b_aligned = 0;  // Value should vanish
         } else {
             mant_b_aligned >>= exp_diff;
         }
         res_exp = eff_exp_a;
     } else {
-        if (-exp_diff > sizeof(uint64_t) * 8 + 1) { // Overflow
-            mant_a_aligned = 0;
+        if (-exp_diff > sizeof(uint64_t) * 8 - 1) { // Overflow
+            mant_a_aligned = 0;  // Value should vanish
         } else {
             mant_a_aligned >>= -exp_diff;
         }
@@ -400,7 +400,7 @@ uint64_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
 
     // Add or Subtract
     int op_is_sub = sign_a != sign_b;
-    uint64_t res_mant;
+    uint64_t res_mant; // width=MANT_W+1+precision_bits+1
     int res_sign;
 
     if (op_is_sub) {
@@ -422,7 +422,7 @@ uint64_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
     }
 
     // Normalize
-    int msb_pos = -1;
+    int msb_pos = -1;  // from -1 to MANT_W+1+precision_bits+1
     if (res_mant > 0) {
         // Equivalent to Python's bit_length() - 1 for non-zero values
         // __builtin_clzll counts leading zeros for unsigned long long (64-bit)
@@ -430,12 +430,20 @@ uint64_t c_fp_add_ex(uint64_t a_val, uint64_t b_val, const int width, const int 
     }
 
     // Normalized position for implicit bit is at ALIGN_MANT_W - 1
-    int shift = ALIGN_MANT_W - 1 - msb_pos;
+    int shift = ALIGN_MANT_W - 1 - msb_pos; // from (MANT_W+1+precision_bits) to (-1)
 
     if (shift > 0) {
-        res_mant <<= shift;
+        if (shift > sizeof(uint64_t) * 8 - 1) { // Overflow
+            res_mant = 0;  // Value should vanish
+        } else {
+            res_mant <<= shift;
+        }
     } else {
-        res_mant >>= -shift;
+        if (-shift > sizeof(uint64_t) * 8 - 1) { // Overflow
+            res_mant = 0;  // Value should vanish
+        } else {
+            res_mant >>= -shift;
+        }
     }
     res_exp -= shift;
 
