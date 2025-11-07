@@ -161,7 +161,7 @@ The table below shows the implementation and verification status of the floating
 | `cmp`         | RTL only      | RTL only      | RTL only      |
 | `div`         | RTL only      | RTL only      | RTL only      |
 | `invsqrt`     | RTL only      | RTL only      | RTL only      |
-| `mul`         | RTL only      | RTL only      | RTL only      |
+| `mul`         | [x]  Verified | [x]  Verified | [x]  Verified |
 | `mul_add`     | RTL only      | RTL only      | RTL only      |
 | `mul_sub`     | RTL only      | RTL only      | RTL only      |
 | `recip`       | RTL only      | RTL only      | RTL only      |
