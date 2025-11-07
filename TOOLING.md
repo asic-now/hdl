@@ -4,7 +4,7 @@ This project has been developed on Windows 10 OS using free version of Altair DS
 
 For code highlighting and linting, TerosHDL VSCode extension is used with Vivado, Verilator and Verible.
 
-Once all dependencies are installed, compile and simulate modules by opening DSIm Studio terminal in VSCode and running `make` from project root (note that DSim Studio terminal opens in `verif` directory):
+Once all dependencies are installed, compile and simulate modules by opening `DSim Studio` terminal in VSCode and running `make` from project root (note that DSim Studio terminal opens in `verif` directory, and it is based on Windows PowerShell):
 
 ```bash
 make -f dsim.mk
@@ -13,7 +13,13 @@ make -f dsim.mk
 You can get fancy with the command, e.g. running from verif directory, only one DUT, add time measurement for the whole run and capture log:
 
 ```bash
-(time make -C ../ -f dsim.mk DUT=fp_classify) 2>&1 | tee ../log.run
+(time make -C ../ -f dsim.mk DUT=fp_classify 2>&1 | tee ../log.run
+```
+
+To include time measurement in PowerShell (DSim Studio terminal in Windows VSCode), use `Measure-Command`:
+
+```powershell
+(Measure-Command {make -C ../ -f dsim.mk DUT=fp_classify}) 2>&1 | tee ../log.run
 ```
 
 You can specify DUT, PRECISION, TEST, and select target compile, run or all (all simulates all tests for DUT/PRECISION).

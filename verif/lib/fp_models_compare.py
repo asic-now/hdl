@@ -660,7 +660,7 @@ def run_mul_tests(width: int, mul_test_cases: list) -> Tuple[List[Dict[str, Any]
 def tests(width: int = 16, rms: Optional[List[str]] = None) -> List[Dict[str, Any]]:
     """Runs all tests for a given width."""
     if not rms:
-        rms = [str(rm) for rm in ROUNDING_MODES.keys()]
+        rms = [str(rm) for rm in ROUNDING_MODES]
     random_count = 10
     # random_count = 100
     # random_count = 1000

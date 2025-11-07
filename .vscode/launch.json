@@ -101,12 +101,12 @@
         },
 
         {
-            "name": "parse_simlog.py log.run1",
+            "name": "parse_simlog.py log.run",
             "type": "debugpy",
             "request": "launch",
             "program": "scripts/parse_simlog.py",
             "args": [
-                "${workspaceFolder}/log.run1",
+                "${workspaceFolder}/log.run",
             ],
             "console": "integratedTerminal"
         },
