@@ -60,14 +60,15 @@ module fas_vec_tb;
         //==========================================================================================
 
         // Test addition mode (add_nsub=0)
-        test_case(5'b00001, 5'b00001, 1'b0, 1'b0, 5'b00010, 1'b0, "Add 1 + 1     no carry");
-        test_case(5'b11111, 5'b00001, 1'b0, 1'b0, 5'b00000, 1'b1, "Add max + 1      carry");
-        test_case(5'b10101, 5'b01010, 1'b0, 1'b0, 5'b11111, 1'b0, "Add 21 + 10   no carry");
-        test_case(5'b10101, 5'b01010, 1'b1, 1'b0, 5'b00000, 1'b1, "Add 21 + 10 + 1  carry");
-        test_case(5'b11111, 5'b11111, 1'b1, 1'b0, 5'b11110, 1'b1, "Add max + max    carry");
+        test_case(5'b00001, 5'b00001, 1'b0, 1'b0, 5'b00010, 1'b0, "Add 1 + 1          no carry");
+        test_case(5'b11111, 5'b00001, 1'b0, 1'b0, 5'b00000, 1'b1, "Add max + 1           carry");
+        test_case(5'b10101, 5'b01010, 1'b0, 1'b0, 5'b11111, 1'b0, "Add 21 + 10        no carry");
+        test_case(5'b10101, 5'b01010, 1'b1, 1'b0, 5'b00000, 1'b1, "Add 21 + 10 + 1       carry");
+        test_case(5'b11111, 5'b11111, 1'b0, 1'b0, 5'b11110, 1'b1, "Add max + max         carry");
+        test_case(5'b11111, 5'b11111, 1'b1, 1'b0, 5'b11111, 1'b1, "Add max + max + 1     carry");
 
         // Test subtraction mode (add_nsub=1)
-        test_case(5'b00000, 5'b00000, 1'b0, 1'b1, 5'b00000, 1'b0, "Sub zero - zero");
+        test_case(5'b00000, 5'b00000, 1'b0, 1'b1, 5'b00000, 1'b0, "Sub zero - zero   no borrow");
         test_case(5'b01010, 5'b00101, 1'b0, 1'b1, 5'b00101, 1'b0, "Sub 10 - 5        no borrow");
         test_case(5'b00101, 5'b01010, 1'b0, 1'b1, 5'b11011, 1'b1, "Sub 5 - 10           borrow");
         test_case(5'b11111, 5'b00001, 1'b0, 1'b1, 5'b11110, 1'b0, "Sub max - 1       no borrow");
