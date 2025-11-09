@@ -5,6 +5,13 @@ version: '0.2'
 work_dir: .
 design_root_dir: ..
 simulations:
+  - name: fas_vec
+    options: |-
+      -top work.fas_vec_tb
+      -uvm 1.2
+      -c-opts "-shared"
+      -cc-verbose
+
   - name: grs_round
     options: |-
       -top work.grs_round_tb

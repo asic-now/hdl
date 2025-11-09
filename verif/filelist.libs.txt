@@ -8,6 +8,8 @@
 # Compilation passes regardless of the order, but elaboration fails if order is reversed.
 
 # RTL Lib
+../rtl/verilog/lib/fas.v
+../rtl/verilog/lib/fas_vec.v
 ../rtl/verilog/lib/grs_round.v
 ../rtl/verilog/lib/grs_rounder.v
 

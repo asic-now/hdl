@@ -1,5 +1,6 @@
 # Todo's
 
+- [ ] TODO: Implement sticky bit in operand right shift instead of after addition/subtraction (so large PRECISION is not needed). Can parameterize it with PRECISION=3 (or 0?)
 - [ ] TODO: Parameterize cells
 - [ ] TODO: Implement UVM testbenches for each fpXX and each operation
 - [ ] TODO: Implement RTL fp16, fp32, fp64: sin, cos, log, exp
