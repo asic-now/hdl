@@ -68,6 +68,7 @@ COMPILER_FLAGS = \
 	-lib 'work' \
 	-uvm 1.2 \
 	+incdir+rtl/verilog/fp \
+	+incdir+rtl/verilog/systolic \
 	+incdir+$(RTL_LIB_DIR) \
 	+incdir+$(VERIF_LIB_DIR) \
 	+incdir+$(TEST_DIR)

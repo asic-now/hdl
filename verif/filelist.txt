@@ -21,4 +21,4 @@
 -F ../verif/tests/fp_add/filelist.txt
 -F ../verif/tests/fp_classify/filelist.txt
 -F ../verif/tests/fp_mul/filelist.txt
--F ../verif/tests/lib/filelist.txt
+-F ../verif/tests/systolic/filelist.txt

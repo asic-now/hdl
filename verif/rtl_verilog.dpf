@@ -25,6 +25,15 @@ simulations:
       -c-opts "-shared"
       -cc-verbose
 
+  - name: systolic_tb_top
+    options: |-
+      -top work.systolic_tb_top
+      -uvm 1.2
+      -c-opts "-shared"
+      -cc-verbose
+      -waves systolic_tb_top.mxd
+      +acc+b
+
   - name: fp_classify_random 16
     options: |-
       -top work.fp_classify_tb_top
@@ -313,6 +322,7 @@ source_files:
       +incdir+../verif/tests/fp_add
       +incdir+../verif/tests/fp_classify
       +incdir+../verif/tests/fp_mul
+      +incdir+../verif/tests/systolic
     file_list: relative-to-file
 library_search_paths:
   - $STD_LIBS\ieee93

@@ -1,0 +1,98 @@
+<svg width="400" height="420" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .box { stroke: black; stroke-width: 2px; fill: #e0e0e0; }
+    .circle { stroke: black; stroke-width: 2px; fill: white; }
+    .wire { stroke: black; stroke-width: 2px; fill: none; }
+    .text { font-family: sans-serif; fill: black; }
+    .label { font-family: sans-serif; font-size: 14px; font-weight: bold; }
+    .inner-label { font-family: sans-serif; font-size: 10px; }
+    .op-label { font-family: sans-serif; font-size: 16px; }
+    .arrow-head { fill: black; }
+    
+    @media (prefers-color-scheme: dark) {
+      .box { stroke: #c9d1d9; fill: #0d1117; }
+      .circle { stroke: #c9d1d9; fill: #0d1117; }
+      .wire { stroke: #c9d1d9; }
+      .text { fill: #c9d1d9; }
+      .arrow-head { fill: #c9d1d9; }
+    }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,5 L0,10 z" class="arrow-head" />
+    </marker>
+  </defs>
+
+  <!-- Inputs -->
+  <text x="100" y="80" text-anchor="middle" class="text label">b_in</text>
+  <text x="250" y="80" text-anchor="middle" class="text label">c_in</text>
+  <text x="10" y="155" text-anchor="start" class="text label">a_in</text>
+
+  <!-- Outputs -->
+  <text x="100" y="400" text-anchor="middle" class="text label">b_out</text>
+  <text x="250" y="400" text-anchor="middle" class="text label">c_out</text>
+  <text x="395" y="155" text-anchor="end" class="text label">a_out</text>
+
+  <!-- B Path -->
+  <!-- b_active register (Moved under Mul) -->
+  <rect x="140" y="240" width="40" height="40" class="box"/>
+  <text x="160" y="265" text-anchor="middle" class="text inner-label">b_act</text>
+
+  <!-- b_out register -->
+  <rect x="80" y="300" width="40" height="40" class="box"/>
+  <text x="100" y="325" text-anchor="middle" class="text inner-label">b_out</text>
+
+  <!-- A Path -->
+  <!-- a_out register -->
+  <rect x="300" y="130" width="40" height="40" class="box"/>
+  <text x="320" y="155" text-anchor="middle" class="text inner-label">a_out</text>
+
+  <!-- C Path -->
+  <!-- c_out register -->
+  <rect x="230" y="300" width="40" height="40" class="box"/>
+  <text x="250" y="325" text-anchor="middle" class="text inner-label">c_out</text>
+
+  <!-- Logic -->
+  <!-- Multiplier -->
+  <circle cx="160" cy="200" r="20" class="circle"/>
+  <text x="160" y="205" text-anchor="middle" class="text op-label">×</text>
+
+  <!-- Adder -->
+  <circle cx="250" cy="200" r="20" class="circle"/>
+  <text x="250" y="205" text-anchor="middle" class="text op-label" font-size="20">+</text>
+
+  <!-- Connections -->
+  <!-- b_in -> b_out_reg (Direct) -->
+  <line x1="100" y1="85" x2="100" y2="300" class="wire" marker-end="url(#arrow)"/>
+  
+  <!-- b_out_reg -> b_active (Update path) -->
+  <path d="M120 320 L160 320 L160 280" class="wire" marker-end="url(#arrow)"/>
+  
+  <!-- b_active -> Mult (Upwards) -->
+  <line x1="160" y1="240" x2="160" y2="220" class="wire" marker-end="url(#arrow)"/>
+  
+  <!-- a_in -> a_reg (Straight) -->
+  <line x1="40" y1="150" x2="300" y2="150" class="wire" marker-end="url(#arrow)"/>
+  
+  <!-- a_in -> Mult (Branch down from top) -->
+  <line x1="160" y1="150" x2="160" y2="180" class="wire" marker-end="url(#arrow)"/>
+
+  <!-- Mult -> Adder -->
+  <line x1="180" y1="200" x2="230" y2="200" class="wire" marker-end="url(#arrow)"/>
+  
+  <!-- c_in -> Adder -->
+  <line x1="250" y1="85" x2="250" y2="180" class="wire" marker-end="url(#arrow)"/>
+  
+  <!-- Adder -> c_reg -->
+  <line x1="250" y1="220" x2="250" y2="300" class="wire" marker-end="url(#arrow)"/>
+  
+  <!-- b_out_reg -> b_out -->
+  <line x1="100" y1="340" x2="100" y2="385" class="wire" marker-end="url(#arrow)"/>
+  
+  <!-- c_reg -> c_out -->
+  <line x1="250" y1="340" x2="250" y2="385" class="wire" marker-end="url(#arrow)"/>
+  
+  <!-- a_reg -> a_out -->
+  <line x1="340" y1="150" x2="355" y2="150" class="wire" marker-end="url(#arrow)"/>
+
+</svg>

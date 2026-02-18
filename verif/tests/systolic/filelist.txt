@@ -1,0 +1,21 @@
+# verif/tests/filelist.txt
+
+# Note: You can use # to add comments to the file.
+# Order of files seems super-important and should be in dependency order. 
+# Compilation passes regardless of the order, but elaboration fails if order is reversed.
+
+## DUT - RTL Design File(s)
+../../../rtl/verilog/systolic/pe2.v
+../../../rtl/verilog/systolic/systolic_array.v
+../../../rtl/verilog/systolic/systolic_controller.v
+../../../rtl/verilog/systolic/systolic.v
+
+# Testbench
+#   1. List interface file(s) here.
+#   2. List the package file here.
+#      Make sure all UVM testbench .sv source files 
+#      are included into the package file,
+#      except files with `module`, like Testbench Top.
+#   3. List module (Testbench Top) file(s) here.
+
+../../../verif/tests/systolic/systolic_tb_top.sv

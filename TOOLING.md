@@ -58,6 +58,41 @@ This section was written for Altair DSim v2025.1.
   * Open "DSim Studio" terminal.
   * DSim Studio projects are configured by `*.dpf` files.
 
+#### Using DSim
+
+Altair DSim can generate waveform files (typically in .mxd or .vcd format) during a simulation run, which can then be viewed using the integrated DSim Waveform Viewer within VSCode or the DSim Cloud interface.
+
+Steps to View Waveforms in DSim Studio/VS Code:
+
+1. Generate Waves: Ensure your simulation command includes options to output a wave file (e.g. `-waves waves.mxd`) and `+acc+b` option (without it dsim.log shows an error and no signals are recorded).
+2. Locate File: After a successful simulation run, find the generated  file in the file explorer (e.g. `./waves.mxd`).
+3. Open Viewer: Double-click the file to open it in the DSim Waveform Viewer.
+4. Add Signals: Use the design hierarchy pane to select signals, then drag and drop them or use the "insert" button to add them to the waveform view.
+
+Key Features of DSim Waveform Viewer:
+
+* Navigation: Allows zooming in/out, zooming to fit, and panning.
+* Markers & Cursors: Supports multiple, labeled, and movable vertical markers to measure time differences.
+* Signal Management: Signals can be rearranged, and bus signals can be expanded/collapsed.
+* Data Formats: Supports viewing signal values at specific cursor points.
+
+Important Notes:
+
+* Reloading: If you re-run a simulation, you may need to close and reopen the `.mxd` file to see updated waveforms, as a live "reload" button is not currently available.
+* Overwrite Warning: Subsequent simulation runs with the same name will overwrite existing `.mxd` files.
+* Unsupported Data: SystemVerilog events and strings may not display correctly in the current MXD viewer.
+
+AI responses may include mistakes.
+
+[1] <https://www.youtube.com/watch?v=AeZaVlYg3VY>
+[2] <https://help.metrics.ca/support/solutions/articles/154000141102-user-guide-dsim-cloud-cli-view-wave-command>
+[4] <https://www.linkedin.com/posts/hong-ping-tan-9499935a_while-antmicro-is-working-hard-enhancing-activity-7401647951670149122-Povm>
+[5] <https://help.metrics.ca/support/solutions/articles/154000141180-user-guide-dsim-dumping-opening-waveforms>
+[6] <https://help.metrics.ca/support/solutions/articles/154000141169-tutorial-dsim-studio-for-intel>
+[7] <https://help.metrics.ca/support/solutions/articles/154000147958-tutorial-dsim-studio-for-xilinx>
+[8] <https://community.altair.com/discussion/61816/waveform-reload-function>
+[9] <https://community.altair.com/discussion/61815/systemverilog-event-and-string-support-of-waveform>
+
 #### DSim DPI-C
 
 Most verification models are implemented with C reference functions. C functions are called from UVM testbench model using DPI-C.

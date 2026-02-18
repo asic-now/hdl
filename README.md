@@ -19,6 +19,7 @@ The repository is organized into two main directories: rtl/ and verif/.
   * fp16/: Modules for 16-bit (half-precision) floating-point numbers. In process of moving to parameterized version.  
   * fp32/: Modules for 32-bit (single-precision) floating-point numbers. In process of moving to parameterized version.  
   * fp64/: Modules for 64-bit (double-precision) floating-point numbers. In process of moving to parameterized version.  
+  * systolic/: Parameterized Systolic Array.  
 * verif/: Contains the UVM verification environment.  
   * lib/: Contains generic, reusable UVM base classes and components designed to be shared across different testbenches.  
   * tests/: Contains DUT-specific testbenches. Each subdirectory (e.g., fp\_add/) is a complete testbench for a single RTL module.
@@ -48,7 +49,7 @@ end
 
 ### Logic Implementation Style
 
-To prevent accidental latch inference and improve design clarity, a **two-process methodology** is required for all but the most trivial sequential logic. (Some existing cell might still have a mized implementatioon, but they will be cleaned up eventually).
+To prevent accidental latch inference and improve design clarity, a **two-process methodology** is required for all but the most trivial sequential logic. (Some existing cells might still have a mixed implementatioon, but they will be cleaned up eventually).
 
 1. **Combinational Logic (`always_comb`)**: All combinational logic, including the calculation of the next state for registers, must be implemented in a dedicated `always_comb` block (or `always @(*)` for Verilog-2001).
 2. **Sequential Logic (`always_ff`)**: The state-holding elements (flip-flops) must be implemented in a separate `always_ff` block (or `always @(posedge clk ...)` for Verilog-2001). This block should contain minimal logic and primarily perform non-blocking assignments from the next-state signals.

@@ -11,6 +11,7 @@
 ../rtl/verilog/lib/adders.v
 ../rtl/verilog/lib/fas.v
 ../rtl/verilog/lib/fas_vec.v
+../rtl/verilog/lib/fifo1.v
 ../rtl/verilog/lib/grs_round.v
 ../rtl/verilog/lib/grs_rounder.v
 
