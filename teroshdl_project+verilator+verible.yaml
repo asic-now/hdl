@@ -737,6 +737,14 @@ files:
     logical_name: rtl/verilog/lib
     is_manual: true
     source_type: none
+  - name: rtl\verilog\lib\adders.v
+    file_type: verilogSource
+    file_version: '2000'
+    is_include_file: false
+    include_path: ''
+    logical_name: rtl/verilog/lib
+    is_manual: true
+    source_type: none
   - name: rtl\verilog\lib\fas.v
     file_type: verilogSource
     file_version: '2000'

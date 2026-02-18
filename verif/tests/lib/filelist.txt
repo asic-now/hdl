@@ -5,6 +5,7 @@
 # Compilation passes regardless of the order, but elaboration fails if order is reversed.
 
 ## DUT - RTL Design File(s)
+#../../../rtl/verilog/lib/adders.v
 #../../../rtl/verilog/lib/fas.v
 #../../../rtl/verilog/lib/fas_vec.v
 #../../../rtl/verilog/lib/grs_round.v

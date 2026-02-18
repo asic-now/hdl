@@ -17,7 +17,43 @@ module fas_vec_tb;
     wire             tb_cout;
 
     // --- Instantiate DUT ---
-    fas_vec #(.WIDTH(WIDTH)) dut (
+    // fas_vec #(.WIDTH(WIDTH)) dut (
+    //     .a(tb_a),
+    //     .b(tb_b),
+    //     .cin(tb_cin),
+    //     .add_nsub(tb_add_nsub),
+    //     .z(tb_z),
+    //     .cout(tb_cout)
+    // );
+
+    // fas_vec_cla #(.WIDTH(WIDTH)) dut (
+    //     .a(tb_a),
+    //     .b(tb_b),
+    //     .cin(tb_cin),
+    //     .add_nsub(tb_add_nsub),
+    //     .z(tb_z),
+    //     .cout(tb_cout)
+    // );
+
+    // fas_vec_carry_skip #(.WIDTH(WIDTH)) dut (
+    //     .a(tb_a),
+    //     .b(tb_b),
+    //     .cin(tb_cin),
+    //     .add_nsub(tb_add_nsub),
+    //     .z(tb_z),
+    //     .cout(tb_cout)
+    // );
+
+    // fas_vec_carry_select #(.WIDTH(WIDTH)) dut (
+    //     .a(tb_a),
+    //     .b(tb_b),
+    //     .cin(tb_cin),
+    //     .add_nsub(tb_add_nsub),
+    //     .z(tb_z),
+    //     .cout(tb_cout)
+    // );
+
+    fas_vec_prefix #(.WIDTH(WIDTH)) dut (
         .a(tb_a),
         .b(tb_b),
         .cin(tb_cin),
@@ -25,6 +61,15 @@ module fas_vec_tb;
         .z(tb_z),
         .cout(tb_cout)
     );
+
+    // fa_vec_carry_save #(.WIDTH(WIDTH)) dut (
+    //     .a(tb_a),
+    //     .b(tb_b),
+    //     .c(TODO),     //     tb_cin
+    //     .add_nsub(tb_add_nsub),
+    //     .z(tb_z),
+    //     .carry(TODO) // tb_cout
+    // );
 
     // --- Task to perform a single test case ---
     task test_case(

@@ -1,9 +1,9 @@
 // rtl/verilog/lib/fas_vec.v
 // full_add_sub (parameterized WIDTH-bit)
 
+// Simple Ripple Carry Vectored Full Adder Subtractor (RCA)
 module fas_vec #(parameter WIDTH = 8) (
-    input  wire [WIDTH-1:0] a,
-    input  wire [WIDTH-1:0] b,
+    input  wire [WIDTH-1:0] a, b,
     input  wire cin,
     input  wire add_nsub,       // 0: add, 1: subtract
     output wire [WIDTH-1:0] z,

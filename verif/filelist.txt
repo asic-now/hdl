@@ -17,6 +17,7 @@
 # Add `-F tests/testbench/filelist.txt` here for each new testbench.
 # Testbench filelist should list all testbench packages and verilog files with `module` keyword
 # and all DUT RTL files used in the testbench, but not the common / library files.
+-F ../verif/tests/lib/filelist.txt
 -F ../verif/tests/fp_add/filelist.txt
 -F ../verif/tests/fp_classify/filelist.txt
 -F ../verif/tests/fp_mul/filelist.txt
