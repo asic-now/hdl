@@ -25,9 +25,9 @@ simulations:
       -c-opts "-shared"
       -cc-verbose
 
-  - name: systolic_tb_top
+  - name: systolic_tb_top_nonuvm
     options: |-
-      -top work.systolic_tb_top
+      -top work.systolic_tb_top_nonuvm
       -uvm 1.2
       -c-opts "-shared"
       -cc-verbose
@@ -307,6 +307,19 @@ simulations:
       -defparam WIDTH=64
       +UVM_TESTNAME=fp_mul_combined_test
       +acc+b ../verif/lib/fp_model.c ../verif/lib/fp16_model.c ../verif/lib/fp32_model.c ../verif/lib/fp64_model.c ../verif/lib/fp_dpi_utils.c
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
+
+  - name: systolic_random 4 2x2
+    options: |-
+      -top work.systolic_tb_top
+      -uvm 1.2
+      -defparam WIDTH=4
+      -defparam ROWS=2
+      -defparam COLS=2
+      +UVM_TESTNAME=systolic_random_test
+      +acc+b
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
