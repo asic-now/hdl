@@ -30,6 +30,9 @@ class systolic_driver #(
         vif.cb_drv.a <= 0;
         vif.cb_drv.b <= 0;
         
+        wait(vif.rst_n === 1'b1);
+        @(vif.cb_drv);
+
         forever begin
             seq_item_port.get_next_item(req);
             
