@@ -44,6 +44,7 @@ class systolic_monitor #(
                 item = systolic_item #(ROWS, COLS, WIDTH, ACC_WIDTH)::type_id::create("item_in");
                 item.unpack_a(vif.cb_mon.a);
                 item.unpack_b(vif.cb_mon.b);
+                `uvm_info("MON", $sformatf("Sampled Input: A[0][0]=%0d B[0][0]=%0d", item.a_matrix[0][0], item.b_matrix[0][0]), UVM_HIGH)
                 ap_in.write(item);
             end
         end
@@ -56,6 +57,7 @@ class systolic_monitor #(
             if (vif.cb_mon.out_valid) begin
                 item = systolic_item #(ROWS, COLS, WIDTH, ACC_WIDTH)::type_id::create("item_out");
                 item.unpack_c(vif.cb_mon.c);
+                `uvm_info("MON", $sformatf("Sampled Output: C[0][0]=%0d", item.c_matrix[0][0]), UVM_HIGH)
                 ap_out.write(item);
             end
         end

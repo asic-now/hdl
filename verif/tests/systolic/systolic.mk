@@ -1,7 +1,7 @@
 # Makefile for Systolic Array UVM Testbench
 
 COMPILER = vcs
-TESTNAME ?= systolic_random_test
+TESTNAME ?= systolic_debug_test
 
 # Project Structure
 RTL_DIR      = rtl/verilog/systolic

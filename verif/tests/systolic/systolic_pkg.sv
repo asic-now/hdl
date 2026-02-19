@@ -13,5 +13,6 @@ package systolic_pkg;
     `include "systolic_env.sv"
     `include "systolic_sequence.sv"
     `include "systolic_random_test.sv"
+    `include "systolic_debug_test.sv"
 
 endpackage

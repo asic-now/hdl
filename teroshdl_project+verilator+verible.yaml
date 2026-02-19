@@ -559,6 +559,14 @@ files:
     logical_name: verif/tests/systolic
     is_manual: true
     source_type: none
+  - name: verif\tests\systolic\systolic_debug_test.sv
+    file_type: systemVerilogSource
+    file_version: !<tag:yaml.org,2002:js/undefined> ''
+    is_include_file: false
+    include_path: ''
+    logical_name: verif/tests/systolic
+    is_manual: true
+    source_type: none
   - name: verif\tests\systolic\systolic_random_test.sv
     file_type: systemVerilogSource
     file_version: !<tag:yaml.org,2002:js/undefined> ''

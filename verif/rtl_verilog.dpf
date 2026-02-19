@@ -323,6 +323,18 @@ simulations:
       -c-opts "-shared"
       -cc-verbose
       -suppress IneffectiveDynamicCast:UninstVif
+  - name: systolic_debug 4 2x2
+    options: |-
+      -top work.systolic_tb_top
+      -uvm 1.2
+      -defparam WIDTH=4
+      -defparam ROWS=2
+      -defparam COLS=2
+      +UVM_TESTNAME=systolic_debug_test
+      +acc+b
+      -c-opts "-shared"
+      -cc-verbose
+      -suppress IneffectiveDynamicCast:UninstVif
 
 source_files:
   - language: verilog

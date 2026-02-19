@@ -1,11 +1,11 @@
-// verif/tests/systolic/systolic_random_test.sv
-// Test that runs a random sequence.
+// verif/tests/systolic/systolic_debug_test.sv
+// Test that runs debug sequences (Identity, Sparse, etc).
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-class systolic_random_test extends uvm_test;
-    `uvm_component_utils(systolic_random_test)
+class systolic_debug_test extends uvm_test;
+    `uvm_component_utils(systolic_debug_test)
 
     // Parameters must match DUT/Top
     parameter ROWS = 2;
@@ -25,15 +25,14 @@ class systolic_random_test extends uvm_test;
     endfunction
 
     task run_phase(uvm_phase phase);
-        systolic_random_sequence #(ROWS, COLS, WIDTH, ACC_WIDTH) seq;
+        systolic_debug_sequence #(ROWS, COLS, WIDTH, ACC_WIDTH) seq;
         
         phase.raise_objection(this);
         
-        seq = systolic_random_sequence #(ROWS, COLS, WIDTH, ACC_WIDTH)::type_id::create("seq");
+        seq = systolic_debug_sequence #(ROWS, COLS, WIDTH, ACC_WIDTH)::type_id::create("seq");
         seq.start(env.agent.sequencer);
         
         #100ns; // Wait for last outputs
         phase.drop_objection(this);
     endtask
-
 endclass
