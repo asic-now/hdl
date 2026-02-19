@@ -1,8 +1,8 @@
-# hdl
+# HDL
 
 Hardware Description Language library
 
-This project contains a library of synthesizable Verilog RTL for various floating-point operations, along with a comprehensive UVM-based verification environment.
+This project contains a library of synthesizable Verilog RTL for various floating-point operations and matrix computations, along with a comprehensive UVM-based verification environment.
 
 It is WIP (Work In Progress), and not everything has been verified.
 
@@ -172,3 +172,9 @@ The table below shows the implementation and verification status of the floating
 | `to_fp16`     | -             | RTL only      | RTL only      |
 | `to_fp32`     | RTL only      | -             | RTL only      |
 | `to_fp64`     | -             | RTL only      | -             |
+
+## Matrix Operations
+
+| Operation     | Status        | Notes                                      |
+|---------------|---------------|--------------------------------------------|
+| `systolic`    | [x]  Verified | Parameterized integer systolic array (PE2) |
