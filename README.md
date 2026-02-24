@@ -10,6 +10,16 @@ It is WIP (Work In Progress), and not everything has been verified.
 
 [IEEE-754 floating point numbers converter](https://numeral-systems.com/ieee-754-converter/)
 
+### FP8
+
+FP8 E4M3 format: 1 sign, 4 exponent, 3 mantissa bits
+
+### BFLOAT16
+
+BFLOAT16 format: 1 sign, 8 exponent, 7 mantissa bits
+
+(Exponent width same as in FP32)
+
 ## Project Structure
 
 The repository is organized into two main directories: rtl/ and verif/.
