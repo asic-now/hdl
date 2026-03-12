@@ -68,4 +68,4 @@ Did I expect something different? Of course not. I've used LLMs for a full spect
 
 The future of hardware design will undoubtedly involve AI, but it will be a partnership. The AI can provide the "vibe" and the first 80%, but it's the experienced engineer who has to provide the rigor, the insight, and the final 20% that makes it actually work. And for now, that’s a pretty good place to be.
 
-#verilog #rtl #vibecoding #OpenSource #ASIC #AI #FPGA
+ #verilog #rtl #vibecoding #OpenSource #ASIC #AI #FPGA
