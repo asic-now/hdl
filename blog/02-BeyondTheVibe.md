@@ -11,7 +11,7 @@ But a single `fp16_add` does not a floating-point library make. The initial plan
 
 ## The Perils of Native Models and the Shift to Bit-Accuracy
 
-As I began parameterizing the RTL for `fp_add`, `fp_mul`, and `fp_classify`, the verification strategy had to evolve. First, UVM testbenches for each precision were almost identical, and unifying them with parameterization removed 3x copy-pasta. 
+As I began parameterizing the RTL for `fp_add`, `fp_mul`, and `fp_classify`, the verification strategy had to evolve. First, UVM testbenches for each precision were almost identical, and unifying them with parameterization removed 3x copy-pasta.
 
 Next, my initial C models, verified against Python's NumPy, were a good start for `fp16`, but they had a hidden flaw. When I asked Gemini for ideas on a parameterized model, it consistently suggested using native floating-point functions in Python or C. This is a logical, high-level suggestion, but it's strategically wrong for rigorous RTL verification where internal precision and the IEEE rounding mode can be parameterized.
 
