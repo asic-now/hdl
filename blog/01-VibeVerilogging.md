@@ -67,3 +67,5 @@ However, they are not yet capable of the deep, critical thinking and systematic 
 Did I expect something different? Of course not. I've used LLMs for a full spectrum of technical problems -- including Verilog, Python, TypeScript, C, documentation, and diagrams -- and I expected the LLM to struggle, as it does in any moderately complex problem space. Where it shines is its almost perfect recall and its ability to grasp the questions well.
 
 The future of hardware design will undoubtedly involve AI, but it will be a partnership. The AI can provide the "vibe" and the first 80%, but it's the experienced engineer who has to provide the rigor, the insight, and the final 20% that makes it actually work. And for now, that’s a pretty good place to be.
+
+#verilog #rtl #vibecoding #OpenSource #ASIC #AI #FPGA

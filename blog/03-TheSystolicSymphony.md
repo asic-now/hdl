@@ -122,4 +122,4 @@ This module is the perfect example of the new era of hardware design. The AI is 
 
 <https://github.com/asic-now/hdl>
 
- #verilog #rtl #systolicarray #matrixmultiplication #ASIC #AI #FPGA
+ #verilog #rtl #vibecoding #OpenSource #ASIC #AI #FPGA #systolicarray #matrixmultiplication
