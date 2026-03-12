@@ -130,7 +130,7 @@ Best practice is to have fully-parameterized module (e.g. WIDTH) instead of hard
 - MUL_LATENCY
 - ADD_LATENCY
 
-The purpose of MUL_LATENCY and ADD_LATENCY is to model the ALU implementation pipeline, with depth of MUL_LATENCY + ADD_LATENCY. 
+The purpose of MUL_LATENCY and ADD_LATENCY is to model the ALU implementation pipeline, with depth of MUL_LATENCY + ADD_LATENCY.
 
 All the surrounding modules are parameterized.
 
